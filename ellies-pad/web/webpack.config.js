@@ -1,7 +1,8 @@
 var path = require('path');
 
 module.exports = {
-	entry: './src/index.js',
+	devtool: 'source-map',
+	entry: path.resolve(__dirname, 'src', 'index.js'),
 	output: {
 		path: path.resolve(__dirname, 'static'),
 		publicPath: '/static/',
@@ -16,7 +17,7 @@ module.exports = {
 		loaders: [{
 			test: /\.js$/,
 			exclude: /node_modules/,
-			loaders: 'babel',
+			loaders: ['babel'],
 		}],
 	},
 };

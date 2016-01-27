@@ -1,12 +1,4 @@
 {
   "presets": ["es2015", "stage-0", "react"],
   "plugins": ["babel-relay-plugin-loader"],
-	"env": {
-		"localhost": {
-			"presets": ["react-hmre"]
-		},
-    "production": {
-      "plugins": ["transform-react-display-name"]
-    }
-	}
 }
