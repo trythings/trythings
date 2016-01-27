@@ -7,11 +7,8 @@
   "license": "private",
   "scripts": {
     "production": "NODE_ENV=production npm run build",
-    "build": "$npm_package_config_browserify --debug --entry src/index.js --outfile static/index.js",
-    "lint": "eslint src",
-    "postbuild": "exorcist static/index.js.map < static/index.js > static/temp.js && mv static/temp.js static/index.js",
-    "prewatch": "npm run build",
-    "watch": "browser-sync start --proxy localhost:8080 --port 3000 --files build --no-open --reload-delay 250 & npm run build --ellies-pad:browserify=watchify"
+    "build": "webpack",
+    "lint": "eslint webpack.config.js src"
   },
   "browserify": {
     "transform": [
@@ -34,8 +31,11 @@
   },
   "author": "Try Things",
   "devDependencies": {
+    "babel-core": "^6.4.5",
+    "babel-loader": "^6.2.1",
     "babel-preset-es2015": "^6.3.13",
     "babel-preset-react": "^6.3.13",
+    "babel-preset-react-hmre": "^1.0.1",
     "babel-preset-stage-0": "^6.3.13",
     "babel-relay-plugin": "^0.6.3",
     "babelify": "^7.2.0",
@@ -47,7 +47,9 @@
     "eslint-plugin-react": "^3.16.1",
     "exorcist": "^0.4.0",
     "uglifyify": "^3.0.1",
-    "watchify": "^3.7.0"
+    "watchify": "^3.7.0",
+    "webpack": "^2.0.5-beta",
+    "webpack-dev-server": "^1.14.1"
   },
   "dependencies": {
     "react": "^0.14.6",
