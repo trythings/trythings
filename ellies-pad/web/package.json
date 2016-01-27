@@ -8,6 +8,7 @@
   "scripts": {
     "production": "NODE_ENV=production npm run build",
     "build": "$npm_package_config_browserify --debug --entry src/index.js --outfile static/index.js",
+    "lint": "eslint src",
     "postbuild": "exorcist static/index.js.map < static/index.js > static/temp.js && mv static/temp.js static/index.js",
     "prewatch": "npm run build",
     "watch": "browser-sync start --proxy localhost:8080 --port 3000 --files build --no-open --reload-delay 250 & npm run build --ellies-pad:browserify=watchify"
@@ -41,6 +42,9 @@
     "browser-sync": "^2.11.1",
     "browserify": "^13.0.0",
     "envify": "^3.4.0",
+    "eslint": "^1.10.3",
+    "eslint-config-airbnb": "^4.0.0",
+    "eslint-plugin-react": "^3.16.1",
     "exorcist": "^0.4.0",
     "uglifyify": "^3.0.1",
     "watchify": "^3.7.0"
