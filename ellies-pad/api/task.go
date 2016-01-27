@@ -64,7 +64,7 @@ func (s *TaskService) Create(t *Task) error {
 	if t.ID != "" {
 		return fmt.Errorf("t already has id %q", t.ID)
 	}
-	t.ID = "klm"
+	t.ID = t.Title
 	s.tasks = append(s.tasks, t)
 	return nil
 }
