@@ -5,6 +5,27 @@ import (
 	"github.com/graphql-go/relay"
 )
 
+type User struct {
+	ID string `json:"id"`
+}
+
+type UserService struct {
+	user *User
+}
+
+func NewUserService(user *User) *UserService {
+	return &UserService{
+		user: user,
+	}
+}
+
+func (s *UserService) Get(id string) *User {
+	if id != s.user.ID {
+		return nil
+	}
+	return s.user
+}
+
 // Task represents a particular action or piece of work to be completed.
 type Task struct {
 	ID    string `json:"id"`
@@ -35,6 +56,7 @@ func (s *TaskService) GetAll() []*Task {
 }
 
 var taskType *graphql.Object
+var userType *graphql.Object
 
 var nodeDefinitions *relay.NodeDefinitions
 
@@ -56,11 +78,18 @@ func init() {
 		},
 	})
 
+	us := NewUserService(&User{
+		ID: "ellie",
+	})
+
 	nodeDefinitions = relay.NewNodeDefinitions(relay.NodeDefinitionsConfig{
 		IDFetcher: func(id string, info graphql.ResolveInfo) interface{} {
 			resolvedID := relay.FromGlobalID(id)
-			if resolvedID.Type == "Task" {
+			switch resolvedID.Type {
+			case "Task":
 				return ts.Get(resolvedID.ID)
+			case "User":
+				return us.Get(resolvedID.ID)
 			}
 			return nil
 		},
@@ -68,6 +97,8 @@ func init() {
 			switch value.(type) {
 			case *Task:
 				return taskType
+			case *User:
+				return userType
 			}
 			return nil
 		},
@@ -88,15 +119,33 @@ func init() {
 		},
 	})
 
+	userType = graphql.NewObject(graphql.ObjectConfig{
+		Name:        "User",
+		Description: "User represents a person who can interact with the app.",
+		Fields: graphql.Fields{
+			"id": relay.GlobalIDField("User", nil),
+			"tasks": &graphql.Field{
+				Description: "tasks are all pieces of work that need to be completed for the user.",
+				Type:        graphql.NewList(taskType),
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					return ts.GetAll(), nil
+				},
+			},
+		},
+		Interfaces: []*graphql.Interface{
+			nodeDefinitions.NodeInterface,
+		},
+	})
+
 	queryType := graphql.NewObject(graphql.ObjectConfig{
 		Name: "Query",
 		Fields: graphql.Fields{
 			"node": nodeDefinitions.NodeField,
-			"tasks": &graphql.Field{
-				Description: "All tasks that need to be completed",
-				Type:        graphql.NewList(taskType),
+			"viewer": &graphql.Field{
+				Description: "viewer is the person currently interacting with the app.",
+				Type:        userType,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					return ts.GetAll(), nil
+					return us.Get("ellie"), nil
 				},
 			},
 		},

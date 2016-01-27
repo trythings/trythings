@@ -12,5 +12,10 @@ func init() {
 		Pretty: true,
 	})
 
-	http.Handle("/graphql", h)
+	http.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Access-Control-Allow-Origin", "*")
+		w.Header().Add("Access-Control-Allow-Headers", "Accept")
+		w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
+		h.ServeHTTP(w, r)
+	})
 }
