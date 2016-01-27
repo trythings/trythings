@@ -1,6 +1,11 @@
 package api
 
 import (
+	"errors"
+	"fmt"
+
+	"golang.org/x/net/context"
+
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/relay"
 )
@@ -42,17 +47,26 @@ func NewTaskService(tasks []*Task) *TaskService {
 	}
 }
 
-func (s *TaskService) Get(id string) *Task {
+func (s *TaskService) Get(id string) (*Task, error) {
 	for _, t := range s.tasks {
 		if t.ID == id {
-			return t
+			return t, nil
 		}
 	}
-	return nil
+	return nil, fmt.Errorf("could not find task with id %q", id)
 }
 
 func (s *TaskService) GetAll() []*Task {
 	return s.tasks
+}
+
+func (s *TaskService) Create(t *Task) error {
+	if t.ID != "" {
+		return fmt.Errorf("t already has id %q", t.ID)
+	}
+	t.ID = "klm"
+	s.tasks = append(s.tasks, t)
+	return nil
 }
 
 var taskType *graphql.Object
@@ -87,7 +101,11 @@ func init() {
 			resolvedID := relay.FromGlobalID(id)
 			switch resolvedID.Type {
 			case "Task":
-				return ts.Get(resolvedID.ID)
+				t, err := ts.Get(resolvedID.ID)
+				if err != nil {
+					panic(err)
+				}
+				return t
 			case "User":
 				return us.Get(resolvedID.ID)
 			}
@@ -151,9 +169,70 @@ func init() {
 		},
 	})
 
+	addTaskMutation := relay.MutationWithClientMutationID(relay.MutationConfig{
+		Name: "AddTask",
+		InputFields: graphql.InputObjectConfigFieldMap{
+			"title": &graphql.InputObjectFieldConfig{
+				Type: graphql.NewNonNull(graphql.String),
+			},
+		},
+		OutputFields: graphql.Fields{
+			"task": &graphql.Field{
+				Type: taskType,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					payload, ok := p.Source.(map[string]interface{})
+					if !ok {
+						return nil, errors.New("could not cast payload to map")
+					}
+					id, ok := payload["taskId"].(string)
+					if !ok {
+						return nil, errors.New("could not cast taskId to string")
+					}
+					t, err := ts.Get(id)
+					if err != nil {
+						return nil, err
+					}
+					return t, nil
+				},
+			},
+			"viewer": &graphql.Field{
+				Type: userType,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					return us.Get("ellie"), nil
+				},
+			},
+		},
+		MutateAndGetPayload: func(inputMap map[string]interface{}, info graphql.ResolveInfo, ctx context.Context) (map[string]interface{}, error) {
+			title, ok := inputMap["title"].(string)
+			if !ok {
+				return nil, errors.New("could not cast title to string")
+			}
+
+			t := &Task{
+				Title: title,
+			}
+			err := ts.Create(t)
+			if err != nil {
+				return nil, err
+			}
+
+			return map[string]interface{}{
+				"taskId": t.ID,
+			}, nil
+		},
+	})
+
+	mutationType := graphql.NewObject(graphql.ObjectConfig{
+		Name: "Mutation",
+		Fields: graphql.Fields{
+			"addTask": addTaskMutation,
+		},
+	})
+
 	var err error
 	Schema, err = graphql.NewSchema(graphql.SchemaConfig{
-		Query: queryType,
+		Query:    queryType,
+		Mutation: mutationType,
 	})
 	if err != nil {
 		panic(err)
