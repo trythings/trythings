@@ -1,19 +1,34 @@
 import React from 'react';
 import Relay from 'react-relay';
 
+const Task = Relay.createContainer((props) => {
+	return <li>{props.task.title}</li>;
+}, {
+	fragments: {
+		task: () => Relay.QL`
+			fragment on Task {
+				title,
+			}
+		`,
+	},
+});
+
+
 const App = (props) => {
-	console.log(props);
-	return <p>hello, world!</p>;
+	return (
+		<ol>
+			{props.viewer.tasks.map(task => <Task key={task.id} task={task}/>)}
+		</ol>
+	);
 }
 
 export default Relay.createContainer(App, {
 	fragments: {
 		viewer: () => Relay.QL`
 			fragment on User {
-				id,
 				tasks {
 					id,
-					title,
+					${Task.getFragment('task')}
 				},
 			}
 		`,
