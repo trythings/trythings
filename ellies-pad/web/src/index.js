@@ -8,7 +8,11 @@ class AppRoute extends Relay.Route {
 	static routeName = 'AppRoute';
 	
 	static queries = {
-		tasks: () => Relay.QL`query { tasks }`,
+		viewer: () => Relay.QL`
+			query {
+				viewer
+			}
+		`,
 	};
 }
 
@@ -17,6 +21,10 @@ const element = (
   Component={App}
   route={new AppRoute()}
 	/>
+);
+
+Relay.injectNetworkLayer(
+  new Relay.DefaultNetworkLayer('http://localhost:8080/graphql')
 );
 
 ReactDOM.render(element, document.getElementById('App'));
