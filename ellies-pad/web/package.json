@@ -8,22 +8,8 @@
   "scripts": {
     "production": "NODE_ENV=production npm run build",
     "build": "webpack",
-    "lint": "eslint webpack.config.js src"
-  },
-  "browserify": {
-    "transform": [
-      "babelify",
-      [
-        "envify",
-        {
-          "_": "purge"
-        }
-      ],
-      "uglifyify"
-    ]
-  },
-  "config": {
-    "browserify": "browserify"
+    "lint": "eslint src",
+    "localhost": "NODE_ENV=localhost webpack-dev-server --hot --inline --port 3000 --content-base static"
   },
   "repository": {
     "type": "git",
@@ -38,16 +24,10 @@
     "babel-preset-react-hmre": "^1.0.1",
     "babel-preset-stage-0": "^6.3.13",
     "babel-relay-plugin": "^0.6.3",
-    "babelify": "^7.2.0",
-    "browser-sync": "^2.11.1",
-    "browserify": "^13.0.0",
-    "envify": "^3.4.0",
+    "babel-relay-plugin-loader": "^0.6.4",
     "eslint": "^1.10.3",
     "eslint-config-airbnb": "^4.0.0",
     "eslint-plugin-react": "^3.16.1",
-    "exorcist": "^0.4.0",
-    "uglifyify": "^3.0.1",
-    "watchify": "^3.7.0",
     "webpack": "^2.0.5-beta",
     "webpack-dev-server": "^1.14.1"
   },
@@ -55,5 +35,10 @@
     "react": "^0.14.6",
     "react-dom": "^0.14.6",
     "react-relay": "^0.6.1"
+  },
+  "metadata": {
+    "graphql": {
+      "schema": "../schema.json"
+    }
   }
 }
