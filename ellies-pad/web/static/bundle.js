@@ -37,7 +37,7 @@
 /******/ 	__webpack_require__.oe = function(err) { throw err; };
 
 /******/ 	// __webpack_public_path__
-/******/ 	__webpack_require__.p = "";
+/******/ 	__webpack_require__.p = "/static/";
 /******/ 	// Load entry module and return exports
 /******/ 	return __webpack_require__(__webpack_require__.s = 87);
 /******/ })
