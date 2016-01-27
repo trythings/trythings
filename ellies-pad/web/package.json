@@ -9,7 +9,7 @@
     "production": "NODE_ENV=production npm run build",
     "build": "webpack --bail",
     "lint": "eslint src",
-    "localhost": "NODE_ENV=localhost webpack-dev-server --content-base static --history-api-fallback --hot --inline --port 3000"
+    "localhost": "NODE_ENV=localhost webpack-dev-server --content-base static --history-api-fallback --port 3000"
   },
   "repository": {
     "type": "git",
