@@ -1,13 +1,16 @@
 var path = require('path');
+var webpack = require('webpack');
 
 module.exports = {
 	devtool: 'source-map',
 	entry: path.resolve(__dirname, 'src', 'index.js'),
 	output: {
 		path: path.resolve(__dirname, 'static'),
-		publicPath: '/static/',
 		filename: 'bundle.js',
 	},
+	plugins: [
+		new webpack.EnvironmentPlugin(['NODE_ENV']),
+	],
 	module: {
 		// preLoaders: [{
 		// 	test: /\.js$/,

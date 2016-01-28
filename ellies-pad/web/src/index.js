@@ -24,7 +24,9 @@ const element = (
 );
 
 Relay.injectNetworkLayer(
-  new Relay.DefaultNetworkLayer('http://localhost:8080/graphql')
+  new Relay.DefaultNetworkLayer('/graphql', {
+		credentials: 'same-origin',
+	}),
 );
 
 ReactDOM.render(element, document.getElementById('App'));
