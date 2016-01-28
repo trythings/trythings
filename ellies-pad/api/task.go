@@ -98,6 +98,12 @@ func init() {
 	nodeDefinitions = relay.NewNodeDefinitions(relay.NodeDefinitionsConfig{
 		IDFetcher: func(ctx context.Context, id string, info graphql.ResolveInfo) (interface{}, error) {
 			resolvedID := relay.FromGlobalID(id)
+			// relay.FromGlobalID does not return an error if it encounters one.
+			// Instead, it just returns a nil pointer.
+			if resolvedID == nil {
+				return nil, fmt.Errorf("invalid id %q", id)
+			}
+
 			switch resolvedID.Type {
 			case "Task":
 				return ts.Get(ctx, resolvedID.ID)
