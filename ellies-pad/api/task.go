@@ -4,10 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	"golang.org/x/net/context"
-
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/relay"
+	"golang.org/x/net/context"
 )
 
 type User struct {
@@ -24,11 +23,11 @@ func NewUserService(user *User) *UserService {
 	}
 }
 
-func (s *UserService) Get(id string) *User {
+func (s *UserService) Get(ctx context.Context, id string) (*User, error) {
 	if id != s.user.ID {
-		return nil
+		return nil, fmt.Errorf("could not find user with id %q", id)
 	}
-	return s.user
+	return s.user, nil
 }
 
 // Task represents a particular action or piece of work to be completed.
@@ -47,7 +46,7 @@ func NewTaskService(tasks []*Task) *TaskService {
 	}
 }
 
-func (s *TaskService) Get(id string) (*Task, error) {
+func (s *TaskService) Get(ctx context.Context, id string) (*Task, error) {
 	for _, t := range s.tasks {
 		if t.ID == id {
 			return t, nil
@@ -56,11 +55,11 @@ func (s *TaskService) Get(id string) (*Task, error) {
 	return nil, fmt.Errorf("could not find task with id %q", id)
 }
 
-func (s *TaskService) GetAll() []*Task {
+func (s *TaskService) GetAll(ctx context.Context) []*Task {
 	return s.tasks
 }
 
-func (s *TaskService) Create(t *Task) error {
+func (s *TaskService) Create(ctx context.Context, t *Task) error {
 	if t.ID != "" {
 		return fmt.Errorf("t already has id %q", t.ID)
 	}
@@ -97,19 +96,15 @@ func init() {
 	})
 
 	nodeDefinitions = relay.NewNodeDefinitions(relay.NodeDefinitionsConfig{
-		IDFetcher: func(id string, info graphql.ResolveInfo) interface{} {
+		IDFetcher: func(ctx context.Context, id string, info graphql.ResolveInfo) (interface{}, error) {
 			resolvedID := relay.FromGlobalID(id)
 			switch resolvedID.Type {
 			case "Task":
-				t, err := ts.Get(resolvedID.ID)
-				if err != nil {
-					panic(err)
-				}
-				return t
+				return ts.Get(ctx, resolvedID.ID)
 			case "User":
-				return us.Get(resolvedID.ID)
+				return us.Get(ctx, resolvedID.ID)
 			}
-			return nil
+			return nil, fmt.Errorf("unknown type %q", resolvedID.Type)
 		},
 		TypeResolve: func(value interface{}, info graphql.ResolveInfo) *graphql.Object {
 			switch value.(type) {
@@ -146,7 +141,7 @@ func init() {
 				Description: "tasks are all pieces of work that need to be completed for the user.",
 				Type:        graphql.NewList(taskType),
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					return ts.GetAll(), nil
+					return ts.GetAll(p.Context), nil
 				},
 			},
 		},
@@ -163,7 +158,7 @@ func init() {
 				Description: "viewer is the person currently interacting with the app.",
 				Type:        userType,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					return us.Get("ellie"), nil
+					return us.Get(p.Context, "ellie")
 				},
 			},
 		},
@@ -188,7 +183,7 @@ func init() {
 					if !ok {
 						return nil, errors.New("could not cast taskId to string")
 					}
-					t, err := ts.Get(id)
+					t, err := ts.Get(p.Context, id)
 					if err != nil {
 						return nil, err
 					}
@@ -198,7 +193,7 @@ func init() {
 			"viewer": &graphql.Field{
 				Type: userType,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					return us.Get("ellie"), nil
+					return us.Get(p.Context, "ellie")
 				},
 			},
 		},
@@ -211,7 +206,7 @@ func init() {
 			t := &Task{
 				Title: title,
 			}
-			err := ts.Create(t)
+			err := ts.Create(ctx, t)
 			if err != nil {
 				return nil, err
 			}
