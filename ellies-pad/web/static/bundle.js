@@ -19381,25 +19381,62 @@
 		}
 	});
 	
-	var App = function App(props) {
-		return _react2.default.createElement(
-			'div',
-			null,
-			_react2.default.createElement('input', { onBlur: function onBlur(e) {
-					_reactRelay2.default.Store.commitUpdate(new AddTaskMutation({
-						title: e.target.value,
-						viewer: props.viewer
-					}));
-				}, placeholder: 'New task' }),
-			_react2.default.createElement(
-				'ol',
-				null,
-				props.viewer.tasks.map(function (task) {
-					return _react2.default.createElement(Task, { key: task.id, task: task });
-				})
-			)
-		);
-	};
+	var App = function (_React$Component) {
+		_inherits(App, _React$Component);
+	
+		function App() {
+			var _Object$getPrototypeO;
+	
+			var _temp, _this2, _ret;
+	
+			_classCallCheck(this, App);
+	
+			for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+				args[_key] = arguments[_key];
+			}
+	
+			return _ret = (_temp = (_this2 = _possibleConstructorReturn(this, (_Object$getPrototypeO = Object.getPrototypeOf(App)).call.apply(_Object$getPrototypeO, [this].concat(args))), _this2), _this2.state = {
+				title: ''
+			}, _temp), _possibleConstructorReturn(_this2, _ret);
+		}
+	
+		_createClass(App, [{
+			key: 'render',
+			value: function render() {
+				var _this3 = this;
+	
+				return _react2.default.createElement(
+					'div',
+					null,
+					_react2.default.createElement('input', {
+						placeholder: 'New task',
+						value: this.state.title,
+						onChange: function onChange(event) {
+							_this3.setState({ title: event.target.value });
+						},
+						onKeyPress: function onKeyPress(event) {
+							if (event.key === 'Enter') {
+								_reactRelay2.default.Store.commitUpdate(new AddTaskMutation({
+									title: event.target.value,
+									viewer: _this3.props.viewer
+								}));
+								_this3.setState({ title: '' });
+							}
+						}
+					}),
+					_react2.default.createElement(
+						'ol',
+						null,
+						this.props.viewer.tasks.map(function (task) {
+							return _react2.default.createElement(Task, { key: task.id, task: task });
+						})
+					)
+				);
+			}
+		}]);
+	
+		return App;
+	}(_react2.default.Component);
 	
 	exports.default = _reactRelay2.default.createContainer(App, {
 		fragments: {
