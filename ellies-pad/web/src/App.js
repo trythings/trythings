@@ -69,22 +69,39 @@ const Task = Relay.createContainer((props) => {
 	},
 });
 
-const App = (props) => {
-	return (
-		<div>
-			<input onBlur={(e) => {
-				Relay.Store.commitUpdate(
-					new AddTaskMutation({
-						title: e.target.value,
-						viewer: props.viewer,
-					}),
-				);
-			}} placeholder="New task"/>
-			<ol>
-				{props.viewer.tasks.map(task => <Task key={task.id} task={task}/>)}
-			</ol>
-		</div>
-	);
+
+class App extends React.Component {
+	state = {
+		title: '',
+	};
+
+	render() {
+		return (
+			<div>
+				<input
+					placeholder="New task"
+					value={this.state.title}
+					onChange={(event) => {
+						this.setState({title: event.target.value});
+					}}
+					onKeyPress={(event) => {
+						if (event.key === 'Enter') {
+							Relay.Store.commitUpdate(
+								new AddTaskMutation({
+									title: event.target.value,
+									viewer: this.props.viewer,
+								}),
+							);
+							this.setState({title: ''});
+						}
+					}}
+				/>
+				<ol>
+					{this.props.viewer.tasks.map(task => <Task key={task.id} task={task}/>)}
+				</ol>
+			</div>
+		);
+	}
 }
 
 export default Relay.createContainer(App, {
