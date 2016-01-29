@@ -42,6 +42,7 @@ class AddTaskMutation extends Relay.Mutation {
 	getVariables() {
 		return {
 			title: this.props.title,
+			description: this.props.description,
 		};
 	}
 	
@@ -49,6 +50,7 @@ class AddTaskMutation extends Relay.Mutation {
 		return {
 			task: {
 				title: this.props.title,
+				description: this.props.description,
 			},
 			viewer: {
 				id: this.props.viewer.id,
@@ -58,44 +60,65 @@ class AddTaskMutation extends Relay.Mutation {
 }
 
 const Task = Relay.createContainer((props) => {
-	return <li>{props.task.title}</li>;
+	return (
+		<li>
+			<strong>{props.task.title}</strong> ≫ <span>{props.task.description}</span>
+		</li>
+	);
 }, {
 	fragments: {
 		task: () => Relay.QL`
 			fragment on Task {
 				title,
+				description,
 			}
 		`,
 	},
 });
 
-
 class App extends React.Component {
 	state = {
 		title: '',
+		description: '',
 	};
 
 	render() {
 		return (
 			<div>
-				<input
-					placeholder="New task"
-					value={this.state.title}
-					onChange={(event) => {
-						this.setState({title: event.target.value});
-					}}
-					onKeyPress={(event) => {
-						if (event.key === 'Enter') {
+				<form>
+					<input
+						placeholder="Title"
+						value={this.state.title}
+						onChange={(event) => {
+							this.setState({title: event.target.value});
+						}}
+					/>
+					<textarea
+						placeholder="Description"
+						value={this.state.description}
+						onChange={(event) => {
+							this.setState({description: event.target.value});
+						}}
+					/>
+					<button
+						onClick={(event) => {
 							Relay.Store.commitUpdate(
 								new AddTaskMutation({
-									title: event.target.value,
+									title: this.state.title,
+									description: this.state.description || null,
 									viewer: this.props.viewer,
 								}),
 							);
-							this.setState({title: ''});
-						}
-					}}
-				/>
+							this.setState({
+								title: '',
+								description: '',
+							});
+						}}
+					>
+						Add task
+					</button>
+				</form>
+				
 				<ol>
 					{this.props.viewer.tasks.map(task => <Task key={task.id} task={task}/>)}
 				</ol>
