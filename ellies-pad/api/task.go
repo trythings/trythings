@@ -7,6 +7,7 @@ import (
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/relay"
 	"golang.org/x/net/context"
+	"google.golang.org/appengine/datastore"
 )
 
 type User struct {
@@ -37,34 +38,54 @@ type Task struct {
 }
 
 type TaskService struct {
-	tasks []*Task
 }
 
-func NewTaskService(tasks []*Task) *TaskService {
-	return &TaskService{
-		tasks: tasks,
-	}
+func NewTaskService() *TaskService {
+	return &TaskService{}
 }
 
 func (s *TaskService) Get(ctx context.Context, id string) (*Task, error) {
-	for _, t := range s.tasks {
-		if t.ID == id {
-			return t, nil
-		}
+	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
+	k := datastore.NewKey(ctx, "Task", id, 0, rootKey)
+	var t Task
+	err := datastore.Get(ctx, k, &t)
+	if err != nil {
+		return nil, err
 	}
-	return nil, fmt.Errorf("could not find task with id %q", id)
+	return &t, nil
 }
 
-func (s *TaskService) GetAll(ctx context.Context) []*Task {
-	return s.tasks
+func (s *TaskService) GetAll(ctx context.Context) ([]*Task, error) {
+	var ts []*Task
+
+	_, err := datastore.NewQuery("Task").
+		Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
+		GetAll(ctx, &ts)
+	if err != nil {
+		return nil, err
+	}
+
+	return ts, nil
 }
 
 func (s *TaskService) Create(ctx context.Context, t *Task) error {
 	if t.ID != "" {
 		return fmt.Errorf("t already has id %q", t.ID)
 	}
-	t.ID = t.Title
-	s.tasks = append(s.tasks, t)
+
+	id, _, err := datastore.AllocateIDs(ctx, "Task", nil, 1)
+	if err != nil {
+		return err
+	}
+	t.ID = fmt.Sprintf("%x", id)
+
+	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
+	k := datastore.NewKey(ctx, "Task", t.ID, 0, rootKey)
+	k, err = datastore.Put(ctx, k, t)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -76,20 +97,7 @@ var nodeDefinitions *relay.NodeDefinitions
 var Schema graphql.Schema
 
 func init() {
-	ts := NewTaskService([]*Task{
-		&Task{
-			ID:    "abc",
-			Title: "Pick up milk",
-		},
-		&Task{
-			ID:    "def",
-			Title: "Finish working on Ellie's Pad",
-		},
-		&Task{
-			ID:    "ghi",
-			Title: "Rub the dog",
-		},
-	})
+	ts := NewTaskService()
 
 	us := NewUserService(&User{
 		ID: "ellie",
@@ -147,7 +155,7 @@ func init() {
 				Description: "tasks are all pieces of work that need to be completed for the user.",
 				Type:        graphql.NewList(taskType),
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					return ts.GetAll(p.Context), nil
+					return ts.GetAll(p.Context)
 				},
 			},
 		},

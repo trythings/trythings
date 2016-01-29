@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/graphql-go/handler"
+	"google.golang.org/appengine"
 )
 
 func init() {
@@ -13,9 +14,7 @@ func init() {
 	})
 
 	http.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Access-Control-Allow-Origin", "*")
-		w.Header().Add("Access-Control-Allow-Headers", "Accept")
-		w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
-		h.ServeHTTP(w, r)
+		ctx := appengine.NewContext(r)
+		h.ContextHandler(ctx, w, r)
 	})
 }
