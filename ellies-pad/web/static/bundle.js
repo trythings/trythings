@@ -19426,40 +19426,36 @@
 				return _react2.default.createElement(
 					'div',
 					null,
+					_react2.default.createElement('input', {
+						placeholder: 'Title',
+						value: this.state.title,
+						onChange: function onChange(event) {
+							_this3.setState({ title: event.target.value });
+						}
+					}),
+					_react2.default.createElement('textarea', {
+						placeholder: 'Description',
+						value: this.state.description,
+						onChange: function onChange(event) {
+							_this3.setState({ description: event.target.value });
+						}
+					}),
 					_react2.default.createElement(
-						'form',
-						null,
-						_react2.default.createElement('input', {
-							placeholder: 'Title',
-							value: this.state.title,
-							onChange: function onChange(event) {
-								_this3.setState({ title: event.target.value });
+						'button',
+						{
+							onClick: function onClick(event) {
+								_reactRelay2.default.Store.commitUpdate(new AddTaskMutation({
+									title: _this3.state.title,
+									description: _this3.state.description || null,
+									viewer: _this3.props.viewer
+								}));
+								_this3.setState({
+									title: '',
+									description: ''
+								});
 							}
-						}),
-						_react2.default.createElement('textarea', {
-							placeholder: 'Description',
-							value: this.state.description,
-							onChange: function onChange(event) {
-								_this3.setState({ description: event.target.value });
-							}
-						}),
-						_react2.default.createElement(
-							'button',
-							{
-								onClick: function onClick(event) {
-									_reactRelay2.default.Store.commitUpdate(new AddTaskMutation({
-										title: _this3.state.title,
-										description: _this3.state.description || null,
-										viewer: _this3.props.viewer
-									}));
-									_this3.setState({
-										title: '',
-										description: ''
-									});
-								}
-							},
-							'Add task'
-						)
+						},
+						'Add task'
 					),
 					_react2.default.createElement(
 						'ol',
