@@ -85,39 +85,37 @@ class App extends React.Component {
 	render() {
 		return (
 			<div>
-				<form>
-					<input
-						placeholder="Title"
-						value={this.state.title}
-						onChange={(event) => {
-							this.setState({title: event.target.value});
-						}}
-					/>
-					<textarea
-						placeholder="Description"
-						value={this.state.description}
-						onChange={(event) => {
-							this.setState({description: event.target.value});
-						}}
-					/>
-					<button
-						onClick={(event) => {
-							Relay.Store.commitUpdate(
-								new AddTaskMutation({
-									title: this.state.title,
-									description: this.state.description || null,
-									viewer: this.props.viewer,
-								}),
-							);
-							this.setState({
-								title: '',
-								description: '',
-							});
-						}}
-					>
-						Add task
-					</button>
-				</form>
+				<input
+					placeholder="Title"
+					value={this.state.title}
+					onChange={(event) => {
+						this.setState({title: event.target.value});
+					}}
+				/>
+				<textarea
+					placeholder="Description"
+					value={this.state.description}
+					onChange={(event) => {
+						this.setState({description: event.target.value});
+					}}
+				/>
+				<button
+					onClick={(event) => {
+						Relay.Store.commitUpdate(
+							new AddTaskMutation({
+								title: this.state.title,
+								description: this.state.description || null,
+								viewer: this.props.viewer,
+							}),
+						);
+						this.setState({
+							title: '',
+							description: '',
+						});
+					}}
+				>
+					Add task
+				</button>
 				
 				<ol>
 					{this.props.viewer.tasks.map(task => <Task key={task.id} task={task}/>)}
