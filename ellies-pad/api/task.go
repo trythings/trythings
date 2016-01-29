@@ -33,8 +33,9 @@ func (s *UserService) Get(ctx context.Context, id string) (*User, error) {
 
 // Task represents a particular action or piece of work to be completed.
 type Task struct {
-	ID    string `json:"id"`
-	Title string `json:"title"`
+	ID          string `json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description" datastore:",noindex"`
 }
 
 type TaskService struct {
@@ -140,6 +141,10 @@ func init() {
 				Description: "A short summary of the task",
 				Type:        graphql.String,
 			},
+			"description": &graphql.Field{
+				Description: "A more detailed explanation of the task",
+				Type:        graphql.String,
+			},
 		},
 		Interfaces: []*graphql.Interface{
 			nodeDefinitions.NodeInterface,
@@ -184,6 +189,9 @@ func init() {
 			"title": &graphql.InputObjectFieldConfig{
 				Type: graphql.NewNonNull(graphql.String),
 			},
+			"description": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
 		},
 		OutputFields: graphql.Fields{
 			"task": &graphql.Field{
@@ -217,8 +225,18 @@ func init() {
 				return nil, errors.New("could not cast title to string")
 			}
 
+			var desc string
+			descOrNil := inputMap["description"]
+			if descOrNil != nil {
+				desc, ok = descOrNil.(string)
+				if !ok {
+					return nil, errors.New("could not cast description to string")
+				}
+			}
+
 			t := &Task{
-				Title: title,
+				Title:       title,
+				Description: desc,
 			}
 			err := ts.Create(ctx, t)
 			if err != nil {
