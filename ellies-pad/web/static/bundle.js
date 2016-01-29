@@ -19287,7 +19287,8 @@
 			key: 'getVariables',
 			value: function getVariables() {
 				return {
-					title: this.props.title
+					title: this.props.title,
+					description: this.props.description
 				};
 			}
 		}, {
@@ -19295,7 +19296,8 @@
 			value: function getOptimisticResponse() {
 				return {
 					task: {
-						title: this.props.title
+						title: this.props.title,
+						description: this.props.description
 					},
 					viewer: {
 						id: this.props.viewer.id
@@ -19350,7 +19352,17 @@
 		return _react2.default.createElement(
 			'li',
 			null,
-			props.task.title
+			_react2.default.createElement(
+				'strong',
+				null,
+				props.task.title
+			),
+			' ≫ ',
+			_react2.default.createElement(
+				'span',
+				null,
+				props.task.description
+			)
 		);
 	}, {
 		fragments: {
@@ -19359,6 +19371,11 @@
 					return {
 						children: [{
 							fieldName: 'title',
+							kind: 'Field',
+							metadata: {},
+							type: 'String'
+						}, {
+							fieldName: 'description',
 							kind: 'Field',
 							metadata: {},
 							type: 'String'
@@ -19396,7 +19413,8 @@
 			}
 	
 			return _ret = (_temp = (_this2 = _possibleConstructorReturn(this, (_Object$getPrototypeO = Object.getPrototypeOf(App)).call.apply(_Object$getPrototypeO, [this].concat(args))), _this2), _this2.state = {
-				title: ''
+				title: '',
+				description: ''
 			}, _temp), _possibleConstructorReturn(_this2, _ret);
 		}
 	
@@ -19408,22 +19426,41 @@
 				return _react2.default.createElement(
 					'div',
 					null,
-					_react2.default.createElement('input', {
-						placeholder: 'New task',
-						value: this.state.title,
-						onChange: function onChange(event) {
-							_this3.setState({ title: event.target.value });
-						},
-						onKeyPress: function onKeyPress(event) {
-							if (event.key === 'Enter') {
-								_reactRelay2.default.Store.commitUpdate(new AddTaskMutation({
-									title: event.target.value,
-									viewer: _this3.props.viewer
-								}));
-								_this3.setState({ title: '' });
+					_react2.default.createElement(
+						'form',
+						null,
+						_react2.default.createElement('input', {
+							placeholder: 'Title',
+							value: this.state.title,
+							onChange: function onChange(event) {
+								_this3.setState({ title: event.target.value });
 							}
-						}
-					}),
+						}),
+						_react2.default.createElement('textarea', {
+							placeholder: 'Description',
+							value: this.state.description,
+							onChange: function onChange(event) {
+								_this3.setState({ description: event.target.value });
+							}
+						}),
+						_react2.default.createElement(
+							'button',
+							{
+								onClick: function onClick(event) {
+									_reactRelay2.default.Store.commitUpdate(new AddTaskMutation({
+										title: _this3.state.title,
+										description: _this3.state.description || null,
+										viewer: _this3.props.viewer
+									}));
+									_this3.setState({
+										title: '',
+										description: ''
+									});
+								}
+							},
+							'Add task'
+						)
+					),
 					_react2.default.createElement(
 						'ol',
 						null,
