@@ -19413,6 +19413,7 @@
 			}
 	
 			return _ret = (_temp = (_this2 = _possibleConstructorReturn(this, (_Object$getPrototypeO = Object.getPrototypeOf(App)).call.apply(_Object$getPrototypeO, [this].concat(args))), _this2), _this2.state = {
+				tags: '',
 				title: '',
 				description: ''
 			}, _temp), _possibleConstructorReturn(_this2, _ret);
@@ -19426,6 +19427,13 @@
 				return _react2.default.createElement(
 					'div',
 					null,
+					_react2.default.createElement('input', {
+						placeholder: 'Tags',
+						value: this.state.tags,
+						onChange: function onChange(event) {
+							_this3.setState({ tags: event.target.value });
+						}
+					}),
 					_react2.default.createElement('input', {
 						placeholder: 'Title',
 						value: this.state.title,
@@ -19445,11 +19453,12 @@
 						{
 							onClick: function onClick(event) {
 								_reactRelay2.default.Store.commitUpdate(new AddTaskMutation({
-									title: _this3.state.title,
+									title: _this3.state.tags + ' ' + _this3.state.title,
 									description: _this3.state.description || null,
 									viewer: _this3.props.viewer
 								}));
 								_this3.setState({
+									tags: '',
 									title: '',
 									description: ''
 								});

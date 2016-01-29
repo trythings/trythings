@@ -78,6 +78,7 @@ const Task = Relay.createContainer((props) => {
 
 class App extends React.Component {
 	state = {
+		tags: '',
 		title: '',
 		description: '',
 	};
@@ -85,6 +86,13 @@ class App extends React.Component {
 	render() {
 		return (
 			<div>
+				<input
+					placeholder="Tags"
+					value={this.state.tags}
+					onChange={(event) => {
+						this.setState({tags: event.target.value});
+					}}
+				/>
 				<input
 					placeholder="Title"
 					value={this.state.title}
@@ -103,12 +111,13 @@ class App extends React.Component {
 					onClick={(event) => {
 						Relay.Store.commitUpdate(
 							new AddTaskMutation({
-								title: this.state.title,
+								title: `${this.state.tags} ${this.state.title}`,
 								description: this.state.description || null,
 								viewer: this.props.viewer,
 							}),
 						);
 						this.setState({
+							tags: '',
 							title: '',
 							description: '',
 						});
