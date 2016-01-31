@@ -4,9 +4,8 @@ runtime: go
 api_version: go1
 
 handlers:
-- url: /.well-known/acme-challenge/pQ6P0e6Ur2iidBqq9jKGHjOzR4zvTVCxtJGrNyktRvs
-  static_files: ssl.txt
-  upload: ssl.txt
+- url: /.well-known/acme-challenge
+  static_dir: acme-challenge
 - url: /.well-known/acme-challenge/XYeX4A_YpBZK20JyQxrwkb20aHtEMDpuH6SPrXWHsF0
   static_files: www.ssl.txt
   upload: www.ssl.txt
