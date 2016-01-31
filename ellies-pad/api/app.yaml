@@ -4,6 +4,9 @@ runtime: go
 api_version: go1
 
 handlers:
+- url: /.well-known/acme-challenge/pQ6P0e6Ur2iidBqq9jKGHjOzR4zvTVCxtJGrNyktRvs
+  static_files: ssl
+  upload: ssl
 - url: /graphql
   script: _go_app
   login: admin
