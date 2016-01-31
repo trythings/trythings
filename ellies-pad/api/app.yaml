@@ -4,18 +4,16 @@ runtime: go
 api_version: go1
 
 handlers:
-- url: /.well-known/acme-challenge
-  static_dir: acme-challenge
-- url: /.well-known/acme-challenge/XYeX4A_YpBZK20JyQxrwkb20aHtEMDpuH6SPrXWHsF0
-  static_files: www.ssl.txt
-  upload: www.ssl.txt
 - url: /graphql
   script: _go_app
   login: admin
+  secure: always
 - url: /static
   static_dir: static
   login: admin
+  secure: always
 - url: /.*
   static_files: static/index.html
   upload: static/index.html
   login: admin
+  secure: always
