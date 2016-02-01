@@ -1,0 +1,1 @@
+../../../../../vendor/github.com/graphql-go/graphql/rules_scalar_leafs_test.go

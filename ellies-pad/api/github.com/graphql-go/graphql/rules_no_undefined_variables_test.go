@@ -1,0 +1,1 @@
+../../../../../vendor/github.com/graphql-go/graphql/rules_no_undefined_variables_test.go

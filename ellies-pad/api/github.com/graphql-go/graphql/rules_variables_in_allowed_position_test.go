@@ -1,0 +1,1 @@
+../../../../../vendor/github.com/graphql-go/graphql/rules_variables_in_allowed_position_test.go

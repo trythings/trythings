@@ -1,0 +1,1 @@
+../../../../../vendor/github.com/graphql-go/graphql/rules_lone_anonymous_operation_rule_test.go

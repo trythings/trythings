@@ -1,0 +1,1 @@
+../../../../../vendor/github.com/graphql-go/graphql/rules_variables_are_input_types_test.go
