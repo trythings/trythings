@@ -23,4 +23,9 @@ module.exports = {
 			loaders: ['babel'],
 		}],
 	},
+	devServer: {
+		proxy: {
+			'/graphql': 'http://localhost:8080',
+		},
+	},
 };
