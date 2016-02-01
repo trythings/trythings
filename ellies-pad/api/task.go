@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/relay"
@@ -33,9 +34,10 @@ func (s *UserService) Get(ctx context.Context, id string) (*User, error) {
 
 // Task represents a particular action or piece of work to be completed.
 type Task struct {
-	ID          string `json:"id"`
-	Title       string `json:"title"`
-	Description string `json:"description" datastore:",noindex"`
+	ID          string    `json:"id"`
+	CreatedAt   time.Time `json:"createdAt"`
+	Title       string    `json:"title"`
+	Description string    `json:"description" datastore:",noindex"`
 }
 
 type TaskService struct {
@@ -61,6 +63,7 @@ func (s *TaskService) GetAll(ctx context.Context) ([]*Task, error) {
 
 	_, err := datastore.NewQuery("Task").
 		Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
+		Order("-CreatedAt").
 		GetAll(ctx, &ts)
 	if err != nil {
 		return nil, err
@@ -72,6 +75,11 @@ func (s *TaskService) GetAll(ctx context.Context) ([]*Task, error) {
 func (s *TaskService) Create(ctx context.Context, t *Task) error {
 	if t.ID != "" {
 		return fmt.Errorf("t already has id %q", t.ID)
+	}
+
+	if t.CreatedAt.IsZero() {
+		// TODO Remove dependency on the current time.
+		t.CreatedAt = time.Now()
 	}
 
 	id, _, err := datastore.AllocateIDs(ctx, "Task", nil, 1)
@@ -137,6 +145,10 @@ func init() {
 		Description: "Task represents a particular action or piece of work to be completed.",
 		Fields: graphql.Fields{
 			"id": relay.GlobalIDField("Task", nil),
+			"createdAt": &graphql.Field{
+				Description: "When the task was first added",
+				Type:        graphql.String,
+			},
 			"title": &graphql.Field{
 				Description: "A short summary of the task",
 				Type:        graphql.String,
