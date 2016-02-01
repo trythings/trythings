@@ -1,0 +1,11 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = git@github.com:gorilla/schema.git
+	branch = master
+	commit = 14c555599c2a4f493c1e13fd1ea6fdf721739028
+	parent = 5971c3e2a6dd34c6337c89bc029fb176e87a499b
+	cmdver = 0.3.0
