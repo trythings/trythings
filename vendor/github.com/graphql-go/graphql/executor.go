@@ -42,16 +42,16 @@ func Execute(p ExecuteParams) (result *Result) {
 		return
 	}
 
-	// defer func() {
-	// 	if r := recover(); r != nil {
-	// 		var err error
-	// 		if r, ok := r.(error); ok {
-	// 			err = gqlerrors.FormatError(r)
-	// 		}
-	// 		exeContext.Errors = append(exeContext.Errors, gqlerrors.FormatError(err))
-	// 		result.Errors = exeContext.Errors
-	// 	}
-	// }()
+	defer func() {
+		if r := recover(); r != nil {
+			var err error
+			if r, ok := r.(error); ok {
+				err = gqlerrors.FormatError(r)
+			}
+			exeContext.Errors = append(exeContext.Errors, gqlerrors.FormatError(err))
+			result.Errors = exeContext.Errors
+		}
+	}()
 
 	return executeOperation(ExecuteOperationParams{
 		ExecutionContext: exeContext,
@@ -397,10 +397,10 @@ func doesFragmentConditionMatch(eCtx *ExecutionContext, fragment ast.Node, ttype
 		if conditionalType == ttype {
 			return true
 		}
-		if conditionalType.Name() == ttype.Name() {
+                if conditionalType.Name() == ttype.Name() {
 			return true
 		}
-
+		
 		if conditionalType, ok := conditionalType.(Abstract); ok {
 			return conditionalType.IsPossibleType(ttype)
 		}
@@ -447,28 +447,28 @@ type resolveFieldResultState struct {
 func resolveField(eCtx *ExecutionContext, parentType *Object, source interface{}, fieldASTs []*ast.Field) (result interface{}, resultState resolveFieldResultState) {
 	// catch panic from resolveFn
 	var returnType Output
-	// defer func() (interface{}, resolveFieldResultState) {
-	// 	if r := recover(); r != nil {
+	defer func() (interface{}, resolveFieldResultState) {
+		if r := recover(); r != nil {
 
-	// 		var err error
-	// 		if r, ok := r.(string); ok {
-	// 			err = NewLocatedError(
-	// 				fmt.Sprintf("%v", r),
-	// 				FieldASTsToNodeASTs(fieldASTs),
-	// 			)
-	// 		}
-	// 		if r, ok := r.(error); ok {
-	// 			err = gqlerrors.FormatError(r)
-	// 		}
-	// 		// send panic upstream
-	// 		if _, ok := returnType.(*NonNull); ok {
-	// 			panic(gqlerrors.FormatError(err))
-	// 		}
-	// 		eCtx.Errors = append(eCtx.Errors, gqlerrors.FormatError(err))
-	// 		return result, resultState
-	// 	}
-	// 	return result, resultState
-	// }()
+			var err error
+			if r, ok := r.(string); ok {
+				err = NewLocatedError(
+					fmt.Sprintf("%v", r),
+					FieldASTsToNodeASTs(fieldASTs),
+				)
+			}
+			if r, ok := r.(error); ok {
+				err = gqlerrors.FormatError(r)
+			}
+			// send panic upstream
+			if _, ok := returnType.(*NonNull); ok {
+				panic(gqlerrors.FormatError(err))
+			}
+			eCtx.Errors = append(eCtx.Errors, gqlerrors.FormatError(err))
+			return result, resultState
+		}
+		return result, resultState
+	}()
 
 	fieldAST := fieldASTs[0]
 	fieldName := ""
@@ -529,19 +529,19 @@ func resolveField(eCtx *ExecutionContext, parentType *Object, source interface{}
 
 func completeValueCatchingError(eCtx *ExecutionContext, returnType Type, fieldASTs []*ast.Field, info ResolveInfo, result interface{}) (completed interface{}) {
 	// catch panic
-	// defer func() interface{} {
-	// 	if r := recover(); r != nil {
-	// 		//send panic upstream
-	// 		if _, ok := returnType.(*NonNull); ok {
-	// 			panic(r)
-	// 		}
-	// 		if err, ok := r.(gqlerrors.FormattedError); ok {
-	// 			eCtx.Errors = append(eCtx.Errors, err)
-	// 		}
-	// 		return completed
-	// 	}
-	// 	return completed
-	// }()
+	defer func() interface{} {
+		if r := recover(); r != nil {
+			//send panic upstream
+			if _, ok := returnType.(*NonNull); ok {
+				panic(r)
+			}
+			if err, ok := r.(gqlerrors.FormattedError); ok {
+				eCtx.Errors = append(eCtx.Errors, err)
+			}
+			return completed
+		}
+		return completed
+	}()
 
 	if returnType, ok := returnType.(*NonNull); ok {
 		completed := completeValue(eCtx, returnType, fieldASTs, info, result)

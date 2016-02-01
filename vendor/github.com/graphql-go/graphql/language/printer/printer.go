@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"reflect"
-
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/graphql-go/graphql/language/visitor"
+	"reflect"
 )
 
 func getMapValue(m map[string]interface{}, key string) interface{} {
@@ -566,12 +565,12 @@ var printDocASTReducer = map[string]visitor.VisitFunc{
 }
 
 func Print(astNode ast.Node) (printed interface{}) {
-	// defer func() interface{} {
-	// 	if r := recover(); r != nil {
-	// 		return fmt.Sprintf("%v", astNode)
-	// 	}
-	// 	return printed
-	// }()
+	defer func() interface{} {
+		if r := recover(); r != nil {
+			return fmt.Sprintf("%v", astNode)
+		}
+		return printed
+	}()
 	printed = visitor.Visit(astNode, &visitor.VisitorOptions{
 		LeaveKindMap: printDocASTReducer,
 	}, nil)
