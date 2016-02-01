@@ -10,7 +10,7 @@ class AddTaskMutation extends Relay.Mutation {
 			}
 		`,
 	};
-	
+
 	getMutation() {
 		return Relay.QL`
 			mutation {
@@ -18,7 +18,7 @@ class AddTaskMutation extends Relay.Mutation {
 			}
 		`;
 	}
-	
+
 	getFatQuery() {
 		return Relay.QL`
 			fragment on AddTaskPayload {
@@ -29,7 +29,7 @@ class AddTaskMutation extends Relay.Mutation {
 			}
 		`;
 	}
-	
+
 	getConfigs() {
 		return [{
 			type: 'FIELDS_CHANGE',
@@ -38,14 +38,14 @@ class AddTaskMutation extends Relay.Mutation {
 			},
 		}];
 	}
-	
+
 	getVariables() {
 		return {
 			title: this.props.title,
 			description: this.props.description,
 		};
 	}
-	
+
 	getOptimisticResponse() {
 		return {
 			task: {
@@ -125,7 +125,7 @@ class App extends React.Component {
 				>
 					Add task
 				</button>
-				
+
 				<ol>
 					{this.props.viewer.tasks.map(task => <Task key={task.id} task={task}/>)}
 				</ol>
