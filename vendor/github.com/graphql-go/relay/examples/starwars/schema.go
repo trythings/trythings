@@ -103,15 +103,15 @@ func init() {
 	 * way we resolve an object that implements node to its type.
 	 */
 	nodeDefinitions = relay.NewNodeDefinitions(relay.NodeDefinitionsConfig{
-		IDFetcher: func(id string, info graphql.ResolveInfo) interface{} {
+		IDFetcher: func(ctx context.Context, id string, info graphql.ResolveInfo) (interface{}, error) {
 			// resolve id from global id
 			resolvedID := relay.FromGlobalID(id)
 
 			// based on id and its type, return the object
 			if resolvedID.Type == "Faction" {
-				return GetFaction(resolvedID.ID)
+				return GetFaction(resolvedID.ID), nil
 			} else {
-				return GetShip(resolvedID.ID)
+				return GetShip(resolvedID.ID), nil
 			}
 		},
 		TypeResolve: func(value interface{}, info graphql.ResolveInfo) *graphql.Object {
