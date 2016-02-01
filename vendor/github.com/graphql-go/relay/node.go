@@ -4,8 +4,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/graphql-go/graphql"
 	"strings"
+
+	"github.com/graphql-go/graphql"
+	"golang.org/x/net/context"
 )
 
 type NodeDefinitions struct {
@@ -17,7 +19,7 @@ type NodeDefinitionsConfig struct {
 	IDFetcher   IDFetcherFn
 	TypeResolve graphql.ResolveTypeFn
 }
-type IDFetcherFn func(id string, info graphql.ResolveInfo) interface{}
+type IDFetcherFn func(ctx context.Context, id string, info graphql.ResolveInfo) (interface{}, error)
 type GlobalIDFetcherFn func(obj interface{}, info graphql.ResolveInfo) string
 
 /*
@@ -61,8 +63,7 @@ func NewNodeDefinitions(config NodeDefinitionsConfig) *NodeDefinitions {
 			if iid, ok := p.Args["id"]; ok {
 				id = fmt.Sprintf("%v", iid)
 			}
-			fetchedID := config.IDFetcher(id, p.Info)
-			return fetchedID, nil
+			return config.IDFetcher(p.Context, id, p.Info)
 		},
 	}
 	return &NodeDefinitions{
