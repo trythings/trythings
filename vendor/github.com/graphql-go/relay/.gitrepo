@@ -1,0 +1,11 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = git@github.com:graphql-go/relay.git
+	branch = master
+	commit = 1bd1b1c9238c6104b4c86908126e4eb2fdac7346
+	parent = fb7a03253cbb7515d94d58a740eadc501a889acf
+	cmdver = 0.3.0
