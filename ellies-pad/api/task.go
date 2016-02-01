@@ -63,7 +63,7 @@ func (s *TaskService) GetAll(ctx context.Context) ([]*Task, error) {
 
 	_, err := datastore.NewQuery("Task").
 		Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
-		Order("-CreatedAt").
+		// Order("-CreatedAt").
 		GetAll(ctx, &ts)
 	if err != nil {
 		return nil, err
