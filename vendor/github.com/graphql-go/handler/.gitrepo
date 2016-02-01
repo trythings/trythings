@@ -1,0 +1,11 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = git@github.com:graphql-go/handler.git
+	branch = master
+	commit = f2b24d1fc961ef6fcc17c0ae323d022fe0dd03b6
+	parent = 009c16a0048d01a9377bb84ab7a458030ac1c2f1
+	cmdver = 0.3.0
