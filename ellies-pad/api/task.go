@@ -365,9 +365,9 @@ func init() {
 	mutationType := graphql.NewObject(graphql.ObjectConfig{
 		Name: "Mutation",
 		Fields: graphql.Fields{
-			"addTask":                      addTaskMutation,
-			"archiveTask":                  archiveTaskMutation,
-			"addCreatedAtToTasksMigration": relay.MutationWithClientMutationID(addCreatedAtToTasksMigrationMutation(ts)),
+			"addTask":      addTaskMutation,
+			"archiveTask":  archiveTaskMutation,
+			"runMigration": relay.MutationWithClientMutationID(runMigrationMutation(ts)),
 		},
 	})
 
@@ -381,9 +381,9 @@ func init() {
 	}
 }
 
-func addCreatedAtToTasksMigrationMutation(ts *TaskService) relay.MutationConfig {
+func runMigrationMutation(ts *TaskService) relay.MutationConfig {
 	return relay.MutationConfig{
-		Name:         "AddCreatedAtToTasksMigration",
+		Name:         "RunMigration",
 		InputFields:  graphql.InputObjectConfigFieldMap{},
 		OutputFields: graphql.Fields{},
 		MutateAndGetPayload: func(inputMap map[string]interface{}, info graphql.ResolveInfo, ctx context.Context) (map[string]interface{}, error) {
