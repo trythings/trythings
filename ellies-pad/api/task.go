@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"expvar"
 	"fmt"
 	"time"
 
@@ -47,7 +48,11 @@ func NewTaskService() *TaskService {
 	return &TaskService{}
 }
 
+var numGet = expvar.NewInt("api.*TaskService.Get")
+
 func (s *TaskService) Get(ctx context.Context, id string) (*Task, error) {
+	numGet.Add(1)
+
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
 	k := datastore.NewKey(ctx, "Task", id, 0, rootKey)
 	var t Task
@@ -58,9 +63,12 @@ func (s *TaskService) Get(ctx context.Context, id string) (*Task, error) {
 	return &t, nil
 }
 
-func (s *TaskService) GetAll(ctx context.Context) ([]*Task, error) {
-	var ts []*Task
+var numGetAll = expvar.NewInt("api.*TaskService.GetAll")
 
+func (s *TaskService) GetAll(ctx context.Context) ([]*Task, error) {
+	numGetAll.Add(1)
+
+	var ts []*Task
 	_, err := datastore.NewQuery("Task").
 		Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
 		// Order("-CreatedAt").
@@ -68,11 +76,14 @@ func (s *TaskService) GetAll(ctx context.Context) ([]*Task, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return ts, nil
 }
 
+var numCreate = expvar.NewInt("api.*TaskService.Create")
+
 func (s *TaskService) Create(ctx context.Context, t *Task) error {
+	numCreate.Add(1)
+
 	if t.ID != "" {
 		return fmt.Errorf("t already has id %q", t.ID)
 	}
@@ -94,7 +105,6 @@ func (s *TaskService) Create(ctx context.Context, t *Task) error {
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
