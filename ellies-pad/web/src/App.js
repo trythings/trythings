@@ -59,13 +59,11 @@ class AddTaskMutation extends Relay.Mutation {
 	}
 }
 
-const Task = Relay.createContainer((props) => {
-	return (
-		<li>
-			<strong>{props.task.title}</strong> ≫ <span>{props.task.description}</span>
-		</li>
-	);
-}, {
+const Task = Relay.createContainer(props => (
+	<li>
+		<strong>{props.task.title}</strong> ≫ <span>{props.task.description}</span>
+	</li>
+), {
 	fragments: {
 		task: () => Relay.QL`
 			fragment on Task {
@@ -77,10 +75,43 @@ const Task = Relay.createContainer((props) => {
 });
 
 class App extends React.Component {
+	static propTypes = {
+		viewer: React.PropTypes.shape({
+			tasks: React.PropTypes.arrayOf(Task.propTypes.task),
+		}).isRequired,
+	};
+
 	state = {
 		tags: '',
 		title: '',
 		description: '',
+	};
+
+	onTagsChange = (event) => {
+		this.setState({ tags: event.target.value });
+	};
+
+	onTitleChange = (event) => {
+		this.setState({ title: event.target.value });
+	};
+
+	onDescriptionChange = (event) => {
+		this.setState({ description: event.target.value });
+	};
+
+	onAddClick = () => {
+		Relay.Store.commitUpdate(
+			new AddTaskMutation({
+				title: `${this.state.tags} ${this.state.title}`,
+				description: this.state.description || null,
+				viewer: this.props.viewer,
+			}),
+		);
+		this.setState({
+			tags: '',
+			title: '',
+			description: '',
+		});
 	};
 
 	render() {
@@ -89,40 +120,19 @@ class App extends React.Component {
 				<input
 					placeholder="Tags"
 					value={this.state.tags}
-					onChange={(event) => {
-						this.setState({tags: event.target.value});
-					}}
+					onChange={this.onTagsChange}
 				/>
 				<input
 					placeholder="Title"
 					value={this.state.title}
-					onChange={(event) => {
-						this.setState({title: event.target.value});
-					}}
+					onChange={this.onTitleChange}
 				/>
 				<textarea
 					placeholder="Description"
 					value={this.state.description}
-					onChange={(event) => {
-						this.setState({description: event.target.value});
-					}}
+					onChange={this.onDescriptionChange}
 				/>
-				<button
-					onClick={(event) => {
-						Relay.Store.commitUpdate(
-							new AddTaskMutation({
-								title: `${this.state.tags} ${this.state.title}`,
-								description: this.state.description || null,
-								viewer: this.props.viewer,
-							}),
-						);
-						this.setState({
-							tags: '',
-							title: '',
-							description: '',
-						});
-					}}
-				>
+				<button onClick={this.onAddClick}>
 					Add task
 				</button>
 
