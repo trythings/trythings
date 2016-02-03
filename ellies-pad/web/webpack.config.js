@@ -25,7 +25,7 @@ module.exports = {
 	},
 	devServer: {
 		proxy: {
-			'/graphql': 'http://localhost:8080',
+			'*': 'http://localhost:8080',
 		},
 	},
 };
