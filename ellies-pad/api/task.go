@@ -10,6 +10,7 @@ import (
 	"github.com/graphql-go/relay"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
+	"google.golang.org/appengine/delay"
 )
 
 type User struct {
@@ -90,7 +91,6 @@ func (s *TaskService) Create(ctx context.Context, t *Task) error {
 	}
 
 	if t.CreatedAt.IsZero() {
-		// TODO Remove dependency on the current time.
 		t.CreatedAt = time.Now()
 	}
 
@@ -106,6 +106,25 @@ func (s *TaskService) Create(ctx context.Context, t *Task) error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+var numUpdate = expvar.NewInt("api.*TaskService.Update")
+
+func (s *TaskService) Update(ctx context.Context, t *Task) error {
+	numUpdate.Add(1)
+
+	if t.ID == "" {
+		return errors.New("cannot update task with no ID")
+	}
+
+	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
+	k := datastore.NewKey(ctx, "Task", t.ID, 0, rootKey)
+	_, err := datastore.Put(ctx, k, t)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -346,8 +365,9 @@ func init() {
 	mutationType := graphql.NewObject(graphql.ObjectConfig{
 		Name: "Mutation",
 		Fields: graphql.Fields{
-			"addTask":     addTaskMutation,
-			"archiveTask": archiveTaskMutation,
+			"addTask":                      addTaskMutation,
+			"archiveTask":                  archiveTaskMutation,
+			"addCreatedAtToTasksMigration": relay.MutationWithClientMutationID(addCreatedAtToTasksMigrationMutation(ts)),
 		},
 	})
 
@@ -360,3 +380,40 @@ func init() {
 		panic(err)
 	}
 }
+
+func addCreatedAtToTasksMigrationMutation(ts *TaskService) relay.MutationConfig {
+	return relay.MutationConfig{
+		Name:         "AddCreatedAtToTasksMigration",
+		InputFields:  graphql.InputObjectConfigFieldMap{},
+		OutputFields: graphql.Fields{},
+		MutateAndGetPayload: func(inputMap map[string]interface{}, info graphql.ResolveInfo, ctx context.Context) (map[string]interface{}, error) {
+			err := addCreatedAtToTasksMigration.Call(ctx)
+			if err != nil {
+				return nil, err
+			}
+
+			return map[string]interface{}{}, nil
+		},
+	}
+}
+
+var addCreatedAtToTasksMigration = delay.Func("AddCreatedAtToTasks", func(ctx context.Context, ts *TaskService) error {
+	// TODO#Perf: Consider using a cursor and/or a batch update.
+
+	tasks, err := ts.GetAll(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, t := range tasks {
+		if t.CreatedAt.IsZero() {
+			t.CreatedAt = time.Now()
+			err = ts.Update(ctx, t)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+})
