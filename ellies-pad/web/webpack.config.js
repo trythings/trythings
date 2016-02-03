@@ -12,11 +12,11 @@ module.exports = {
 		new webpack.EnvironmentPlugin(['NODE_ENV']),
 	],
 	module: {
-		// preLoaders: [{
-		// 	test: /\.js$/,
-		// 	exclude: /node_modules/,
-		// 	loaders: 'eslint',
-		// }],
+		preLoaders: [{
+			test: /\.js$/,
+			exclude: /node_modules/,
+			loaders: 'eslint',
+		}],
 		loaders: [{
 			test: /\.js$/,
 			exclude: /node_modules/,
