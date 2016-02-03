@@ -10,6 +10,12 @@ indexes:
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
 
+- kind: Migration
+  ancestor: yes
+  properties:
+  - name: Version
+    direction: desc
+
 - kind: Task
   ancestor: yes
   properties:

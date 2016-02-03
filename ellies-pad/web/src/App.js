@@ -4,6 +4,41 @@ import Relay from 'react-relay';
 import Task from './Task.js';
 import './fonts.css';
 
+// TODO: This is a temporary solution to enable us to run migrations.
+class AddCreatedAtToTasksMigration extends Relay.Mutation {
+	static fragments = {};
+
+	getMutation() {
+		return Relay.QL`
+			mutation {
+				addCreatedAtToTasksMigration
+			}
+		`;
+	}
+
+	getFatQuery() {
+		return Relay.QL`
+			fragment on AddCreatedAtToTasksMigrationPayload {
+				clientMutationId,
+			}
+		`;
+	}
+
+	getConfigs() {
+		return [];
+	}
+
+	getVariables() {
+		return {};
+	}
+
+	getOptimisticResponse() {
+		return {};
+	}
+}
+
+
+
 class AddTaskMutation extends Relay.Mutation {
 	static fragments = {
 		viewer: () => Relay.QL`
@@ -123,6 +158,15 @@ class App extends React.Component {
 				/>
 				<button onClick={this.onAddClick}>
 					Add task
+				</button>
+				<button
+					onClick={(event) => {
+						Relay.Store.commitUpdate(
+							new AddCreatedAtToTasksMigration({}),
+						);
+					}}
+				>
+					Update all tasks
 				</button>
 
 				<ol>

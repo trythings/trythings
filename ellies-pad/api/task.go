@@ -73,7 +73,7 @@ func (s *TaskService) GetAll(ctx context.Context) ([]*Task, error) {
 	var ts []*Task
 	_, err := datastore.NewQuery("Task").
 		Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
-		// Order("-CreatedAt").
+		Order("-CreatedAt").
 		GetAll(ctx, &ts)
 	if err != nil {
 		return nil, err
@@ -387,7 +387,7 @@ func addCreatedAtToTasksMigrationMutation(ts *TaskService) relay.MutationConfig 
 		InputFields:  graphql.InputObjectConfigFieldMap{},
 		OutputFields: graphql.Fields{},
 		MutateAndGetPayload: func(inputMap map[string]interface{}, info graphql.ResolveInfo, ctx context.Context) (map[string]interface{}, error) {
-			err := addCreatedAtToTasksMigration.Call(ctx)
+			err := addCreatedAtToTasksMigration.Call(ctx, ts)
 			if err != nil {
 				return nil, err
 			}
@@ -400,7 +400,10 @@ func addCreatedAtToTasksMigrationMutation(ts *TaskService) relay.MutationConfig 
 var addCreatedAtToTasksMigration = delay.Func("AddCreatedAtToTasks", func(ctx context.Context, ts *TaskService) error {
 	// TODO#Perf: Consider using a cursor and/or a batch update.
 
-	tasks, err := ts.GetAll(ctx)
+	var tasks []*Task
+	_, err := datastore.NewQuery("Task").
+		Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
+		GetAll(ctx, &tasks)
 	if err != nil {
 		return err
 	}
