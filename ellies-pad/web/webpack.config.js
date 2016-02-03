@@ -3,7 +3,9 @@ var webpack = require('webpack');
 
 module.exports = {
 	devtool: 'source-map',
-	entry: path.resolve(__dirname, 'src', 'index.js'),
+	entry: [
+		path.resolve(__dirname, 'src', 'index.js'),
+	],
 	output: {
 		path: path.resolve(__dirname, 'static'),
 		filename: 'bundle.js',
@@ -14,12 +16,12 @@ module.exports = {
 	module: {
 		preLoaders: [{
 			test: /\.js$/,
-			exclude: /node_modules/,
+			include: path.resolve(__dirname, 'src'),
 			loaders: 'eslint',
 		}],
 		loaders: [{
 			test: /\.js$/,
-			exclude: /node_modules/,
+			include: path.resolve(__dirname, 'src'),
 			loaders: ['babel'],
 		}],
 	},
