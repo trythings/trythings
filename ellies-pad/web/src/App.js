@@ -1,6 +1,8 @@
 import React from 'react';
 import Relay from 'react-relay';
 
+import Task from './Task.js';
+
 class AddTaskMutation extends Relay.Mutation {
 	static fragments = {
 		viewer: () => Relay.QL`
@@ -59,25 +61,11 @@ class AddTaskMutation extends Relay.Mutation {
 	}
 }
 
-const Task = Relay.createContainer(props => (
-	<li>
-		<strong>{props.task.title}</strong> ≫ <span>{props.task.description}</span>
-	</li>
-), {
-	fragments: {
-		task: () => Relay.QL`
-			fragment on Task {
-				title,
-				description,
-			}
-		`,
-	},
-});
-
 class App extends React.Component {
 	static propTypes = {
 		viewer: React.PropTypes.shape({
-			tasks: React.PropTypes.arrayOf(Task.propTypes.task),
+			// ...AddTaskMutation.propTypes.viewer
+			tasks: React.PropTypes.arrayOf(React.PropTypes.object).isRequired, // ...Task.propTypes.task
 		}).isRequired,
 	};
 
