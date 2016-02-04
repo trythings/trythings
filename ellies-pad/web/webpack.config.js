@@ -19,11 +19,18 @@ module.exports = {
 			include: path.resolve(__dirname, 'src'),
 			loaders: 'eslint',
 		}],
-		loaders: [{
-			test: /\.js$/,
-			include: path.resolve(__dirname, 'src'),
-			loaders: ['babel'],
-		}],
+		loaders: [
+			{
+				test: /\.js$/,
+				include: path.resolve(__dirname, 'src'),
+				loaders: ['babel'],
+			},
+			{
+				test: /\.css$/,
+				include: path.resolve(__dirname, 'src'),
+				loaders: ['style', 'css'],
+			},
+		],
 	},
 	devServer: {
 		proxy: {
