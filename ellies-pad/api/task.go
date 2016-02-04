@@ -39,6 +39,7 @@ type Task struct {
 	CreatedAt   time.Time `json:"createdAt"`
 	Title       string    `json:"title"`
 	Description string    `json:"description" datastore:",noindex"`
+	IsArchived  bool      `json:"isArchived"`
 }
 
 type TaskService struct {
@@ -167,6 +168,10 @@ func init() {
 				Description: "A more detailed explanation of the task",
 				Type:        graphql.String,
 			},
+			"isArchived": &graphql.Field{
+				Description: "Whether this task requires attention",
+				Type:        graphql.Boolean,
+			},
 		},
 		Interfaces: []*graphql.Interface{
 			nodeDefinitions.NodeInterface,
@@ -271,10 +276,69 @@ func init() {
 		},
 	})
 
+	archiveTaskMutation := relay.MutationWithClientMutationID(relay.MutationConfig{
+		Name: "ArchiveTask",
+		InputFields: graphql.InputObjectConfigFieldMap{
+			"taskId": &graphql.InputObjectFieldConfig{
+				Type: graphql.NewNonNull(graphql.ID),
+			},
+		},
+		OutputFields: graphql.Fields{
+			"task": &graphql.Field{
+				Type: taskType,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					payload, ok := p.Source.(map[string]interface{})
+					if !ok {
+						return nil, errors.New("could not cast payload to map")
+					}
+					id, ok := payload["taskId"].(string)
+					if !ok {
+						return nil, errors.New("could not cast taskId to string")
+					}
+					t, err := ts.Get(p.Context, id)
+					if err != nil {
+						return nil, err
+					}
+					return t, nil
+				},
+			},
+		},
+		MutateAndGetPayload: func(inputMap map[string]interface{}, info graphql.ResolveInfo, ctx context.Context) (map[string]interface{}, error) {
+			id, ok := inputMap["taskId"].(string)
+			if !ok {
+				return nil, errors.New("could not cast taskId to string")
+			}
+
+			resolvedID := relay.FromGlobalID(id)
+			if resolvedID == nil {
+				return nil, fmt.Errorf("invalid id %q", id)
+			}
+
+			t, err := ts.Get(ctx, resolvedID.ID)
+			if err != nil {
+				return nil, err
+			}
+
+			// TODO Move this into the service.
+			t.IsArchived = true
+			rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
+			k := datastore.NewKey(ctx, "Task", t.ID, 0, rootKey)
+			k, err = datastore.Put(ctx, k, t)
+			if err != nil {
+				return nil, err
+			}
+
+			return map[string]interface{}{
+				"taskId": t.ID,
+			}, nil
+		},
+	})
+
 	mutationType := graphql.NewObject(graphql.ObjectConfig{
 		Name: "Mutation",
 		Fields: graphql.Fields{
-			"addTask": addTaskMutation,
+			"addTask":     addTaskMutation,
+			"archiveTask": archiveTaskMutation,
 		},
 	})
 
