@@ -16,7 +16,8 @@ class RunMigration extends Relay.Mutation {
 		`;
 	}
 
-	// It's unclear how to specify a fragment with no fields. We use the clientMutationId to give this fragment > 0 fields.
+	// It's unclear how to specify a fragment with no fields.
+	// We use the clientMutationId to give this fragment > 0 fields.
 	getFatQuery() {
 		return Relay.QL`
 			fragment on RunMigrationPayload {
@@ -37,8 +38,6 @@ class RunMigration extends Relay.Mutation {
 		return {};
 	}
 }
-
-
 
 class AddTaskMutation extends Relay.Mutation {
 	static fragments = {
@@ -124,6 +123,12 @@ class App extends React.Component {
 		this.setState({ description: event.target.value });
 	};
 
+	onMigrateClick = () => {
+		Relay.Store.commitUpdate(
+							new RunMigration({}),
+						);
+	};
+
 	onAddClick = () => {
 		Relay.Store.commitUpdate(
 			new AddTaskMutation({
@@ -161,11 +166,7 @@ class App extends React.Component {
 					Add task
 				</button>
 				<button
-					onClick={(event) => {
-						Relay.Store.commitUpdate(
-							new RunMigration({}),
-						);
-					}}
+					onClick={this.onMigrateClick}
 				>
 					Run migration
 				</button>
