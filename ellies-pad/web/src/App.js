@@ -16,7 +16,7 @@ class AddTaskMutation extends Relay.Mutation {
 	getMutation() {
 		return Relay.QL`
 			mutation {
-				addTask
+				addTask,
 			}
 		`;
 	}
