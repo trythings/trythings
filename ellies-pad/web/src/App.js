@@ -2,6 +2,7 @@ import React from 'react';
 import Relay from 'react-relay';
 
 import Task from './Task.js';
+import './fonts.css';
 
 class AddTaskMutation extends Relay.Mutation {
 	static fragments = {
@@ -104,7 +105,7 @@ class App extends React.Component {
 
 	render() {
 		return (
-			<div>
+			<div style={{ fontFamily: 'Roboto' }}>
 				<input
 					placeholder="Tags"
 					value={this.state.tags}
