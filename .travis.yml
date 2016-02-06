@@ -5,7 +5,7 @@ go:
 sudo: false
 env: >
   GO15VENDOREXPERIMENT=1
-  PATH="$PWD/go_appengine:$PATH"
+  PATH="$TRAVIS_BUILD_DIR/go_appengine:$PATH"
 cache:
   directories:
     - ellies-pad/web/node_modules
