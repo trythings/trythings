@@ -23,5 +23,5 @@ script:
   - if test "$API"; then env GOPATH="$PWD" goapp test ./ellies-pad/api; fi
   - if test "$WEB"; then (cd ellies-pad/web && npm test); fi
 after_success: |
-  # test "$DEPLOY" && \
+  ## test "$DEPLOY" && \
   go run ellies-pad/tools/cmd/deploy.go -email "$APPENGINE_EMAIL" -password "$APPENGINE_PASSWORD"
