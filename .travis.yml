@@ -24,4 +24,4 @@ script:
   - if test "$WEB"; then (cd ellies-pad/web && npm test); fi
 after_success: |
   test "$DEPLOY" && \
-  go run ellies-pad/tools/cmd/deploy/deploy.go -email "$APPENGINE_EMAIL" -password "$APPENGINE_PASSWORD"
+  go run ellies-pad/tools/cmd/deploy/deploy.go -token "$APP_ENGINE_OAUTH2_REFRESH_TOKEN"
