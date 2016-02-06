@@ -27,18 +27,18 @@ install:
     fi
   - |
     if test "$WEB"
-    then
+    then (
       cd ellies-pad/web
       npm install
-    fi
+    ) fi
 script:
   - if test "$API"; then env GOPATH="$TRAVIS_BUILD_DIR" goapp test ./ellies-pad/api; fi
   - |
     if test "$WEB"
-    then
+    then (
       cd ellies-pad/web
       npm test
-    fi
+    ) fi
 after_success: |
   if test "$DEPLOY"
   then
