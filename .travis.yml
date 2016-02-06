@@ -15,13 +15,22 @@ before_install:
   - if test "$DEPLOY" || test $(git rev-list --count "$TRAVIS_COMMIT_RANGE" -- ellies-pad/web) -ne 0; then export WEB=true; fi
   - if test "$WEB"; then nvm install 5.5.0; fi
 install:
-  - if test "$API"; then wget https://storage.googleapis.com/appengine-sdks/featured/go_appengine_sdk_linux_amd64-1.9.31.zip; fi
-  - if test "$API"; then unzip -q go_appengine_sdk_linux_amd64-1.9.31.zip; fi
-  - if test "$API"; then export PATH="$PATH:$PWD/go_appengine"; fi
+  - |
+    if test "$API"
+    then
+      export PATH="$PATH:$PWD/go_appengine" &&
+      if test ! -d go_appengine
+      then
+        wget https://storage.googleapis.com/appengine-sdks/featured/go_appengine_sdk_linux_amd64-1.9.31.zip &&
+        unzip -q go_appengine_sdk_linux_amd64-1.9.31.zip
+      fi
+    fi
   - if test "$WEB"; then (cd ellies-pad/web && npm install); fi
 script:
   - if test "$API"; then env GOPATH="$PWD" goapp test ./ellies-pad/api; fi
   - if test "$WEB"; then (cd ellies-pad/web && npm test); fi
 after_success: |
-  test "$DEPLOY" && \
-  go run ellies-pad/tools/cmd/deploy/deploy.go -token "$APP_ENGINE_OAUTH2_REFRESH_TOKEN"
+  if test "$DEPLOY"
+  then
+    go run ellies-pad/tools/cmd/deploy/deploy.go -token "$APP_ENGINE_OAUTH2_REFRESH_TOKEN"
+  fi
