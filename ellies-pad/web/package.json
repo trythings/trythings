@@ -6,10 +6,11 @@
   "private": true,
   "license": "private",
   "scripts": {
-    "production": "NODE_ENV=production npm run build",
     "build": "webpack --bail",
     "lint": "eslint src",
-    "localhost": "NODE_ENV=localhost webpack-dev-server --content-base static --history-api-fallback --inline --output-public-path http://localhost:3000/static/ --port 3000"
+    "localhost": "NODE_ENV=localhost webpack-dev-server --content-base static --history-api-fallback --inline --output-public-path http://localhost:3000/static/ --port 3000",
+    "production": "NODE_ENV=production npm run build",
+    "test": "true"
   },
   "repository": {
     "type": "git",
