@@ -282,6 +282,9 @@ func init() {
 			"taskId": &graphql.InputObjectFieldConfig{
 				Type: graphql.NewNonNull(graphql.ID),
 			},
+			"newIsArchived": &graphql.InputObjectFieldConfig{
+				Type: graphql.Boolean,
+			},
 		},
 		OutputFields: graphql.Fields{
 			"task": &graphql.Field{
@@ -314,13 +317,19 @@ func init() {
 				return nil, fmt.Errorf("invalid id %q", id)
 			}
 
+			newIsArchived, ok := inputMap["newIsArchived"].(bool)
+			if !ok {
+				newIsArchived = true
+			}
+
 			t, err := ts.Get(ctx, resolvedID.ID)
 			if err != nil {
 				return nil, err
 			}
 
+			t.IsArchived = newIsArchived
+
 			// TODO Move this into the service.
-			t.IsArchived = true
 			rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
 			k := datastore.NewKey(ctx, "Task", t.ID, 0, rootKey)
 			k, err = datastore.Put(ctx, k, t)
