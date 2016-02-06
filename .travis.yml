@@ -15,6 +15,7 @@ before_install:
   - if test "$DEPLOY" || test $(git rev-list --count "$TRAVIS_COMMIT_RANGE" -- ellies-pad/api) -ne 0 || test $(git rev-list --count "$TRAVIS_COMMIT_RANGE" -- vendor) -ne 0; then export API=true; fi
   # Only build and test the web app if it has changed, or we should deploy.
   - if test "$DEPLOY" || test $(git rev-list --count "$TRAVIS_COMMIT_RANGE" -- ellies-pad/web) -ne 0; then export WEB=true; fi
+  - node --version
   # If we need to build and test the web app, install a newer version of node.
   - if test "$WEB"; then nvm install 5.5.0; fi
 install:
