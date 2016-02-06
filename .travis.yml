@@ -24,5 +24,4 @@ script:
   - if test "$WEB"; then (cd ellies-pad/web && npm test); fi
 after_success: |
   # test "$DEPLOY" && \
-  echo $PWD && \
-  go run ellies-pad/tools/cmd/deploy.go -email "$APPENGINE_EMAIL" -password "$APPENGINE_PASSWORD"
+  go run ellies-pad/tools/cmd/deploy/deploy.go -email "$APPENGINE_EMAIL" -password "$APPENGINE_PASSWORD"
