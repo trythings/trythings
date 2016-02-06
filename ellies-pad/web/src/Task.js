@@ -6,6 +6,7 @@ class ArchiveTaskMutation extends Relay.Mutation {
 		task: () => Relay.QL`
 			fragment on Task {
 				id,
+				isArchived,
 			}
 		`,
 	};
@@ -40,13 +41,14 @@ class ArchiveTaskMutation extends Relay.Mutation {
 	getVariables() {
 		return {
 			taskId: this.props.task.id,
+			newIsArchived: !this.props.task.isArchived,
 		};
 	}
 
 	getOptimisticResponse() {
 		return {
 			task: {
-				isArchived: true,
+				isArchived: !this.props.task.isArchived,
 			},
 		};
 	}
@@ -92,7 +94,9 @@ class Task extends React.Component {
 				<span>{this.props.task.description}</span>
 				{' '}
 				{this.state.isHovering ?
-					<a href="#" onClick={this.onArchiveClick}>archive</a> :
+					<a href="#" onClick={this.onArchiveClick}>
+						{this.props.task.isArchived ? 'move to inbox' : 'archive'}
+					</a> :
 					null
 				}
 			</li>
