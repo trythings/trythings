@@ -4,7 +4,7 @@ go:
 # Use container infrastructure.
 sudo: false
 env:
-  - GO15VENDOREXPERIMENT=1 DEPLOY=true
+  - GO15VENDOREXPERIMENT=1
 cache:
   directories:
     - ellies-pad/web/node_modules
