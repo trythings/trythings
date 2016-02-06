@@ -1,0 +1,52 @@
+language: go
+go:
+  - 1.5.3
+# Use container infrastructure.
+sudo: false
+env: >
+  GO15VENDOREXPERIMENT=1
+  PATH="$PWD/go_appengine:$PATH"
+cache:
+  directories:
+    - ellies-pad/web/node_modules
+    - go_appengine
+before_install:
+  # Only deploy on master.
+  - if test "$TRAVIS_PULL_REQUEST" = false && test "$TRAVIS_BRANCH" = master; then export DEPLOY=true; fi
+  # Only build and test the API if it has changed, or we should deploy.
+  - if test "$DEPLOY" || test $(git rev-list --count "$TRAVIS_COMMIT_RANGE" -- ellies-pad/api) -ne 0 || test $(git rev-list --count "$TRAVIS_COMMIT_RANGE" -- vendor) -ne 0; then export API=true; fi
+  # Only build and test the web app if it has changed, or we should deploy.
+  - if test "$DEPLOY" || test $(git rev-list --count "$TRAVIS_COMMIT_RANGE" -- ellies-pad/web) -ne 0; then export WEB=true; fi
+  # If we need to build and test the web app, install a newer version of node.
+  - if test "$WEB"; then nvm install 5.5.0; fi
+install:
+  - |
+    if test "$API" && test ! -d go_appengine
+    then
+      # Download the App Engine SDK if we didn't have it in the cache.
+      wget https://storage.googleapis.com/appengine-sdks/featured/go_appengine_sdk_linux_amd64-1.9.31.zip &&
+      unzip -q go_appengine_sdk_linux_amd64-1.9.31.zip
+    fi
+  - |
+    if test "$WEB"
+    then (
+      # npm needs to be run from the same directory as package.json,
+      # so run npm commands in a subshell to avoid changing the working directory
+      # for subsequent commands.
+      cd ellies-pad/web
+      npm install
+    ) fi
+script:
+  - if test "$API"; then env GOPATH="$TRAVIS_BUILD_DIR" goapp test ./ellies-pad/api; fi
+  - |
+    if test "$WEB"
+    then (
+      cd ellies-pad/web
+      npm test
+    ) fi
+after_success: |
+  if test "$DEPLOY"
+  then
+    # Deploy the API and web app using an oauth token stored in a Travis environment variable.
+    go run ellies-pad/tools/cmd/deploy/deploy.go -token "$APP_ENGINE_OAUTH2_REFRESH_TOKEN"
+  fi
