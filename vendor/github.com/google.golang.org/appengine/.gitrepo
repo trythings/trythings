@@ -1,0 +1,11 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = git@github.com:golang/appengine.git
+	branch = master
+	commit = 6a436539be38c296a8075a871cc536686b458371
+	parent = ceebc076c9519f435d0bb335d7a120cd0540850d
+	cmdver = 0.3.0
