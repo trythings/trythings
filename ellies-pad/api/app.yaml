@@ -4,6 +4,10 @@ runtime: go
 api_version: go1
 
 handlers:
+- url: /_ah/.*
+  script: _go_app
+  login: admin
+  secure: always
 - url: /graphql
   script: _go_app
   login: admin

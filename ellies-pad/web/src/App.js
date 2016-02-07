@@ -4,6 +4,41 @@ import Relay from 'react-relay';
 import Task from './Task.js';
 import './fonts.css';
 
+// TODO: This is a temporary solution to enable us to run all of our migrations.
+class MigrateMutation extends Relay.Mutation {
+	static fragments = {};
+
+	getMutation() {
+		return Relay.QL`
+			mutation {
+				migrate,
+			}
+		`;
+	}
+
+	// It's unclear how to specify a fragment with no fields.
+	// We use the clientMutationId to give this fragment > 0 fields.
+	getFatQuery() {
+		return Relay.QL`
+			fragment on MigratePayload {
+				clientMutationId,
+			}
+		`;
+	}
+
+	getConfigs() {
+		return [];
+	}
+
+	getVariables() {
+		return {};
+	}
+
+	getOptimisticResponse() {
+		return {};
+	}
+}
+
 class AddTaskMutation extends Relay.Mutation {
 	static fragments = {
 		viewer: () => Relay.QL`
@@ -88,6 +123,12 @@ class App extends React.Component {
 		this.setState({ description: event.target.value });
 	};
 
+	onMigrateClick = () => {
+		Relay.Store.commitUpdate(
+			new MigrateMutation({}),
+		);
+	};
+
 	onAddClick = () => {
 		Relay.Store.commitUpdate(
 			new AddTaskMutation({
@@ -123,6 +164,11 @@ class App extends React.Component {
 				/>
 				<button onClick={this.onAddClick}>
 					Add task
+				</button>
+				<button
+					onClick={this.onMigrateClick}
+				>
+					Run migration
 				</button>
 
 				<ol>
