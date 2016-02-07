@@ -17,105 +17,89 @@ import (
 // Migration represents a batch update to existing entities in the datastore.
 // Migrations are defined in code and are only stored in the database once they have been executed.
 type Migration struct {
-	WrittenAt string `datastore:"-"`
-
 	Version     time.Time
 	Author      string
 	Description string
 	RunAt       time.Time
+	Run         func(ctx context.Context, ts *TaskService) error `datastore:"-"`
+}
 
-	fn func(ctx context.Context, ts *TaskService) error `datastore:"-"`
+func version(timeStr string) time.Time {
+	loc, err := time.LoadLocation("America/Toronto")
+	if err != nil {
+		panic(err)
+	}
+
+	t, err := time.ParseInLocation("2006-01-02T15:04:05", timeStr, loc)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+var migrations = []*Migration{
+	{
+		Version:     version("2016-02-03T18:52:00"),
+		Author:      "annie",
+		Description: "Add createdAt time to existing tasks, defaulting to now.",
+		Run: func(ctx context.Context, ts *TaskService) error {
+			// TODO#Perf: Consider using a cursor and/or a batch update.
+			var tasks []*Task
+			_, err := datastore.NewQuery("Task").
+				Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
+				GetAll(ctx, &tasks)
+			if err != nil {
+				return err
+			}
+
+			for _, t := range tasks {
+				if t.CreatedAt.IsZero() {
+					t.CreatedAt = time.Now()
+					err = ts.Update(ctx, t)
+					if err != nil {
+						return err
+					}
+				}
+			}
+
+			return nil
+		},
+	},
 }
 
 type MigrationService struct {
-	ts            *TaskService
-	loc           *time.Location
-	allMigrations []*Migration
+	ts *TaskService
 }
 
-func NewMigrationService(ts *TaskService) (*MigrationService, error) {
-	loc, err := time.LoadLocation("America/Toronto")
-	if err != nil {
-		return nil, err
-	}
-
-	computeVersions := func(ms []*Migration) ([]*Migration, error) {
-		for _, m := range ms {
-			if m.Version.IsZero() {
-				var err error
-				m.Version, err = time.ParseInLocation("Jan 02 2006 3:04PM", m.WrittenAt, loc)
-				if err != nil {
-					return nil, err
-				}
-			}
-		}
-		return ms, nil
-	}
-
-	// TODO: Consider sorting the migrations by WrittenAt.
-	allMigrations, err := computeVersions([]*Migration{
-		{
-			WrittenAt:   "Feb 03 2016 6:52PM",
-			Author:      "Annie",
-			Description: "Add createdAt time to existing tasks (defaulting to now)",
-			fn: func(ctx context.Context, ts *TaskService) error {
-				// TODO#Perf: Consider using a cursor and/or a batch update.
-				var tasks []*Task
-				_, err := datastore.NewQuery("Task").
-					Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
-					GetAll(ctx, &tasks)
-				if err != nil {
-					return err
-				}
-
-				for _, t := range tasks {
-					if t.CreatedAt.IsZero() {
-						t.CreatedAt = time.Now()
-						err = ts.Update(ctx, t)
-						if err != nil {
-							return err
-						}
-					}
-				}
-
-				return nil
-			},
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
+func NewMigrationService(ts *TaskService) *MigrationService {
 	return &MigrationService{
-		ts:            ts,
-		loc:           loc,
-		allMigrations: allMigrations,
-	}, nil
+		ts: ts,
+	}
 }
 
 // latestVersion returns the largest version stored in the Migrations table.
 // Since versions are expected to be strictly increasing, any Migration with a version > latestVersion is expected to have not yet been run.
 // If no Migrations have been run against the datastore, latestVersion returns the zero time.
-func (s *MigrationService) latestVersion(ctx context.Context) (*time.Time, error) {
-	var latest time.Time
-
+func (s *MigrationService) latestVersion(ctx context.Context) (time.Time, error) {
 	var ms []*Migration
 	_, err := datastore.NewQuery("Migration").
 		Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
+		Project("Version").
 		Order("-Version").
 		Limit(1).
 		GetAll(ctx, &ms)
 	if err != nil {
-		return nil, err
-	}
-	if len(ms) > 0 {
-		latest = ms[0].Version
+		return time.Time{}, err
 	}
 
-	return &latest, nil
+	if len(ms) == 0 {
+		return time.Time{}, nil
+	}
+
+	return ms[0].Version, nil
 }
 
-func (s *MigrationService) runMigration(ctx context.Context, m *Migration) error {
+func (s *MigrationService) run(ctx context.Context, m *Migration) error {
 	if m.RunAt.IsZero() {
 		m.RunAt = time.Now()
 	}
@@ -128,7 +112,7 @@ func (s *MigrationService) runMigration(ctx context.Context, m *Migration) error
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
 	k := datastore.NewIncompleteKey(ctx, "Migration", rootKey)
 
-	err := m.fn(ctx, s.ts)
+	err := m.Run(ctx, s.ts)
 	if err != nil {
 		return err
 	}
@@ -141,17 +125,17 @@ func (s *MigrationService) runMigration(ctx context.Context, m *Migration) error
 	return nil
 }
 
-func (s *MigrationService) RunAllMigrations(ctx context.Context) error {
+func (s *MigrationService) RunAll(ctx context.Context) error {
 	latest, err := s.latestVersion(ctx)
 	if err != nil {
 		return err
 	}
 	log.Infof(ctx, "running all migrations. latest is %s", latest)
 
-	for _, m := range s.allMigrations {
-		if m.Version.After(*latest) {
+	for _, m := range migrations {
+		if m.Version.After(latest) {
 			log.Infof(ctx, "running migration version %s", m.Version)
-			err = s.runMigration(ctx, m)
+			err = s.run(ctx, m)
 			if err != nil {
 				return err
 			}
@@ -286,10 +270,7 @@ var Schema graphql.Schema
 func init() {
 	ts := NewTaskService()
 
-	ms, err := NewMigrationService(ts)
-	if err != nil {
-		panic(err)
-	}
+	ms := NewMigrationService(ts)
 
 	us := NewUserService(&User{
 		ID: "ellie",
@@ -518,12 +499,14 @@ func init() {
 	mutationType := graphql.NewObject(graphql.ObjectConfig{
 		Name: "Mutation",
 		Fields: graphql.Fields{
-			"addTask":      addTaskMutation,
-			"archiveTask":  archiveTaskMutation,
-			"runMigration": relay.MutationWithClientMutationID(runMigrationMutation(ms)),
+			"addTask":     addTaskMutation,
+			"archiveTask": archiveTaskMutation,
+
+			"migrate": relay.MutationWithClientMutationID(migrateMutationConfig(ms)),
 		},
 	})
 
+	var err error
 	Schema, err = graphql.NewSchema(graphql.SchemaConfig{
 		Query:    queryType,
 		Mutation: mutationType,
@@ -533,16 +516,18 @@ func init() {
 	}
 }
 
-func runMigrationMutation(ms *MigrationService) relay.MutationConfig {
-	runAllMigrations := delay.Func("RunAllMigrations", func(ctx context.Context) error {
-		return ms.RunAllMigrations(ctx)
+// migrateMutation should only be called once, from init().
+func migrateMutationConfig(ms *MigrationService) relay.MutationConfig {
+	// TODO Do we really want this to be separate from init()?
+	runAll := delay.Func("*MigrationService.RunAll", func(ctx context.Context) error {
+		return ms.RunAll(ctx)
 	})
 	return relay.MutationConfig{
-		Name:         "RunMigration",
+		Name:         "Migrate",
 		InputFields:  graphql.InputObjectConfigFieldMap{},
 		OutputFields: graphql.Fields{},
 		MutateAndGetPayload: func(inputMap map[string]interface{}, info graphql.ResolveInfo, ctx context.Context) (map[string]interface{}, error) {
-			err := runAllMigrations.Call(ctx)
+			err := runAll.Call(ctx)
 			if err != nil {
 				return nil, err
 			}

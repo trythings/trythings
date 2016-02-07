@@ -5,13 +5,13 @@ import Task from './Task.js';
 import './fonts.css';
 
 // TODO: This is a temporary solution to enable us to run all of our migrations.
-class RunMigration extends Relay.Mutation {
+class MigrateMutation extends Relay.Mutation {
 	static fragments = {};
 
 	getMutation() {
 		return Relay.QL`
 			mutation {
-				runMigration
+				migrate,
 			}
 		`;
 	}
@@ -20,7 +20,7 @@ class RunMigration extends Relay.Mutation {
 	// We use the clientMutationId to give this fragment > 0 fields.
 	getFatQuery() {
 		return Relay.QL`
-			fragment on RunMigrationPayload {
+			fragment on MigratePayload {
 				clientMutationId,
 			}
 		`;
@@ -125,8 +125,8 @@ class App extends React.Component {
 
 	onMigrateClick = () => {
 		Relay.Store.commitUpdate(
-							new RunMigration({}),
-						);
+			new MigrateMutation({}),
+		);
 	};
 
 	onAddClick = () => {
