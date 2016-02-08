@@ -142,6 +142,8 @@ class App extends React.Component {
 		tags: '',
 		title: '',
 		description: '',
+
+		isAddTaskFormVisible: true,
 	};
 
 	onTagsChange = (event) => {
@@ -162,6 +164,10 @@ class App extends React.Component {
 		);
 	};
 
+	onCancelClick = () => {
+		this.setState({ isAddTaskFormVisible: false });
+	};
+
 	onAddClick = () => {
 		Relay.Store.commitUpdate(
 			new AddTaskMutation({
@@ -178,6 +184,11 @@ class App extends React.Component {
 	};
 
 	static styles = {
+		app: {
+			display: 'flex',
+			flex: 1,
+			flexDirection: 'column',
+		},
 		appBar: {
 			backgroundColor: colors.primary1,
 
@@ -207,34 +218,54 @@ class App extends React.Component {
 				lineHeight: '44px',
 			},
 		},
+		addTaskForm: {
+			backgroundColor: '#ffffff',
+			boxShadow: '0 2px 5px rgba(0, 0, 0, 0.26)',
+			display: 'flex',
+			zIndex: 1,
+		},
 	};
 
 	render() {
 		return (
-			<div>
+			<div style={App.styles.app}>
 				<div style={App.styles.appBar}>
 					<span style={App.styles.appBar.title}>Ellie's Pad</span>
 				</div>
 
+				{this.state.isAddTaskFormVisible ?
+					(
+						<div style={App.styles.addTaskForm}>
+							<input
+								placeholder="Tags"
+								value={this.state.tags}
+								onChange={this.onTagsChange}
+							/>
+							<input
+								placeholder="Title"
+								value={this.state.title}
+								onChange={this.onTitleChange}
+							/>
+							<textarea
+								placeholder="Description"
+								value={this.state.description}
+								onChange={this.onDescriptionChange}
+							/>
+
+							<div>
+								<button onClick={this.onCancelClick}>
+									Cancel
+								</button>
+								<button onClick={this.onAddClick}>
+									Add Task
+								</button>
+							</div>
+						</div>
+					) :
+					null
+				}
+
 				<div>
-					<input
-						placeholder="Tags"
-						value={this.state.tags}
-						onChange={this.onTagsChange}
-					/>
-					<input
-						placeholder="Title"
-						value={this.state.title}
-						onChange={this.onTitleChange}
-					/>
-					<textarea
-						placeholder="Description"
-						value={this.state.description}
-						onChange={this.onDescriptionChange}
-					/>
-					<button onClick={this.onAddClick}>
-						Add task
-					</button>
 					<button
 						onClick={this.onMigrateClick}
 					>
