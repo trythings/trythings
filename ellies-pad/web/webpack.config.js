@@ -27,7 +27,12 @@ module.exports = {
 			},
 			{
 				test: /\.css$/,
-				include: path.resolve(__dirname, 'src'),
+				// TODO Figure out how to restrict this loader to only
+				// src and node_modules/normalize.css
+				// include: [
+				// 	path.resolve(__dirname, 'src'),
+				// 	path.resolve(__dirname, 'node_modules', 'normalize.css'),
+				// ],
 				loaders: ['style', 'css'],
 			},
 		],
