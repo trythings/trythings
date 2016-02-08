@@ -210,6 +210,8 @@ class App extends React.Component {
 
 			display: 'flex',
 			height: 56,
+			minHeight: 'min-content',
+			minWidth: 'min-content',
 			paddingLeft: 16,
 			paddingRight: 16,
 
@@ -249,6 +251,8 @@ class App extends React.Component {
 			backgroundColor: '#ffffff',
 			boxShadow: '0 2px 5px rgba(0, 0, 0, 0.26)',
 			display: 'flex',
+			minHeight: 'min-content',
+			minWidth: 'min-content',
 			zIndex: 1,
 		},
 	};
