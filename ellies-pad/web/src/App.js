@@ -98,6 +98,38 @@ class AddTaskMutation extends Relay.Mutation {
 	}
 }
 
+const deepPurple = {
+	500: '#673ab7',
+};
+
+const colors = {
+	primary1: deepPurple['500'],
+	// primary2,
+	// primary3,
+	// accent,
+};
+
+const text = {
+	light: {
+		color: '#ffffff',
+		opacity: {
+			primary: '100%',
+			secondary: '70%',
+			disabled: '50%',
+			dividers: '12%',
+		},
+	},
+	dark: {
+		color: '#000000',
+		opacity: {
+			primary: '87%',
+			secondary: '54%',
+			disabled: '38%',
+			dividers: '12%',
+		},
+	},
+};
+
 class App extends React.Component {
 	static propTypes = {
 		viewer: React.PropTypes.shape({
@@ -145,36 +177,74 @@ class App extends React.Component {
 		});
 	};
 
+	static styles = {
+		appBar: {
+			backgroundColor: colors.primary1,
+
+			display: 'flex',
+			height: 56,
+			paddingLeft: 16,
+			paddingRight: 16,
+
+			// position: 'fixed',
+
+			//
+			boxShadow: '0 2px 5px rgba(0, 0, 0, 0.26)',
+			zIndex: 1,
+
+			title: {
+				// Alignment inside the app bar.
+				alignSelf: 'center',
+
+				// Light primary text.
+				color: text.light.color,
+				opacity: text.light.opacity.primary,
+
+				// Title text.
+				fontFamily: 'Roboto, sans-serif',
+				fontSize: 20,
+				fontWeight: 600,
+				lineHeight: '44px',
+			},
+		},
+	};
+
 	render() {
 		return (
-			<div style={{ fontFamily: 'Roboto' }}>
-				<input
-					placeholder="Tags"
-					value={this.state.tags}
-					onChange={this.onTagsChange}
-				/>
-				<input
-					placeholder="Title"
-					value={this.state.title}
-					onChange={this.onTitleChange}
-				/>
-				<textarea
-					placeholder="Description"
-					value={this.state.description}
-					onChange={this.onDescriptionChange}
-				/>
-				<button onClick={this.onAddClick}>
-					Add task
-				</button>
-				<button
-					onClick={this.onMigrateClick}
-				>
-					Run migration
-				</button>
+			<div>
+				<div style={App.styles.appBar}>
+					<span style={App.styles.appBar.title}>Ellie's Pad</span>
+				</div>
 
-				<ol>
-					{this.props.viewer.tasks.map(task => <Task key={task.id} task={task}/>)}
-				</ol>
+				<div>
+					<input
+						placeholder="Tags"
+						value={this.state.tags}
+						onChange={this.onTagsChange}
+					/>
+					<input
+						placeholder="Title"
+						value={this.state.title}
+						onChange={this.onTitleChange}
+					/>
+					<textarea
+						placeholder="Description"
+						value={this.state.description}
+						onChange={this.onDescriptionChange}
+					/>
+					<button onClick={this.onAddClick}>
+						Add task
+					</button>
+					<button
+						onClick={this.onMigrateClick}
+					>
+						Run migration
+					</button>
+
+					<ol>
+						{this.props.viewer.tasks.map(task => <Task key={task.id} task={task}/>)}
+					</ol>
+				</div>
 			</div>
 		);
 	}
