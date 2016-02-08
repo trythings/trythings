@@ -188,7 +188,7 @@ class App extends React.Component {
 
 			// position: 'fixed',
 
-			//
+			// App bar hovers above other sheets.
 			boxShadow: '0 2px 5px rgba(0, 0, 0, 0.26)',
 			zIndex: 1,
 
