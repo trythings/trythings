@@ -11,12 +11,15 @@ const grey = {
 	300: '#e0e0e0',
 };
 
+const white = '#ffffff';
+
 const colors = {
 	primary1: deepPurple['500'],
 	// primary2,
 	// primary3,
 	accent1: red.A400,
 	canvas: grey['300'],
+	card: white,
 };
 
 const text = {
