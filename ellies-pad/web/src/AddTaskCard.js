@@ -132,6 +132,7 @@ class AddTaskCard extends React.Component {
 		title: {
 			border: 'none',
 			outline: 0,
+			padding: 0,
 
 			fontFamily: 'Roboto',
 			fontSize: 24,
@@ -144,9 +145,13 @@ class AddTaskCard extends React.Component {
 
 			outline: 0,
 			border: 'none',
+			padding: 0,
 
 			opacity: theme.text.dark.opacity.secondary,
 			resize: 'none',
+		},
+		titleSpacer: {
+			padding: 8,
 		},
 		actionContainer: {
 			padding: 8,
@@ -168,6 +173,8 @@ class AddTaskCard extends React.Component {
 							onChange={this.onTitleChange}
 							style={AddTaskCard.styles.title}
 						/>
+
+						<div style={AddTaskCard.styles.titleSpacer}/>
 
 						<TextareaAutosize
 							placeholder="Description"
