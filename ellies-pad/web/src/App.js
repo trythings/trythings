@@ -141,6 +141,10 @@ class App extends React.Component {
 		this.setState({ isAddTaskFormVisible: false });
 	};
 
+	onPlusClick = () => {
+		this.setState({ isAddTaskFormVisible: true });
+	};
+
 	onAddClick = () => {
 		Relay.Store.commitUpdate(
 			new AddTaskMutation({
@@ -291,7 +295,7 @@ class App extends React.Component {
 							</div>
 						) :
 						<div style={App.styles.addTaskButton}>
-							<ActionButton/>
+							<ActionButton onClick={this.onPlusClick}/>
 						</div>
 					}
 

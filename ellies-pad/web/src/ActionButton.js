@@ -4,6 +4,10 @@ import Icon from './Icon.js';
 import theme from './theme.js';
 
 export default class ActionButton extends React.Component {
+	static propTypes = {
+		onClick: React.PropTypes.func,
+	};
+
 	static styles = {
 		button: {
 			backgroundColor: theme.colors.accent1,
@@ -36,7 +40,7 @@ export default class ActionButton extends React.Component {
 	render() {
 		return (
 			<div style={ActionButton.styles.padding}>
-				<button style={ActionButton.styles.button}>
+				<button onClick={this.props.onClick} style={ActionButton.styles.button}>
 					<Icon name="add"/>
 				</button>
 			</div>
