@@ -32,14 +32,14 @@ export default class ActionButton extends React.Component {
 			].join(','),
 			zIndex: 6,
 		},
-		padding: {
+		container: {
 			padding: 24,
 		},
 	};
 
 	render() {
 		return (
-			<div style={ActionButton.styles.padding}>
+			<div style={ActionButton.styles.container}>
 				<button onClick={this.props.onClick} style={ActionButton.styles.button}>
 					<Icon name="add"/>
 				</button>
