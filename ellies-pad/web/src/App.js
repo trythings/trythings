@@ -86,7 +86,7 @@ class App extends React.Component {
 
 	static styles = {
 		app: {
-			backgroundColor: '#fafafa',
+			backgroundColor: theme.colors.canvas,
 			display: 'flex',
 			flex: 1,
 			flexDirection: 'column',

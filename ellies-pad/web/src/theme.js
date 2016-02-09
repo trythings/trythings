@@ -1,4 +1,5 @@
 const deepPurple = {
+	50: '#ede7f6',
 	500: '#673ab7',
 };
 
@@ -6,11 +7,16 @@ const red = {
 	A400: '#ff1744',
 };
 
+const grey = {
+	300: '#e0e0e0',
+};
+
 const colors = {
 	primary1: deepPurple['500'],
 	// primary2,
 	// primary3,
 	accent1: red.A400,
+	canvas: grey['300'],
 };
 
 const text = {
