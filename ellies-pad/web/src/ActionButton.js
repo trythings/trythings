@@ -10,7 +10,7 @@ export default class ActionButton extends React.Component {
 
 	static styles = {
 		button: {
-			backgroundColor: theme.colors.accent1,
+			backgroundColor: theme.colors.accent,
 
 			border: 'none',
 			outline: 0,

@@ -58,7 +58,7 @@ class App extends React.Component {
 		title: '',
 		description: '',
 
-		isAddTaskFormVisible: false,
+		isAddTaskFormVisible: true,
 		isMigrateHovering: false,
 	};
 
@@ -92,7 +92,7 @@ class App extends React.Component {
 			flexDirection: 'column',
 		},
 		appBar: {
-			backgroundColor: theme.colors.primary1,
+			backgroundColor: theme.colors.primary,
 
 			alignItems: 'center',
 			justifyContent: 'space-between',
