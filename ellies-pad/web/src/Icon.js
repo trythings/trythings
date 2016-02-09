@@ -17,9 +17,13 @@ export default class Icon extends React.Component {
 	};
 
 	render() {
-		return <i
-			className="material-icons"
-			style={Icon.styles.icon}
-		>{this.props.name}</i>;
+		return (
+			<i
+				className="material-icons"
+				style={Icon.styles.icon}
+			>
+				{this.props.name}
+			</i>
+		);
 	}
 }
