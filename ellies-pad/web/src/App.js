@@ -203,18 +203,15 @@ class App extends React.Component {
 				fontWeight: 600,
 				lineHeight: '44px',
 			},
-			migrate: {
+			migrateButton: {
 				display: 'flex',
 				alignItems: 'center',
 
 				// backgroundColor: 'rgba(255, 255, 255, 0)',
 				border: 'none',
-				borderRadius: '50%',
-
-				color: theme.text.light.color,
-				opacity: theme.text.light.opacity.primary,
 				outline: 0,
 
+				borderRadius: '50%',
 				padding: 8,
 			},
 		},
@@ -249,7 +246,7 @@ class App extends React.Component {
 
 					<button
 						style={{
-							...App.styles.appBar.migrate,
+							...App.styles.appBar.migrateButton,
 							backgroundColor: this.state.isMigrateHovering ?
 								'rgba(255, 255, 255, 0.12)' :
 								'rgba(255, 255, 255, 0)',

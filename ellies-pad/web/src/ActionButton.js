@@ -28,11 +28,6 @@ export default class ActionButton extends React.Component {
 			].join(','),
 			zIndex: 6,
 		},
-		icon: {
-			color: theme.text.light.color,
-			opacity: theme.text.light.opacity.primary,
-			fontSize: 24,
-		},
 		padding: {
 			padding: 24,
 		},
@@ -42,7 +37,7 @@ export default class ActionButton extends React.Component {
 		return (
 			<div style={ActionButton.styles.padding}>
 				<button style={ActionButton.styles.button}>
-					<Icon style={ActionButton.styles.icon} name="add"/>
+					<Icon name="add"/>
 				</button>
 			</div>
 		);
