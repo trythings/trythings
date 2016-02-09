@@ -1,5 +1,8 @@
+import TextareaAutosize from 'react-textarea-autosize';
 import React from 'react';
 import Relay from 'react-relay';
+
+import theme from './theme.js';
 
 class AddTaskMutation extends Relay.Mutation {
 	static fragments = {
@@ -102,45 +105,70 @@ class AddTaskCard extends React.Component {
 
 	static styles = {
 		card: {
-			backgroundColor: '#ffffff',
+			borderRadius: 2,
+			backgroundColor: theme.colors.card,
 			boxShadow: [
 				'0 1px 5px 0 rgba(0, 0, 0, 0.12)', // Ambient.
 				'0 2px 2px 0 rgba(0, 0, 0, 0.14)', // Penumbra.
 				'0 3px 1px -2px rgba(0, 0, 0, 0.20)', // Umbra.
 			].join(','),
+			zIndex: 2,
+
+			boxSizing: 'border-box',
 			display: 'flex',
+			flexDirection: 'column',
 			minHeight: 'min-content',
 			minWidth: 'min-content',
-			zIndex: 6,
+
+			padding: 16,
+		},
+		container: {
+			padding: 24,
+		},
+		title: {
+			border: 'none',
+			outline: 0,
+
+			fontSize: 24,
+			fontWeight: 300,
+
+			opacity: theme.text.dark.opacity.primary,
+		},
+		description: {
+			outline: 0,
+			border: 'none',
+
+			opacity: theme.text.dark.opacity.secondary,
+			resize: 'none',
 		},
 	};
 
 	render() {
 		return (
-			<div style={AddTaskCard.styles.card}>
-				<input
-					placeholder="Tags"
-					value={this.state.tags}
-					onChange={this.onTagsChange}
-				/>
-				<input
-					placeholder="Title"
-					value={this.state.title}
-					onChange={this.onTitleChange}
-				/>
-				<textarea
-					placeholder="Description"
-					value={this.state.description}
-					onChange={this.onDescriptionChange}
-				/>
+			<div style={AddTaskCard.styles.container}>
+				<div style={AddTaskCard.styles.card}>
+					<input
+						placeholder="Title"
+						value={this.state.title}
+						onChange={this.onTitleChange}
+						style={AddTaskCard.styles.title}
+					/>
 
-				<div>
-					<button onClick={this.props.onCancelClick}>
-						Cancel
-					</button>
-					<button onClick={this.onAddClick}>
-						Add Task
-					</button>
+					<TextareaAutosize
+						placeholder="Description"
+						value={this.state.description}
+						onChange={this.onDescriptionChange}
+						style={AddTaskCard.styles.description}
+					/>
+
+					<div>
+						<button onClick={this.props.onCancelClick}>
+							Cancel
+						</button>
+						<button onClick={this.onAddClick}>
+							Add Task
+						</button>
+					</div>
 				</div>
 			</div>
 		);
