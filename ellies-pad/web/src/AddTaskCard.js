@@ -2,6 +2,7 @@ import TextareaAutosize from 'react-textarea-autosize';
 import React from 'react';
 import Relay from 'react-relay';
 
+import FlatButton from './FlatButton.js';
 import theme from './theme.js';
 
 class AddTaskMutation extends Relay.Mutation {
@@ -119,27 +120,40 @@ class AddTaskCard extends React.Component {
 			flexDirection: 'column',
 			minHeight: 'min-content',
 			minWidth: 'min-content',
-
-			padding: 16,
 		},
 		container: {
 			padding: 24,
+		},
+		header: {
+			display: 'flex',
+			flexDirection: 'column',
+			padding: 16,
 		},
 		title: {
 			border: 'none',
 			outline: 0,
 
+			fontFamily: 'Roboto',
 			fontSize: 24,
 			fontWeight: 300,
 
 			opacity: theme.text.dark.opacity.primary,
 		},
 		description: {
+			fontFamily: 'Roboto',
+
 			outline: 0,
 			border: 'none',
 
 			opacity: theme.text.dark.opacity.secondary,
 			resize: 'none',
+		},
+		actionContainer: {
+			padding: 8,
+			display: 'flex',
+		},
+		actionSpacer: {
+			padding: 4,
 		},
 	};
 
@@ -147,27 +161,32 @@ class AddTaskCard extends React.Component {
 		return (
 			<div style={AddTaskCard.styles.container}>
 				<div style={AddTaskCard.styles.card}>
-					<input
-						placeholder="Title"
-						value={this.state.title}
-						onChange={this.onTitleChange}
-						style={AddTaskCard.styles.title}
-					/>
+					<header style={AddTaskCard.styles.header}>
+						<input
+							placeholder="Title"
+							value={this.state.title}
+							onChange={this.onTitleChange}
+							style={AddTaskCard.styles.title}
+						/>
 
-					<TextareaAutosize
-						placeholder="Description"
-						value={this.state.description}
-						onChange={this.onDescriptionChange}
-						style={AddTaskCard.styles.description}
-					/>
+						<TextareaAutosize
+							placeholder="Description"
+							value={this.state.description}
+							onChange={this.onDescriptionChange}
+							style={AddTaskCard.styles.description}
+						/>
+					</header>
 
-					<div>
-						<button onClick={this.props.onCancelClick}>
+					<div style={AddTaskCard.styles.actionContainer}>
+						<FlatButton color={theme.text.dark.primary} onClick={this.props.onCancelClick}>
 							Cancel
-						</button>
-						<button onClick={this.onAddClick}>
+						</FlatButton>
+
+						<div style={AddTaskCard.styles.actionSpacer}/>
+
+						<FlatButton color={theme.colors.accentLight} onClick={this.onAddClick}>
 							Add Task
-						</button>
+						</FlatButton>
 					</div>
 				</div>
 			</div>
