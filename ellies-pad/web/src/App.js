@@ -215,14 +215,21 @@ class App extends React.Component {
 
 					<Relay.RootContainer
 						Component={TaskList}
-						route={new TaskListRoute({ query: '#next' })}
+						route={new TaskListRoute({ query: 'NOT #now AND NOT #next AND NOT #later' })}
 					/>
 
 					<div style={App.styles.contentSpacer}/>
 
 					<Relay.RootContainer
 						Component={TaskList}
-						route={new TaskListRoute({ query: '#later' })}
+						route={new TaskListRoute({ query: '#next AND NOT #now' })}
+					/>
+
+					<div style={App.styles.contentSpacer}/>
+
+					<Relay.RootContainer
+						Component={TaskList}
+						route={new TaskListRoute({ query: '#later AND NOT #next AND NOT #now' })}
 					/>
 				</div>
 			</div>
