@@ -1,6 +1,8 @@
 import color from 'color';
 import React from 'react';
 
+import resetStyles from './resetStyles.js';
+
 export default class FlatButton extends React.Component {
 	static propTypes = {
 		onClick: React.PropTypes.func,
@@ -40,20 +42,14 @@ export default class FlatButton extends React.Component {
 
 	static styles = {
 		button: {
-			backgroundColor: 'transparent',
-			border: 'none',
-			outline: 0,
+			...resetStyles,
 
-			paddingTop: 0,
-			paddingBottom: 0,
-			paddingLeft: 8,
-			paddingRight: 8,
 			borderRadius: 2,
-
 			height: 36,
 			minWidth: 64,
+			paddingLeft: 8,
+			paddingRight: 8,
 
-			fontFamily: 'Roboto',
 			fontSize: 14,
 			fontWeight: 500,
 			textTransform: 'uppercase',
