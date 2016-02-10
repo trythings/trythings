@@ -7,7 +7,7 @@ import './Roboto.css';
 import ActionButton from './ActionButton.js';
 import AddTaskCard from './AddTaskCard.js';
 import Icon from './Icon.js';
-import TaskList from './TaskList.js';
+import TaskSearch from './TaskSearch.js';
 import theme from './theme.js';
 
 // TODO: This is a temporary solution to enable us to run all of our migrations.
@@ -43,22 +43,6 @@ class MigrateMutation extends Relay.Mutation {
 	getOptimisticResponse() {
 		return {};
 	}
-}
-
-class TaskListRoute extends Relay.Route {
-	static routeName = 'TaskListRoute';
-
-	static paramDefinitions = {
-		query: { required: true },
-	};
-
-	static queries = {
-		viewer: () => Relay.QL`
-			query {
-				viewer,
-			}
-		`,
-	};
 }
 
 class App extends React.Component {
@@ -191,12 +175,13 @@ class App extends React.Component {
 				<div style={App.styles.content}>
 
 					{this.state.isAddTaskFormVisible ?
-						(
+						[
 							<AddTaskCard
 								viewer={this.props.viewer}
 								onCancelClick={this.onCancelClick}
-							/>
-						) :
+							/>,
+							<div style={App.styles.contentSpacer}/>,
+						] :
 						(
 							<div style={App.styles.addTaskButton}>
 								<ActionButton onClick={this.onPlusClick}/>
@@ -204,33 +189,17 @@ class App extends React.Component {
 						)
 					}
 
+					<TaskSearch name="#now" query="#now"/>
 					<div style={App.styles.contentSpacer}/>
 
-					<Relay.RootContainer
-						Component={TaskList}
-						route={new TaskListRoute({ query: '#now' })}
-					/>
-
+					<TaskSearch name="incoming" query="NOT #now AND NOT #next AND NOT #later"/>
 					<div style={App.styles.contentSpacer}/>
 
-					<Relay.RootContainer
-						Component={TaskList}
-						route={new TaskListRoute({ query: 'NOT #now AND NOT #next AND NOT #later' })}
-					/>
-
+					<TaskSearch name="#next" query="#next AND NOT #now"/>
 					<div style={App.styles.contentSpacer}/>
 
-					<Relay.RootContainer
-						Component={TaskList}
-						route={new TaskListRoute({ query: '#next AND NOT #now' })}
-					/>
-
+					<TaskSearch name="#later" query="#later AND NOT #next AND NOT #now"/>
 					<div style={App.styles.contentSpacer}/>
-
-					<Relay.RootContainer
-						Component={TaskList}
-						route={new TaskListRoute({ query: '#later AND NOT #next AND NOT #now' })}
-					/>
 				</div>
 			</div>
 		);
@@ -242,7 +211,6 @@ export default Relay.createContainer(App, {
 		viewer: () => Relay.QL`
 			fragment on User {
 				${AddTaskCard.getFragment('viewer')},
-				${TaskList.getFragment('viewer')},
 			}
 		`,
 	},
