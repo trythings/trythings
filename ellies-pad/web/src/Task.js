@@ -102,16 +102,29 @@ class Task extends React.Component {
 		title: {
 			fontSize: 16,
 			color: theme.text.dark.primary,
+			overflow: 'hidden',
+			whiteSpace: 'nowrap',
+			textOverflow: 'ellipsis',
 		},
 		description: {
 			fontSize: 14,
 			color: theme.text.dark.secondary,
+			overflow: 'hidden',
+			whiteSpace: 'nowrap',
+			textOverflow: 'ellipsis',
 		},
 		textContainer: {
 			display: 'flex',
 			flexDirection: 'column',
+			overflow: 'hidden',
 		},
 		archive: {
+			outline: 0,
+			border: 'none',
+			backgroundColor: 'transparent',
+			padding: 0,
+			display: 'flex',
+			justifyContent: 'center',
 		},
 	};
 
@@ -127,12 +140,12 @@ class Task extends React.Component {
 					<span style={Task.styles.description}>{this.props.task.description}</span>
 				</div>
 				{this.state.isHovering ?
-					<a href="#" style={Task.styles.archive} onClick={this.onArchiveClick}>
+					<button style={Task.styles.archive} onClick={this.onArchiveClick}>
 						{this.props.task.isArchived ?
-							<Icon name="unarchive"/> :
-							<Icon name="archive"/>
+							<Icon color={theme.text.dark.secondary} name="unarchive"/> :
+							<Icon color={theme.text.dark.secondary} name="archive"/>
 						}
-					</a> :
+					</button> :
 					null
 				}
 			</li>
