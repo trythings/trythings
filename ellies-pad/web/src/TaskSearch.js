@@ -32,6 +32,7 @@ export default class TaskSearch extends React.Component {
 			...resetStyles,
 
 			flexDirection: 'column',
+			minWidth: 0,
 			overflow: 'visible',
 		},
 		name: {
