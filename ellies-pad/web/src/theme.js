@@ -1,3 +1,5 @@
+import './Roboto.css';
+
 const deepPurple = {
 	50: '#ede7f6',
 	500: '#673ab7',
@@ -56,5 +58,6 @@ const text = {
 
 export default {
 	colors,
+	fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
 	text,
 };
