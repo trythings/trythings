@@ -90,6 +90,7 @@ class App extends React.Component {
 			display: 'flex',
 			flex: 1,
 			flexDirection: 'column',
+			overflowX: 'hidden',
 		},
 		appBar: {
 			backgroundColor: theme.colors.primary,
@@ -167,7 +168,7 @@ class App extends React.Component {
 						onMouseEnter={this.onMigrateMouseEnter}
 						onMouseLeave={this.onMigrateMouseLeave}
 					>
-						<Icon name="update"/>
+						<Icon color={theme.text.light.primary} name="update"/>
 					</button>
 				</div>
 
