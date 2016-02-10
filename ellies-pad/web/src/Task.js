@@ -129,7 +129,7 @@ class Task extends React.Component {
 	};
 
 	renderText() {
-		let text = [
+		const text = [
 			<span style={Task.styles.title}>{this.props.task.title}</span>,
 			<span style={Task.styles.description}>{this.props.task.description}</span>,
 		];
