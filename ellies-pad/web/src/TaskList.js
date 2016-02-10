@@ -3,6 +3,7 @@ import Relay from 'react-relay';
 
 import Card from './Card.js';
 import Task from './Task.js';
+import theme from './theme.js';
 
 class TaskList extends React.Component {
 	static propTypes = {
@@ -20,14 +21,28 @@ class TaskList extends React.Component {
 			margin: 0,
 			listStyle: 'none',
 		},
-
+		divider: {
+			margin: 0,
+			border: 'none',
+			height: 1,
+			backgroundColor: theme.text.dark.dividers,
+		},
 	};
 
 	render() {
 		return (
 			<Card>
 				<ol style={TaskList.styles.list}>
-					{this.props.viewer.tasks.map(task => <Task key={task.id} task={task}/>)}
+					{this.props.viewer.tasks.map((task, i, array) => {
+						const tile = <Task key={task.id} task={task}/>;
+						if (i === array.length - 1) {
+							return tile;
+						}
+						return [
+							tile,
+							<hr style={TaskList.styles.divider}/>,
+						];
+					})}
 				</ol>
 			</Card>
 		);
