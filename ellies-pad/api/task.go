@@ -66,6 +66,29 @@ var migrations = []*Migration{
 			return nil
 		},
 	},
+	{
+		Version:     version("2016-02-10T16:37:00"),
+		Author:      "annie, daniel",
+		Description: "Add tasks to search index.",
+		Run: func(ctx context.Context, ts *TaskService) error {
+			var tasks []*Task
+			_, err := datastore.NewQuery("Task").
+				Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
+				GetAll(ctx, &tasks)
+			if err != nil {
+				return err
+			}
+
+			for _, t := range tasks {
+				err = ts.Index(ctx, t)
+				if err != nil {
+					return err
+				}
+			}
+
+			return nil
+		},
+	},
 }
 
 type MigrationService struct {
@@ -252,11 +275,7 @@ func (s *TaskService) Create(ctx context.Context, t *Task) error {
 		return err
 	}
 
-	index, err := search.Open("Task")
-	if err != nil {
-		return err
-	}
-	_, err = index.Put(ctx, t.ID, t)
+	err = s.Index(ctx, t)
 	if err != nil {
 		return err
 	}
@@ -280,11 +299,7 @@ func (s *TaskService) Update(ctx context.Context, t *Task) error {
 		return err
 	}
 
-	index, err := search.Open("Task")
-	if err != nil {
-		return err
-	}
-	_, err = index.Put(ctx, t.ID, t)
+	err = s.Index(ctx, t)
 	if err != nil {
 		return err
 	}
@@ -324,6 +339,18 @@ func (s *TaskService) Search(ctx context.Context, query string) ([]*Task, error)
 	}
 
 	return ts, nil
+}
+
+func (s *TaskService) Index(ctx context.Context, t *Task) error {
+	index, err := search.Open("Task")
+	if err != nil {
+		return err
+	}
+	_, err = index.Put(ctx, t.ID, t)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 var taskType *graphql.Object
