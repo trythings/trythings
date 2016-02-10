@@ -128,6 +128,17 @@ class Task extends React.Component {
 		},
 	};
 
+	renderText() {
+		let text = [
+			<span style={Task.styles.title}>{this.props.task.title}</span>,
+			<span style={Task.styles.description}>{this.props.task.description}</span>,
+		];
+		if (this.props.task.isArchived) {
+			return <del style={Task.styles.textContainer}>{text}</del>;
+		}
+		return <div style={Task.styles.textContainer}>{text}</div>;
+	}
+
 	render() {
 		return (
 			<li
@@ -135,10 +146,7 @@ class Task extends React.Component {
 				onMouseEnter={this.onMouseEnter}
 				onMouseLeave={this.onMouseLeave}
 			>
-				<div style={Task.styles.textContainer}>
-					<span style={Task.styles.title}>{this.props.task.title}</span>
-					<span style={Task.styles.description}>{this.props.task.description}</span>
-				</div>
+				{this.renderText()}
 				{this.state.isHovering ?
 					<button style={Task.styles.archive} onClick={this.onArchiveClick}>
 						{this.props.task.isArchived ?
