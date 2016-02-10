@@ -2,6 +2,7 @@ import TextareaAutosize from 'react-textarea-autosize';
 import React from 'react';
 import Relay from 'react-relay';
 
+import Card from './Card.js';
 import FlatButton from './FlatButton.js';
 import theme from './theme.js';
 
@@ -121,9 +122,6 @@ class AddTaskCard extends React.Component {
 			minHeight: 'min-content',
 			minWidth: 'min-content',
 		},
-		container: {
-			padding: 24,
-		},
 		header: {
 			display: 'flex',
 			flexDirection: 'column',
@@ -164,39 +162,37 @@ class AddTaskCard extends React.Component {
 
 	render() {
 		return (
-			<div style={AddTaskCard.styles.container}>
-				<div style={AddTaskCard.styles.card}>
-					<header style={AddTaskCard.styles.header}>
-						<input
-							placeholder="Title"
-							value={this.state.title}
-							onChange={this.onTitleChange}
-							style={AddTaskCard.styles.title}
-						/>
+			<Card>
+				<header style={AddTaskCard.styles.header}>
+					<input
+						placeholder="Title"
+						value={this.state.title}
+						onChange={this.onTitleChange}
+						style={AddTaskCard.styles.title}
+					/>
 
-						<div style={AddTaskCard.styles.titleSpacer}/>
+					<div style={AddTaskCard.styles.titleSpacer}/>
 
-						<TextareaAutosize
-							placeholder="Description"
-							value={this.state.description}
-							onChange={this.onDescriptionChange}
-							style={AddTaskCard.styles.description}
-						/>
-					</header>
+					<TextareaAutosize
+						placeholder="Description"
+						value={this.state.description}
+						onChange={this.onDescriptionChange}
+						style={AddTaskCard.styles.description}
+					/>
+				</header>
 
-					<div style={AddTaskCard.styles.actionContainer}>
-						<FlatButton color={theme.text.dark.primary} onClick={this.props.onCancelClick}>
-							Cancel
-						</FlatButton>
+				<div style={AddTaskCard.styles.actionContainer}>
+					<FlatButton color={theme.text.dark.primary} onClick={this.props.onCancelClick}>
+						Cancel
+					</FlatButton>
 
-						<div style={AddTaskCard.styles.actionSpacer}/>
+					<div style={AddTaskCard.styles.actionSpacer}/>
 
-						<FlatButton color={theme.colors.accentLight} onClick={this.onAddClick}>
-							Add Task
-						</FlatButton>
-					</div>
+					<FlatButton color={theme.colors.accentLight} onClick={this.onAddClick}>
+						Add Task
+					</FlatButton>
 				</div>
-			</div>
+			</Card>
 		);
 	}
 }
