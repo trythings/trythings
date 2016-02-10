@@ -50,10 +50,14 @@ class TaskList extends React.Component {
 }
 
 export default Relay.createContainer(TaskList, {
+	initialVariables: {
+		query: null,
+	},
+
 	fragments: {
 		viewer: () => Relay.QL`
 			fragment on User {
-				tasks {
+				tasks(query: $query) {
 					id,
 					${Task.getFragment('task')},
 				},

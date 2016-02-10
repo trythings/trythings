@@ -45,6 +45,22 @@ class MigrateMutation extends Relay.Mutation {
 	}
 }
 
+class TaskListRoute extends Relay.Route {
+	static routeName = 'TaskListRoute';
+
+	static paramDefinitions = {
+		query: { required: true },
+	};
+
+	static queries = {
+		viewer: () => Relay.QL`
+			query {
+				viewer,
+			}
+		`,
+	};
+}
+
 class App extends React.Component {
 	static propTypes = {
 		viewer: React.PropTypes.shape({
@@ -190,7 +206,24 @@ class App extends React.Component {
 
 					<div style={App.styles.contentSpacer}/>
 
-					<TaskList viewer={this.props.viewer}/>
+					<Relay.RootContainer
+						Component={TaskList}
+						route={new TaskListRoute({ query: '#now' })}
+					/>
+
+					<div style={App.styles.contentSpacer}/>
+
+					<Relay.RootContainer
+						Component={TaskList}
+						route={new TaskListRoute({ query: '#next' })}
+					/>
+
+					<div style={App.styles.contentSpacer}/>
+
+					<Relay.RootContainer
+						Component={TaskList}
+						route={new TaskListRoute({ query: '#later' })}
+					/>
 				</div>
 			</div>
 		);
