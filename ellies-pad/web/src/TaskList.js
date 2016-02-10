@@ -13,10 +13,14 @@ class TaskList extends React.Component {
 
 	static styles = {
 		list: {
-			padding: 0,
+			paddingLeft: 0,
+			paddingRight: 0,
+			paddingTop: 4,
+			paddingBottom: 4,
 			margin: 0,
 			listStyle: 'none',
 		},
+
 	};
 
 	render() {
