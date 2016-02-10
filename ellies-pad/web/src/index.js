@@ -10,7 +10,7 @@ class AppRoute extends Relay.Route {
 	static queries = {
 		viewer: () => Relay.QL`
 			query {
-				viewer
+				viewer,
 			}
 		`,
 	};
