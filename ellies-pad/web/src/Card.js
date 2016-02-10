@@ -22,7 +22,6 @@ export default class Card extends React.Component {
 			display: 'flex',
 			flexDirection: 'column',
 			minHeight: 'min-content',
-			minWidth: 'min-content',
 		},
 	};
 
