@@ -430,10 +430,21 @@ func init() {
 		Fields: graphql.Fields{
 			"id": relay.GlobalIDField("User", nil),
 			"tasks": &graphql.Field{
+				Args: graphql.FieldConfigArgument{
+					"query": &graphql.ArgumentConfig{
+						Type:         graphql.String,
+						DefaultValue: "",
+						Description:  "query filters the result to only tasks that contain particular terms in their title or description",
+					},
+				},
 				Description: "tasks are all pieces of work that need to be completed for the user.",
 				Type:        graphql.NewList(taskType),
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					return ts.GetAll(p.Context)
+					q, ok := p.Args["query"].(string)
+					if !ok {
+						q = "" // Return all tasks.
+					}
+					return ts.Search(p.Context, q)
 				},
 			},
 		},
