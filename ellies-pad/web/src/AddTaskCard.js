@@ -2,6 +2,7 @@ import TextareaAutosize from 'react-textarea-autosize';
 import React from 'react';
 import Relay from 'react-relay';
 
+import Card from './Card.js';
 import FlatButton from './FlatButton.js';
 import theme from './theme.js';
 
@@ -105,25 +106,6 @@ class AddTaskCard extends React.Component {
 	};
 
 	static styles = {
-		card: {
-			borderRadius: 2,
-			backgroundColor: theme.colors.card,
-			boxShadow: [
-				'0 1px 5px 0 rgba(0, 0, 0, 0.12)', // Ambient.
-				'0 2px 2px 0 rgba(0, 0, 0, 0.14)', // Penumbra.
-				'0 3px 1px -2px rgba(0, 0, 0, 0.20)', // Umbra.
-			].join(','),
-			zIndex: 2,
-
-			boxSizing: 'border-box',
-			display: 'flex',
-			flexDirection: 'column',
-			minHeight: 'min-content',
-			minWidth: 'min-content',
-		},
-		container: {
-			padding: 24,
-		},
 		header: {
 			display: 'flex',
 			flexDirection: 'column',
@@ -132,6 +114,7 @@ class AddTaskCard extends React.Component {
 		title: {
 			border: 'none',
 			outline: 0,
+			padding: 0,
 
 			fontFamily: 'Roboto',
 			fontSize: 24,
@@ -144,9 +127,13 @@ class AddTaskCard extends React.Component {
 
 			outline: 0,
 			border: 'none',
+			padding: 0,
 
 			opacity: theme.text.dark.opacity.secondary,
 			resize: 'none',
+		},
+		titleSpacer: {
+			padding: 8,
 		},
 		actionContainer: {
 			padding: 8,
@@ -159,37 +146,37 @@ class AddTaskCard extends React.Component {
 
 	render() {
 		return (
-			<div style={AddTaskCard.styles.container}>
-				<div style={AddTaskCard.styles.card}>
-					<header style={AddTaskCard.styles.header}>
-						<input
-							placeholder="Title"
-							value={this.state.title}
-							onChange={this.onTitleChange}
-							style={AddTaskCard.styles.title}
-						/>
+			<Card>
+				<header style={AddTaskCard.styles.header}>
+					<input
+						placeholder="Title"
+						value={this.state.title}
+						onChange={this.onTitleChange}
+						style={AddTaskCard.styles.title}
+					/>
 
-						<TextareaAutosize
-							placeholder="Description"
-							value={this.state.description}
-							onChange={this.onDescriptionChange}
-							style={AddTaskCard.styles.description}
-						/>
-					</header>
+					<div style={AddTaskCard.styles.titleSpacer}/>
 
-					<div style={AddTaskCard.styles.actionContainer}>
-						<FlatButton color={theme.text.dark.primary} onClick={this.props.onCancelClick}>
-							Cancel
-						</FlatButton>
+					<TextareaAutosize
+						placeholder="Description"
+						value={this.state.description}
+						onChange={this.onDescriptionChange}
+						style={AddTaskCard.styles.description}
+					/>
+				</header>
 
-						<div style={AddTaskCard.styles.actionSpacer}/>
+				<div style={AddTaskCard.styles.actionContainer}>
+					<FlatButton color={theme.text.dark.primary} onClick={this.props.onCancelClick}>
+						Cancel
+					</FlatButton>
 
-						<FlatButton color={theme.colors.accentLight} onClick={this.onAddClick}>
-							Add Task
-						</FlatButton>
-					</div>
+					<div style={AddTaskCard.styles.actionSpacer}/>
+
+					<FlatButton color={theme.colors.accentLight} onClick={this.onAddClick}>
+						Add Task
+					</FlatButton>
 				</div>
-			</div>
+			</Card>
 		);
 	}
 }

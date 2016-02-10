@@ -1,6 +1,9 @@
 import React from 'react';
 import Relay from 'react-relay';
 
+import Icon from './Icon.js';
+import theme from './theme.js';
+
 class ArchiveTaskMutation extends Relay.Mutation {
 	static fragments = {
 		task: () => Relay.QL`
@@ -83,20 +86,74 @@ class Task extends React.Component {
 		);
 	};
 
+	static styles = {
+		tile: {
+			boxSizing: 'border-box',
+			display: 'flex',
+
+			// paddingTop: 20,
+			// paddingBottom: 20,
+			paddingLeft: 16,
+			paddingRight: 16,
+			height: 60,
+			alignItems: 'center',
+			justifyContent: 'space-between',
+		},
+		title: {
+			fontSize: 16,
+			color: theme.text.dark.primary,
+			overflow: 'hidden',
+			whiteSpace: 'nowrap',
+			textOverflow: 'ellipsis',
+		},
+		description: {
+			fontSize: 14,
+			color: theme.text.dark.secondary,
+			overflow: 'hidden',
+			whiteSpace: 'nowrap',
+			textOverflow: 'ellipsis',
+		},
+		textContainer: {
+			display: 'flex',
+			flexDirection: 'column',
+			overflow: 'hidden',
+		},
+		archive: {
+			outline: 0,
+			border: 'none',
+			backgroundColor: 'transparent',
+			padding: 0,
+			display: 'flex',
+			justifyContent: 'center',
+		},
+	};
+
+	renderText() {
+		let text = [
+			<span style={Task.styles.title}>{this.props.task.title}</span>,
+			<span style={Task.styles.description}>{this.props.task.description}</span>,
+		];
+		if (this.props.task.isArchived) {
+			return <del style={Task.styles.textContainer}>{text}</del>;
+		}
+		return <div style={Task.styles.textContainer}>{text}</div>;
+	}
+
 	render() {
 		return (
-			<li onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-				{this.props.task.isArchived ?
-					<del>{this.props.task.title}</del> :
-					<strong>{this.props.task.title}</strong>
-				}
-				{' ≫ '}
-				<span>{this.props.task.description}</span>
-				{' '}
+			<li
+				style={Task.styles.tile}
+				onMouseEnter={this.onMouseEnter}
+				onMouseLeave={this.onMouseLeave}
+			>
+				{this.renderText()}
 				{this.state.isHovering ?
-					<a href="#" onClick={this.onArchiveClick}>
-						{this.props.task.isArchived ? 'move to inbox' : 'archive'}
-					</a> :
+					<button style={Task.styles.archive} onClick={this.onArchiveClick}>
+						{this.props.task.isArchived ?
+							<Icon color={theme.text.dark.secondary} name="unarchive"/> :
+							<Icon color={theme.text.dark.secondary} name="archive"/>
+						}
+					</button> :
 					null
 				}
 			</li>

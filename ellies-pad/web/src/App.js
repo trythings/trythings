@@ -7,7 +7,7 @@ import './Roboto.css';
 import ActionButton from './ActionButton.js';
 import AddTaskCard from './AddTaskCard.js';
 import Icon from './Icon.js';
-import Task from './Task.js';
+import TaskList from './TaskList.js';
 import theme from './theme.js';
 
 // TODO: This is a temporary solution to enable us to run all of our migrations.
@@ -49,7 +49,7 @@ class App extends React.Component {
 	static propTypes = {
 		viewer: React.PropTypes.shape({
 			// ...AddTaskCard.propTypes.viewer
-			tasks: React.PropTypes.arrayOf(React.PropTypes.object).isRequired, // ...Task.propTypes.task
+			// ...TaskList.propTypes.viewer
 		}).isRequired,
 	};
 
@@ -90,6 +90,7 @@ class App extends React.Component {
 			display: 'flex',
 			flex: 1,
 			flexDirection: 'column',
+			overflowX: 'hidden',
 		},
 		appBar: {
 			backgroundColor: theme.colors.primary,
@@ -143,6 +144,10 @@ class App extends React.Component {
 			display: 'flex',
 			flexDirection: 'column',
 			overflow: 'scroll',
+			padding: 24,
+		},
+		contentSpacer: {
+			padding: 12,
 		},
 	};
 
@@ -163,7 +168,7 @@ class App extends React.Component {
 						onMouseEnter={this.onMigrateMouseEnter}
 						onMouseLeave={this.onMigrateMouseLeave}
 					>
-						<Icon name="update"/>
+						<Icon color={theme.text.light.primary} name="update"/>
 					</button>
 				</div>
 
@@ -183,9 +188,9 @@ class App extends React.Component {
 						)
 					}
 
-					<ol>
-						{this.props.viewer.tasks.map(task => <Task key={task.id} task={task}/>)}
-					</ol>
+					<div style={App.styles.contentSpacer}/>
+
+					<TaskList viewer={this.props.viewer}/>
 				</div>
 			</div>
 		);
@@ -197,10 +202,7 @@ export default Relay.createContainer(App, {
 		viewer: () => Relay.QL`
 			fragment on User {
 				${AddTaskCard.getFragment('viewer')},
-				tasks {
-					id,
-					${Task.getFragment('task')},
-				},
+				${TaskList.getFragment('viewer')},
 			}
 		`,
 	},
