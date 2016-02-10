@@ -12,6 +12,7 @@ import (
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/delay"
 	"google.golang.org/appengine/log"
+	"google.golang.org/appengine/search"
 )
 
 // Migration represents a batch update to existing entities in the datastore.
@@ -175,6 +176,18 @@ type Task struct {
 	IsArchived  bool      `json:"isArchived"`
 }
 
+func (t *Task) Load(fields []search.Field, meta *search.DocumentMetadata) error {
+	// You should load the fields of a Task from the datastore.
+	return errors.New("task should not be loaded from search")
+}
+
+func (t *Task) Save() ([]search.Field, *search.DocumentMetadata, error) {
+	return []search.Field{
+		{Name: "Title", Value: t.Title},
+		{Name: "Description", Value: t.Description},
+	}, nil, nil
+}
+
 type TaskService struct {
 }
 
@@ -238,6 +251,16 @@ func (s *TaskService) Create(ctx context.Context, t *Task) error {
 	if err != nil {
 		return err
 	}
+
+	index, err := search.Open("Task")
+	if err != nil {
+		return err
+	}
+	_, err = index.Put(ctx, t.ID, t)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -257,7 +280,50 @@ func (s *TaskService) Update(ctx context.Context, t *Task) error {
 		return err
 	}
 
+	index, err := search.Open("Task")
+	if err != nil {
+		return err
+	}
+	_, err = index.Put(ctx, t.ID, t)
+	if err != nil {
+		return err
+	}
+
 	return nil
+}
+
+var numSearch = expvar.NewInt("api.*TaskService.Search")
+
+func (s *TaskService) Search(ctx context.Context, query string) ([]*Task, error) {
+	numSearch.Add(1)
+
+	index, err := search.Open("Task")
+	if err != nil {
+		return nil, err
+	}
+
+	var ts []*Task
+	for it := index.Search(ctx, query, &search.SearchOptions{
+		IDsOnly: true,
+	}); ; {
+		id, err := it.Next(nil)
+		if err == search.Done {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		// TODO Use GetMulti.
+		t, err := s.Get(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+
+		ts = append(ts, t)
+	}
+
+	return ts, nil
 }
 
 var taskType *graphql.Object
