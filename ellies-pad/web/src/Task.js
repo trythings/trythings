@@ -129,14 +129,12 @@ class Task extends React.Component {
 	};
 
 	renderText() {
-		const text = [
-			<span style={Task.styles.title}>{this.props.task.title}</span>,
-			<span style={Task.styles.description}>{this.props.task.description}</span>,
-		];
+		const title = <span style={Task.styles.title}>{this.props.task.title}</span>;
+		const description = <span style={Task.styles.description}>{this.props.task.description}</span>;
 		if (this.props.task.isArchived) {
-			return <del style={Task.styles.textContainer}>{text}</del>;
+			return <del style={Task.styles.textContainer}>{title}{description}</del>;
 		}
-		return <div style={Task.styles.textContainer}>{text}</div>;
+		return <div style={Task.styles.textContainer}>{title}{description}</div>;
 	}
 
 	render() {
