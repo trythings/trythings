@@ -74,6 +74,14 @@ export default {
 			].join(','),
 			zIndex: 2,
 		},
+		4: {
+			boxShadow: [
+				'0 1px 10px 0 rgba(0, 0, 0, 0.12)', // Ambient.
+				'0 4px 5px 0 rgba(0, 0, 0, 0.14)', // Penumbra.
+				'0 2px 4px -1px rgba(0, 0, 0, 0.20)', // Umbra.
+			].join(','),
+			zIndex: 4,
+		},
 		6: {
 			boxShadow: [
 				'0 1px 18px 0 rgba(0, 0, 0, 0.12)', // Ambient.
