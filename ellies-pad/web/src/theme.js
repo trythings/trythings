@@ -1,12 +1,12 @@
 import './Roboto.css';
 
-const deepPurple = {
-	50: '#ede7f6',
-	200: '#b39ddb',
-	300: '#9575cd',
-	400: '#7e57c2',
-	500: '#673ab7',
-};
+// const deepPurple = {
+// 	50: '#ede7f6',
+// 	200: '#b39ddb',
+// 	300: '#9575cd',
+// 	400: '#7e57c2',
+// 	500: '#673ab7',
+// };
 
 const indigo = {
 	400: '#5c6bc0',
@@ -26,8 +26,8 @@ const white = '#ffffff';
 
 const colors = {
 	primary: indigo[400],
-	accent: red['A200'],
-	accentLight: red['A200'],
+	accent: red.A200,
+	accentLight: red.A200,
 
 	canvas: grey[100],
 	card: white,
