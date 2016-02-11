@@ -36,6 +36,8 @@ export default class Card extends React.Component {
 			return {
 				...Card.styles.card,
 				...theme.elevation[8],
+				marginLeft: -8,
+				marginRight: -8,
 			};
 		}
 		return {
