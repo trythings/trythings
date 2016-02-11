@@ -8,19 +8,49 @@ export default class Card extends React.Component {
 		children: React.PropTypes.node,
 	};
 
+	state = {
+		hasFocus: false,
+	};
+
+	onBlur = () => {
+		this.setState({ hasFocus: false });
+	};
+
+	onFocus = () => {
+		this.setState({ hasFocus: true });
+	};
+
 	static styles = {
 		card: {
 			...resetStyles,
-			...theme.elevation[2],
+
 			borderRadius: 2,
 			backgroundColor: theme.colors.card,
 			flexDirection: 'column',
 		},
 	};
 
+	cardStyle() {
+		if (this.state.hasFocus) {
+			return {
+				...Card.styles.card,
+				...theme.elevation[8],
+			};
+		}
+		return {
+			...Card.styles.card,
+			...theme.elevation[2],
+		};
+	}
+
 	render() {
 		return (
-			<div style={Card.styles.card}>
+			<div
+				onBlur={this.onBlur}
+				onFocus={this.onFocus}
+				tabIndex={-1}
+				style={this.cardStyle()}
+			>
 				{this.props.children}
 			</div>
 		);

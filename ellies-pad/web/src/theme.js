@@ -33,6 +33,41 @@ const colors = {
 	card: white,
 };
 
+const elevation = {
+	2: {
+		boxShadow: [
+			'0 1px 5px 0 rgba(0, 0, 0, 0.12)', // Ambient.
+			'0 2px 2px 0 rgba(0, 0, 0, 0.14)', // Penumbra.
+			'0 3px 1px -2px rgba(0, 0, 0, 0.20)', // Umbra.
+		].join(','),
+		zIndex: 2,
+	},
+	4: {
+		boxShadow: [
+			'0 1px 10px 0 rgba(0, 0, 0, 0.12)', // Ambient.
+			'0 4px 5px 0 rgba(0, 0, 0, 0.14)', // Penumbra.
+			'0 2px 4px -1px rgba(0, 0, 0, 0.20)', // Umbra.
+		].join(','),
+		zIndex: 4,
+	},
+	6: {
+		boxShadow: [
+			'0 1px 18px 0 rgba(0, 0, 0, 0.12)', // Ambient.
+			'0 6px 10px 0 rgba(0, 0, 0, 0.14)', // Penumbra.
+			'0 3px 5px -1px rgba(0, 0, 0, 0.20)', // Umbra.
+		].join(','),
+		zIndex: 6,
+	},
+	8: {
+		boxShadow: [
+			'0 3px 14px 2px rgba(0, 0, 0, 0.12)', // Ambient.
+			'0 8px 10px 1px rgba(0, 0, 0, 0.14)', // Penumbra.
+			'0 5px 5px -3px rgba(0, 0, 0, 0.20)', // Umbra.
+		].join(','),
+		zIndex: 8,
+	},
+};
+
 const text = {
 	fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
 	light: {
@@ -73,31 +108,6 @@ const text = {
 
 export default {
 	colors,
-	elevation: {
-		2: {
-			boxShadow: [
-				'0 1px 5px 0 rgba(0, 0, 0, 0.12)', // Ambient.
-				'0 2px 2px 0 rgba(0, 0, 0, 0.14)', // Penumbra.
-				'0 3px 1px -2px rgba(0, 0, 0, 0.20)', // Umbra.
-			].join(','),
-			zIndex: 2,
-		},
-		4: {
-			boxShadow: [
-				'0 1px 10px 0 rgba(0, 0, 0, 0.12)', // Ambient.
-				'0 4px 5px 0 rgba(0, 0, 0, 0.14)', // Penumbra.
-				'0 2px 4px -1px rgba(0, 0, 0, 0.20)', // Umbra.
-			].join(','),
-			zIndex: 4,
-		},
-		6: {
-			boxShadow: [
-				'0 1px 18px 0 rgba(0, 0, 0, 0.12)', // Ambient.
-				'0 6px 10px 0 rgba(0, 0, 0, 0.14)', // Penumbra.
-				'0 3px 5px -1px rgba(0, 0, 0, 0.20)', // Umbra.
-			].join(','),
-			zIndex: 6,
-		},
-	},
+	elevation,
 	text,
 };
