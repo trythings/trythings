@@ -6,7 +6,7 @@ const noInherit = {
 	borderSpacing: 'initial',
 	captionSide: 'initial',
 	color: 'initial',
-	cursor: 'initial', //
+	// cursor: 'initial',
 	direction: 'initial',
 	elevation: 'initial',
 	emptyCells: 'initial',
