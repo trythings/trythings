@@ -9,7 +9,7 @@
     "lint": "eslint src",
     "localhost": "env NODE_ENV=localhost webpack-dev-server --content-base static --history-api-fallback --inline --output-public-path http://localhost:3000/static/ --port 3000",
     "production": "env NODE_ENV=production webpack --bail",
-    "test": "true"
+    "test": "npm run lint"
   },
   "repository": {
     "type": "git",
