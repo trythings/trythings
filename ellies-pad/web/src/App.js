@@ -140,8 +140,8 @@ class App extends React.Component {
 		content: {
 			display: 'flex',
 			flexDirection: 'column',
-			overflow: 'scroll',
 			padding: 24,
+			minHeight: 'min-content',
 		},
 		contentSpacer: {
 			padding: 12,

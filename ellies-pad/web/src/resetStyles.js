@@ -61,8 +61,6 @@ const defaults = {
 	marginRight: 0,
 	marginTop: 0,
 
-	minHeight: 'min-content',
-	minWidth: 'min-content',
 	outline: 0,
 	overflow: 'hidden',
 
