@@ -20,6 +20,7 @@ class TaskList extends React.Component {
 			flexDirection: 'column',
 			paddingTop: 4,
 			paddingBottom: 4,
+			overflow: 'visible',
 		},
 		divider: {
 			...resetStyles,

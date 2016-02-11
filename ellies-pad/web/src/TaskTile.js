@@ -69,6 +69,17 @@ class TaskTile extends React.Component {
 
 	state = {
 		isHovering: false,
+		hasFocus: false,
+	};
+
+	onFocus = (event) => {
+		this.setState({ hasFocus: true });
+		event.stopPropagation();
+	};
+
+	onBlur = (event) => {
+		this.setState({ hasFocus: false });
+		event.stopPropagation();
 	};
 
 	onMouseEnter = () => {
@@ -125,6 +136,16 @@ class TaskTile extends React.Component {
 		},
 	};
 
+	tileStyle() {
+		if (this.state.hasFocus) {
+			return {
+				...TaskTile.styles.tile,
+				...theme.elevation[8],
+			};
+		}
+		return TaskTile.styles.tile;
+	}
+
 	renderText() {
 		const title = <span style={TaskTile.styles.title}>{this.props.task.title}</span>;
 		const description = (
@@ -141,9 +162,12 @@ class TaskTile extends React.Component {
 	render() {
 		return (
 			<li
-				style={TaskTile.styles.tile}
+				style={this.tileStyle()}
 				onMouseEnter={this.onMouseEnter}
 				onMouseLeave={this.onMouseLeave}
+				onFocus={this.onFocus}
+				onBlur={this.onBlur}
+				tabIndex={-1}
 			>
 				{this.renderText()}
 				{this.state.isHovering ?

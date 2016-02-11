@@ -27,6 +27,7 @@ export default class Card extends React.Component {
 			borderRadius: 2,
 			backgroundColor: theme.colors.card,
 			flexDirection: 'column',
+			overflow: 'visible',
 		},
 	};
 
