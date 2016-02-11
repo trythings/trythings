@@ -2,12 +2,13 @@ import color from 'color';
 import React from 'react';
 
 import resetStyles from './resetStyles.js';
+import theme from './theme.js';
 
 export default class FlatButton extends React.Component {
 	static propTypes = {
-		onClick: React.PropTypes.func,
-		children: React.PropTypes.node.isRequired,
 		color: React.PropTypes.string.isRequired,
+		label: React.PropTypes.string.isRequired,
+		onClick: React.PropTypes.func,
 	};
 
 	state = {
@@ -49,6 +50,10 @@ export default class FlatButton extends React.Component {
 			minWidth: 64,
 			paddingLeft: 8,
 			paddingRight: 8,
+		},
+		label: {
+			...resetStyles,
+			...theme.text,
 
 			fontSize: 14,
 			fontWeight: 500,
@@ -56,32 +61,33 @@ export default class FlatButton extends React.Component {
 		},
 	};
 
-	render() {
-		let style = {
-			...FlatButton.styles.button,
-			color: this.props.color,
-		};
-
+	buttonStateStyle() {
 		if (this.state.isActive) {
-			style = {
-				...style,
+			return {
 				backgroundColor: color(this.props.color).alpha(0.38).rgbString(),
 			};
-		} else if (this.state.isFocused) {
-			style = {
-				...style,
+		}
+		if (this.state.isFocused) {
+			return {
 				backgroundColor: color(this.props.color).alpha(0.24).rgbString(),
 			};
-		} else if (this.state.isHovered) {
-			style = {
-				...style,
+		}
+		if (this.state.isHovered) {
+			return {
 				backgroundColor: color(this.props.color).alpha(0.12).rgbString(),
 			};
 		}
+		return {};
+	}
 
+	render() {
 		return (
 			<button
-				style={style}
+				style={{
+					...FlatButton.styles.button,
+					...this.buttonStateStyle(),
+					color: this.props.color,
+				}}
 				onClick={this.props.onClick}
 
 				onMouseEnter={this.onMouseEnter}
@@ -91,7 +97,14 @@ export default class FlatButton extends React.Component {
 				onMouseDown={this.onMouseDown}
 				onMouseUp={this.onMouseUp}
 			>
-				{this.props.children}
+				<span
+					style={{
+						...FlatButton.styles.label,
+						color: this.props.color,
+					}}
+				>
+					{this.props.label}
+				</span>
 			</button>
 		);
 	}
