@@ -25,12 +25,9 @@ class TaskList extends React.Component {
 	};
 
 	onBlur = (event) => {
-		const currentTarget = event.currentTarget;
-		setTimeout(() => {
-			if (!currentTarget.contains(document.activeElement)) {
-				this.setState({ focusedTaskId: null });
-			}
-		}, 0);
+		if (!event.currentTarget.contains(event.relatedTarget)) {
+			this.setState({ focusedTaskId: null });
+		}
 	};
 
 	static styles = {
