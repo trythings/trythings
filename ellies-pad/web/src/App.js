@@ -98,7 +98,7 @@ class App extends React.Component {
 						<TaskSearch name="#now" query="#now"/>
 						<div style={App.styles.contentSpacer}/>
 
-						<TaskSearch name="incoming" query="NOT #now AND NOT #next AND NOT #later"/>
+						<TaskSearch name="Incoming" query="NOT #now AND NOT #next AND NOT #later"/>
 						<div style={App.styles.contentSpacer}/>
 
 						<TaskSearch name="#next" query="#next AND NOT #now"/>
