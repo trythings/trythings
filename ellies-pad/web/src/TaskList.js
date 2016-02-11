@@ -1,6 +1,7 @@
 import React from 'react';
 import Relay from 'react-relay';
 
+import AddTaskCard from './AddTaskCard.js';
 import Card from './Card.js';
 import resetStyles from './resetStyles.js';
 import TaskTile from './TaskTile.js';
@@ -14,12 +15,33 @@ class TaskList extends React.Component {
 		}).isRequired,
 	};
 
+	state = {
+		focusedTaskId: null,
+	};
+
+	onFocus = (event) => {
+		// event.currentTarget.focus();
+		this.setState({ focusedTaskId: event.currentTarget.dataset.taskid });
+		event.stopPropagation();
+	};
+
+	onBlur = () => {
+		this.setState({ focusedTaskId: null });
+		event.stopPropagation();
+	};
+
 	static styles = {
 		list: {
 			...resetStyles,
 			flexDirection: 'column',
 			paddingTop: 4,
 			paddingBottom: 4,
+			overflow: 'visible',
+		},
+		listItem: {
+			...resetStyles,
+			// backgroundColor: 'red',
+			flexDirection: 'column',
 			overflow: 'visible',
 		},
 		divider: {
@@ -33,16 +55,25 @@ class TaskList extends React.Component {
 		return (
 			<Card>
 				<ol style={TaskList.styles.list}>
-					{this.props.viewer.tasks.map((task, i, array) => {
-						const tile = <TaskTile key={task.id} task={task}/>;
-						if (i === array.length - 1) {
-							return tile;
-						}
-						return [
-							tile,
-							<hr style={TaskList.styles.divider}/>,
-						];
-					})}
+					{this.props.viewer.tasks.map((task, i, array) => (
+						<li
+							key={task.id}
+							data-taskid={task.id}
+							onFocus={this.onFocus}
+							onBlur={this.onBlur}
+							style={TaskList.styles.listItem}
+							tabIndex={-1}
+						>
+							{task.id === this.state.focusedTaskId
+								? <AddTaskCard autoFocus viewer={this.props.viewer}/>
+								: <TaskTile task={task}/>
+							}
+							{i < array.length - 1
+								? <hr style={TaskList.styles.divider}/>
+								: null
+							}
+						</li>
+					))}
 				</ol>
 			</Card>
 		);
@@ -57,6 +88,7 @@ export default Relay.createContainer(TaskList, {
 	fragments: {
 		viewer: () => Relay.QL`
 			fragment on User {
+				${AddTaskCard.getFragment('viewer')},
 				tasks(query: $query) {
 					id,
 					${TaskTile.getFragment('task')},

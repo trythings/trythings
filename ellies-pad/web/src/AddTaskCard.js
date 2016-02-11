@@ -67,6 +67,7 @@ class AddTaskMutation extends Relay.Mutation {
 
 class AddTaskCard extends React.Component {
 	static propTypes = {
+		autoFocus: React.PropTypes.bool,
 		viewer: React.PropTypes.shape({
 			// ...AddTaskMutation.propTypes.viewer
 		}).isRequired,
@@ -143,7 +144,7 @@ class AddTaskCard extends React.Component {
 
 	render() {
 		return (
-			<Card>
+			<Card autoFocus={this.props.autoFocus}>
 				<header style={AddTaskCard.styles.header}>
 					<input
 						placeholder="Title"

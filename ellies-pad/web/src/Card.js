@@ -5,6 +5,7 @@ import theme from './theme.js';
 
 export default class Card extends React.Component {
 	static propTypes = {
+		autoFocus: React.PropTypes.bool,
 		children: React.PropTypes.node,
 	};
 
@@ -18,6 +19,12 @@ export default class Card extends React.Component {
 
 	onFocus = () => {
 		this.setState({ hasFocus: true });
+	};
+
+	ref = (node) => {
+		if (node && this.props.autoFocus) {
+			node.focus();
+		}
 	};
 
 	static styles = {
@@ -53,6 +60,7 @@ export default class Card extends React.Component {
 				onFocus={this.onFocus}
 				tabIndex={-1}
 				style={this.cardStyle()}
+				ref={this.ref}
 			>
 				{this.props.children}
 			</div>

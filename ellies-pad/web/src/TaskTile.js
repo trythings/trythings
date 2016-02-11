@@ -145,6 +145,7 @@ class TaskTile extends React.Component {
 				style={TaskTile.styles.tile}
 				onMouseEnter={this.onMouseEnter}
 				onMouseLeave={this.onMouseLeave}
+				tabIndex={-1}
 			>
 				{this.renderText()}
 				{this.state.isHovered ?
