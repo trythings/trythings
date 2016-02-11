@@ -4,6 +4,7 @@ import Relay from 'react-relay';
 
 import Card from './Card.js';
 import FlatButton from './FlatButton.js';
+import resetStyles from './resetStyles.js';
 import theme from './theme.js';
 
 class AddTaskMutation extends Relay.Mutation {
@@ -107,40 +108,36 @@ class AddTaskCard extends React.Component {
 
 	static styles = {
 		header: {
-			display: 'flex',
+			...resetStyles,
 			flexDirection: 'column',
 			padding: 16,
 		},
 		title: {
-			border: 'none',
-			outline: 0,
-			padding: 0,
+			...resetStyles,
+			...theme.text.dark.primary,
 
-			fontFamily: 'Roboto',
 			fontSize: 24,
 			fontWeight: 300,
-
-			opacity: theme.text.dark.opacity.primary,
 		},
 		description: {
-			fontFamily: 'Roboto',
-
-			outline: 0,
-			border: 'none',
-			padding: 0,
-
-			opacity: theme.text.dark.opacity.secondary,
-			resize: 'none',
+			...resetStyles,
+			...theme.text.dark.secondary,
+			minHeight: 0,
 		},
 		titleSpacer: {
-			padding: 8,
+			...resetStyles,
+			paddingTop: 16,
 		},
 		actionContainer: {
-			padding: 8,
-			display: 'flex',
+			...resetStyles,
+			paddingBottom: 8,
+			paddingLeft: 8,
+			paddingRight: 8,
+			paddingTop: 8,
 		},
 		actionSpacer: {
-			padding: 4,
+			...resetStyles,
+			paddingLeft: 8,
 		},
 	};
 
@@ -166,15 +163,19 @@ class AddTaskCard extends React.Component {
 				</header>
 
 				<div style={AddTaskCard.styles.actionContainer}>
-					<FlatButton color={theme.text.dark.primary} onClick={this.props.onCancelClick}>
-						Cancel
-					</FlatButton>
+					<FlatButton
+						color={theme.text.dark.primary.color}
+						onClick={this.props.onCancelClick}
+						label="Cancel"
+					/>
 
 					<div style={AddTaskCard.styles.actionSpacer}/>
 
-					<FlatButton color={theme.colors.accentLight} onClick={this.onAddClick}>
-						Add Task
-					</FlatButton>
+					<FlatButton
+						color={theme.colors.accentLight}
+						onClick={this.onAddClick}
+						label="Add Task"
+					/>
 				</div>
 			</Card>
 		);
