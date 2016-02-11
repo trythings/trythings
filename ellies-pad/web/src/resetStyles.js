@@ -57,7 +57,6 @@ const defaults = {
 
 	boxSizing: 'border-box',
 	display: 'flex',
-	fontFamily: theme.fontFamily,
 
 	marginBottom: 0,
 	marginLeft: 0,
@@ -80,4 +79,5 @@ const defaults = {
 export default {
 	...noInherit,
 	...defaults,
+	fontFamily: theme.fontFamily,
 };
