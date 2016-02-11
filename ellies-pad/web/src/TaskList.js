@@ -2,6 +2,7 @@ import React from 'react';
 import Relay from 'react-relay';
 
 import Card from './Card.js';
+import resetStyles from './resetStyles.js';
 import Task from './Task.js';
 import theme from './theme.js';
 
@@ -14,18 +15,15 @@ class TaskList extends React.Component {
 
 	static styles = {
 		list: {
-			paddingLeft: 0,
-			paddingRight: 0,
+			...resetStyles,
+			flexDirection: 'column',
 			paddingTop: 4,
 			paddingBottom: 4,
-			margin: 0,
-			listStyle: 'none',
 		},
 		divider: {
-			margin: 0,
-			border: 'none',
+			...resetStyles,
 			height: 1,
-			backgroundColor: theme.text.dark.dividers,
+			backgroundColor: theme.text.dark.dividers.color,
 		},
 	};
 
