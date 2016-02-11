@@ -73,6 +73,8 @@ const defaults = {
 	paddingLeft: 0,
 	paddingRight: 0,
 	paddingTop: 0,
+
+	position: 'relative',
 };
 
 export default {
