@@ -55,6 +55,7 @@ const defaults = {
 
 	boxSizing: 'border-box',
 	display: 'flex',
+	flex: '0 0 auto',
 
 	marginBottom: 0,
 	marginLeft: 0,

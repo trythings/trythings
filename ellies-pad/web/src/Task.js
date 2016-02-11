@@ -116,6 +116,7 @@ class Task extends React.Component {
 		},
 		textContainer: {
 			...resetStyles,
+			flex: '0 1 auto',
 			flexDirection: 'column',
 		},
 		archive: {

@@ -36,8 +36,13 @@ class App extends React.Component {
 		app: {
 			...resetStyles,
 			backgroundColor: theme.colors.canvas,
-			flex: 1,
 			flexDirection: 'column',
+			height: '100%',
+			width: '100%',
+		},
+		container: {
+			...resetStyles,
+			flex: '1 1 auto',
 		},
 		addTaskButton: {
 			...resetStyles,
@@ -47,16 +52,12 @@ class App extends React.Component {
 			right: 24,
 			top: 24,
 		},
-		contentScroll: {
-			...resetStyles,
-			flexDirection: 'column',
-			overflow: 'scroll',
-		},
 		content: {
 			...resetStyles,
-			flex: '1 0',
+			flex: '1 1 auto',
 			flexDirection: 'column',
 			padding: 24,
+			overflow: 'scroll',
 		},
 		contentSpacer: {
 			...resetStyles,
@@ -68,8 +69,8 @@ class App extends React.Component {
 		return (
 			<div style={App.styles.app}>
 				<AppBar/>
-				<div style={App.styles.contentScroll}>
 
+				<div style={App.styles.container}>
 					{!this.state.isAddTaskFormVisible ?
 						(
 							<div style={App.styles.addTaskButton}>
@@ -78,9 +79,7 @@ class App extends React.Component {
 						) :
 						null
 					}
-
 					<div style={App.styles.content}>
-
 						{this.state.isAddTaskFormVisible ?
 							(
 								<AddTaskCard
