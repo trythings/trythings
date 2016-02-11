@@ -2,6 +2,7 @@ import React from 'react';
 import Relay from 'react-relay';
 
 import Icon from './Icon.js';
+import resetStyles from './resetStyles.js';
 import theme from './theme.js';
 
 class ArchiveTaskMutation extends Relay.Mutation {
@@ -88,11 +89,7 @@ class Task extends React.Component {
 
 	static styles = {
 		tile: {
-			boxSizing: 'border-box',
-			display: 'flex',
-
-			// paddingTop: 20,
-			// paddingBottom: 20,
+			...resetStyles,
 			paddingLeft: 16,
 			paddingRight: 16,
 			height: 60,
@@ -100,30 +97,29 @@ class Task extends React.Component {
 			justifyContent: 'space-between',
 		},
 		title: {
+			...resetStyles,
+			...theme.text.dark.primary,
+
+			display: 'inline',
 			fontSize: 16,
-			color: theme.text.dark.primary,
-			overflow: 'hidden',
-			whiteSpace: 'nowrap',
 			textOverflow: 'ellipsis',
+			whiteSpace: 'nowrap',
 		},
 		description: {
+			...resetStyles,
+			...theme.text.dark.secondary,
+
+			display: 'inline',
 			fontSize: 14,
-			color: theme.text.dark.secondary,
-			overflow: 'hidden',
-			whiteSpace: 'nowrap',
 			textOverflow: 'ellipsis',
+			whiteSpace: 'nowrap',
 		},
 		textContainer: {
-			display: 'flex',
+			...resetStyles,
 			flexDirection: 'column',
-			overflow: 'hidden',
 		},
 		archive: {
-			outline: 0,
-			border: 'none',
-			backgroundColor: 'transparent',
-			padding: 0,
-			display: 'flex',
+			...resetStyles,
 			justifyContent: 'center',
 		},
 	};
