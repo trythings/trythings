@@ -83,6 +83,7 @@ class App extends React.Component {
 						{this.state.isAddTaskFormVisible ?
 							(
 								<AddTaskCard
+									autoFocus
 									viewer={this.props.viewer}
 									onCancelClick={this.onCancelClick}
 								/>

@@ -1,6 +1,6 @@
-import TextareaAutosize from 'react-textarea-autosize';
 import React from 'react';
 import Relay from 'react-relay';
+import TextareaAutosize from 'react-textarea-autosize';
 
 import Card from './Card.js';
 import FlatButton from './FlatButton.js';
@@ -75,13 +75,8 @@ class AddTaskCard extends React.Component {
 	};
 
 	state = {
-		tags: '',
 		title: '',
 		description: '',
-	};
-
-	onTagsChange = (event) => {
-		this.setState({ tags: event.target.value });
 	};
 
 	onTitleChange = (event) => {
@@ -95,13 +90,12 @@ class AddTaskCard extends React.Component {
 	onAddClick = () => {
 		Relay.Store.commitUpdate(
 			new AddTaskMutation({
-				title: `${this.state.tags} ${this.state.title}`,
+				title: `${this.state.title}`,
 				description: this.state.description || null,
 				viewer: this.props.viewer,
 			}),
 		);
 		this.setState({
-			tags: '',
 			title: '',
 			description: '',
 		});
@@ -144,9 +138,10 @@ class AddTaskCard extends React.Component {
 
 	render() {
 		return (
-			<Card autoFocus={this.props.autoFocus}>
+			<Card>
 				<header style={AddTaskCard.styles.header}>
 					<input
+						autoFocus={this.props.autoFocus}
 						placeholder="Title"
 						value={this.state.title}
 						onChange={this.onTitleChange}
