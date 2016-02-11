@@ -58,7 +58,7 @@ class ArchiveTaskMutation extends Relay.Mutation {
 	}
 }
 
-class Task extends React.Component {
+class TaskTile extends React.Component {
 	static propTypes = {
 		task: React.PropTypes.shape({
 			title: React.PropTypes.string.isRequired,
@@ -126,24 +126,28 @@ class Task extends React.Component {
 	};
 
 	renderText() {
-		const title = <span style={Task.styles.title}>{this.props.task.title}</span>;
-		const description = <span style={Task.styles.description}>{this.props.task.description}</span>;
+		const title = <span style={TaskTile.styles.title}>{this.props.task.title}</span>;
+		const description = (
+			<span style={TaskTile.styles.description}>
+				{this.props.task.description}
+			</span>
+		);
 		if (this.props.task.isArchived) {
-			return <del style={Task.styles.textContainer}>{title}{description}</del>;
+			return <del style={TaskTile.styles.textContainer}>{title}{description}</del>;
 		}
-		return <div style={Task.styles.textContainer}>{title}{description}</div>;
+		return <div style={TaskTile.styles.textContainer}>{title}{description}</div>;
 	}
 
 	render() {
 		return (
 			<li
-				style={Task.styles.tile}
+				style={TaskTile.styles.tile}
 				onMouseEnter={this.onMouseEnter}
 				onMouseLeave={this.onMouseLeave}
 			>
 				{this.renderText()}
 				{this.state.isHovering ?
-					<button style={Task.styles.archive} onClick={this.onArchiveClick}>
+					<button style={TaskTile.styles.archive} onClick={this.onArchiveClick}>
 						{this.props.task.isArchived ?
 							<Icon color={theme.text.dark.secondary.color} name="unarchive"/> :
 							<Icon color={theme.text.dark.secondary.color} name="archive"/>
@@ -156,7 +160,7 @@ class Task extends React.Component {
 	}
 }
 
-export default Relay.createContainer(Task, {
+export default Relay.createContainer(TaskTile, {
 	fragments: {
 		task: () => Relay.QL`
 			fragment on Task {

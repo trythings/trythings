@@ -3,13 +3,14 @@ import Relay from 'react-relay';
 
 import Card from './Card.js';
 import resetStyles from './resetStyles.js';
-import Task from './Task.js';
+import TaskTile from './TaskTile.js';
 import theme from './theme.js';
 
 class TaskList extends React.Component {
 	static propTypes = {
 		viewer: React.PropTypes.shape({
-			tasks: React.PropTypes.arrayOf(React.PropTypes.object).isRequired, // ...Task.propTypes.task
+			// ...TaskTile.propTypes.task
+			tasks: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
 		}).isRequired,
 	};
 
@@ -32,7 +33,7 @@ class TaskList extends React.Component {
 			<Card>
 				<ol style={TaskList.styles.list}>
 					{this.props.viewer.tasks.map((task, i, array) => {
-						const tile = <Task key={task.id} task={task}/>;
+						const tile = <TaskTile key={task.id} task={task}/>;
 						if (i === array.length - 1) {
 							return tile;
 						}
@@ -57,7 +58,7 @@ export default Relay.createContainer(TaskList, {
 			fragment on User {
 				tasks(query: $query) {
 					id,
-					${Task.getFragment('task')},
+					${TaskTile.getFragment('task')},
 				},
 			}
 		`,
