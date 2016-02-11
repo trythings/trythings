@@ -68,26 +68,15 @@ class TaskTile extends React.Component {
 	};
 
 	state = {
-		isHovering: false,
-		hasFocus: false,
-	};
-
-	onFocus = (event) => {
-		this.setState({ hasFocus: true });
-		event.stopPropagation();
-	};
-
-	onBlur = (event) => {
-		this.setState({ hasFocus: false });
-		event.stopPropagation();
+		isHovered: false,
 	};
 
 	onMouseEnter = () => {
-		this.setState({ isHovering: true });
+		this.setState({ isHovered: true });
 	};
 
 	onMouseLeave = () => {
-		this.setState({ isHovering: false });
+		this.setState({ isHovered: false });
 	};
 
 	onArchiveClick = () => {
@@ -101,6 +90,7 @@ class TaskTile extends React.Component {
 	static styles = {
 		tile: {
 			...resetStyles,
+
 			paddingLeft: 16,
 			paddingRight: 16,
 			height: 60,
@@ -136,16 +126,6 @@ class TaskTile extends React.Component {
 		},
 	};
 
-	tileStyle() {
-		if (this.state.hasFocus) {
-			return {
-				...TaskTile.styles.tile,
-				...theme.elevation[8],
-			};
-		}
-		return TaskTile.styles.tile;
-	}
-
 	renderText() {
 		const title = <span style={TaskTile.styles.title}>{this.props.task.title}</span>;
 		const description = (
@@ -161,16 +141,13 @@ class TaskTile extends React.Component {
 
 	render() {
 		return (
-			<li
-				style={this.tileStyle()}
+			<div
+				style={TaskTile.styles.tile}
 				onMouseEnter={this.onMouseEnter}
 				onMouseLeave={this.onMouseLeave}
-				onFocus={this.onFocus}
-				onBlur={this.onBlur}
-				tabIndex={-1}
 			>
 				{this.renderText()}
-				{this.state.isHovering ?
+				{this.state.isHovered ?
 					<button style={TaskTile.styles.archive} onClick={this.onArchiveClick}>
 						{this.props.task.isArchived ?
 							<Icon color={theme.text.dark.secondary.color} name="unarchive"/> :
@@ -179,7 +156,7 @@ class TaskTile extends React.Component {
 					</button> :
 					null
 				}
-			</li>
+			</div>
 		);
 	}
 }
