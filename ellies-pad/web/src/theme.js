@@ -58,6 +58,16 @@ const text = {
 
 export default {
 	colors,
+	elevation: {
+		6: {
+			boxShadow: [
+				'0 1px 18px 0 rgba(0, 0, 0, 0.12)', // Ambient.
+				'0 6px 10px 0 rgba(0, 0, 0, 0.14)', // Penumbra.
+				'0 3px 5px -1px rgba(0, 0, 0, 0.20)', // Umbra.
+			].join(','),
+			zIndex: 6,
+		},
+	},
 	fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
 	text,
 };
