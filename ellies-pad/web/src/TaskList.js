@@ -20,14 +20,17 @@ class TaskList extends React.Component {
 	};
 
 	onFocus = (event) => {
-		// event.currentTarget.focus();
 		this.setState({ focusedTaskId: event.currentTarget.dataset.taskid });
 		event.stopPropagation();
 	};
 
-	onBlur = () => {
-		this.setState({ focusedTaskId: null });
-		event.stopPropagation();
+	onBlur = (event) => {
+		const currentTarget = event.currentTarget;
+		setTimeout(() => {
+			if (!currentTarget.contains(document.activeElement)) {
+				this.setState({ focusedTaskId: null });
+			}
+		}, 0);
 	};
 
 	static styles = {
@@ -54,13 +57,12 @@ class TaskList extends React.Component {
 	render() {
 		return (
 			<Card>
-				<ol style={TaskList.styles.list}>
+				<ol style={TaskList.styles.list} onBlur={this.onBlur}>
 					{this.props.viewer.tasks.map((task, i, array) => (
 						<li
 							key={task.id}
 							data-taskid={task.id}
 							onFocus={this.onFocus}
-							onBlur={this.onBlur}
 							style={TaskList.styles.listItem}
 							tabIndex={-1}
 						>
