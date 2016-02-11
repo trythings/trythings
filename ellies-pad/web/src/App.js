@@ -4,6 +4,7 @@ import Relay from 'react-relay';
 import ActionButton from './ActionButton.js';
 import AddTaskCard from './AddTaskCard.js';
 import AppBar from './AppBar.js';
+import resetStyles from './resetStyles.js';
 import TaskSearch from './TaskSearch.js';
 import theme from './theme.js';
 
@@ -33,26 +34,32 @@ class App extends React.Component {
 
 	static styles = {
 		app: {
+			...resetStyles,
 			backgroundColor: theme.colors.canvas,
-			display: 'flex',
 			flex: 1,
 			flexDirection: 'column',
-			overflowX: 'hidden',
 		},
 		addTaskButton: {
+			...resetStyles,
+			overflow: 'visible',
 			position: 'absolute',
+
 			right: 24,
+			top: 24,
 		},
 		contentScroll: {
+			...resetStyles,
+			flexDirection: 'column',
 			overflow: 'scroll',
 		},
 		content: {
-			display: 'flex',
+			...resetStyles,
+			flex: '1 0',
 			flexDirection: 'column',
 			padding: 24,
-			minHeight: 'min-content',
 		},
 		contentSpacer: {
+			...resetStyles,
 			padding: 12,
 		},
 	};
@@ -61,8 +68,17 @@ class App extends React.Component {
 		return (
 			<div style={App.styles.app}>
 				<AppBar/>
-
 				<div style={App.styles.contentScroll}>
+
+					{!this.state.isAddTaskFormVisible ?
+						(
+							<div style={App.styles.addTaskButton}>
+								<ActionButton onClick={this.onPlusClick}/>
+							</div>
+						) :
+						null
+					}
+
 					<div style={App.styles.content}>
 
 						{this.state.isAddTaskFormVisible ?
@@ -72,11 +88,7 @@ class App extends React.Component {
 									onCancelClick={this.onCancelClick}
 								/>
 							) :
-							(
-								<div style={App.styles.addTaskButton}>
-									<ActionButton onClick={this.onPlusClick}/>
-								</div>
-							)
+							null
 						}
 
 						{this.state.isAddTaskFormVisible ?
