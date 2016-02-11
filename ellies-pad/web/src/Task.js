@@ -148,8 +148,8 @@ class Task extends React.Component {
 				{this.state.isHovering ?
 					<button style={Task.styles.archive} onClick={this.onArchiveClick}>
 						{this.props.task.isArchived ?
-							<Icon color={theme.text.dark.secondary} name="unarchive"/> :
-							<Icon color={theme.text.dark.secondary} name="archive"/>
+							<Icon color={theme.text.dark.secondary.color} name="unarchive"/> :
+							<Icon color={theme.text.dark.secondary.color} name="archive"/>
 						}
 					</button> :
 					null

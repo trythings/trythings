@@ -30,7 +30,7 @@ export default class ActionButton extends React.Component {
 	render() {
 		return (
 			<button onClick={this.props.onClick} style={ActionButton.styles.button}>
-				<Icon color={theme.text.light.primary} name="add"/>
+				<Icon color={theme.text.light.primary.color} name="add"/>
 			</button>
 		);
 	}
