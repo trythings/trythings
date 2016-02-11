@@ -138,7 +138,7 @@ class App extends React.Component {
 		},
 		addTaskButton: {
 			position: 'absolute',
-			right: 0,
+			right: 24,
 		},
 		content: {
 			display: 'flex',
@@ -175,18 +175,22 @@ class App extends React.Component {
 				<div style={App.styles.content}>
 
 					{this.state.isAddTaskFormVisible ?
-						[
+						(
 							<AddTaskCard
 								viewer={this.props.viewer}
 								onCancelClick={this.onCancelClick}
-							/>,
-							<div style={App.styles.contentSpacer}/>,
-						] :
+							/>
+						) :
 						(
 							<div style={App.styles.addTaskButton}>
 								<ActionButton onClick={this.onPlusClick}/>
 							</div>
 						)
+					}
+
+					{this.state.isAddTaskFormVisible ?
+						<div style={App.styles.contentSpacer}/> :
+						null
 					}
 
 					<TaskSearch name="#now" query="#now"/>
