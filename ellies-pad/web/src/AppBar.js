@@ -78,10 +78,7 @@ export default class AppBar extends React.Component {
 			...resetStyles,
 			...theme.text.light.primary,
 
-			// Title text.
 			fontSize: 20,
-			fontWeight: 600,
-			lineHeight: '44px',
 		},
 		migrateButton: {
 			...resetStyles,
