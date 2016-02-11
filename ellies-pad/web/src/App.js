@@ -114,12 +114,9 @@ class App extends React.Component {
 			zIndex: 4,
 
 			title: {
-				// Light primary text.
-				color: theme.text.light.color,
-				opacity: theme.text.light.opacity.primary,
+				...theme.text.light.primary,
 
 				// Title text.
-				fontFamily: 'Roboto, sans-serif',
 				fontSize: 20,
 				fontWeight: 600,
 				lineHeight: '44px',
@@ -168,7 +165,7 @@ class App extends React.Component {
 						onMouseEnter={this.onMigrateMouseEnter}
 						onMouseLeave={this.onMigrateMouseLeave}
 					>
-						<Icon color={theme.text.light.primary} name="update"/>
+						<Icon color={theme.text.light.primary.color} name="update"/>
 					</button>
 				</div>
 
