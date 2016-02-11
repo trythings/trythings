@@ -1,5 +1,3 @@
-import theme from './theme.js';
-
 const noInherit = {
 	// all: 'initial',
 
@@ -74,10 +72,10 @@ const defaults = {
 	paddingTop: 0,
 
 	position: 'relative',
+	resize: 'none',
 };
 
 export default {
 	...noInherit,
 	...defaults,
-	fontFamily: theme.fontFamily,
 };
