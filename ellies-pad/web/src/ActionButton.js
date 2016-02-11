@@ -1,6 +1,7 @@
 import React from 'react';
 
 import Icon from './Icon.js';
+import resetStyles from './resetStyles.js';
 import theme from './theme.js';
 
 export default class ActionButton extends React.Component {
@@ -9,13 +10,16 @@ export default class ActionButton extends React.Component {
 	};
 
 	static styles = {
+		container: {
+			...resetStyles,
+
+			padding: 24,
+		},
 		button: {
+			...resetStyles,
+
 			backgroundColor: theme.colors.accent,
 
-			border: 'none',
-			outline: 0,
-
-			display: 'flex',
 			alignItems: 'center',
 			justifyContent: 'center',
 
@@ -31,9 +35,6 @@ export default class ActionButton extends React.Component {
 				'0 3px 5px -1px rgba(0, 0, 0, 0.20)', // Umbra.
 			].join(','),
 			zIndex: 6,
-		},
-		container: {
-			padding: 24,
 		},
 	};
 
