@@ -66,6 +66,14 @@ const text = {
 export default {
 	colors,
 	elevation: {
+		2: {
+			boxShadow: [
+				'0 1px 5px 0 rgba(0, 0, 0, 0.12)', // Ambient.
+				'0 2px 2px 0 rgba(0, 0, 0, 0.14)', // Penumbra.
+				'0 3px 1px -2px rgba(0, 0, 0, 0.20)', // Umbra.
+			].join(','),
+			zIndex: 2,
+		},
 		6: {
 			boxShadow: [
 				'0 1px 18px 0 rgba(0, 0, 0, 0.12)', // Ambient.
