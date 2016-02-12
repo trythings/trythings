@@ -7,6 +7,64 @@ import FlatButton from './FlatButton.js';
 import resetStyles from './resetStyles.js';
 import theme from './theme.js';
 
+class EditTaskMutation extends Relay.Mutation {
+	static fragments = {
+		task: () => Relay.QL`
+			fragment on Task {
+				id,
+			}
+		`,
+	};
+
+	getMutation() {
+		return Relay.QL`
+			mutation {
+				editTask,
+			}
+		`;
+	}
+
+	getFatQuery() {
+		return Relay.QL`
+			fragment on EditTaskPayload {
+				task {
+					title,
+					description,
+					isArchived,
+				},
+			}
+		`;
+	}
+
+	getConfigs() {
+		return [{
+			type: 'FIELDS_CHANGE',
+			fieldIDs: {
+				task: this.props.task.id,
+			},
+		}];
+	}
+
+	getVariables() {
+		return {
+			id: this.props.task.id,
+			title: this.props.title,
+			description: this.props.description,
+			// isArchived: this.props.isArchived,
+		};
+	}
+
+	getOptimisticResponse() {
+		return {
+			task: {
+				id: this.props.task.id,
+				title: this.props.title,
+				description: this.props.description,
+			},
+		};
+	}
+}
+
 class TaskCard extends React.Component {
 	static propTypes = {
 		autoFocus: React.PropTypes.bool,
@@ -43,7 +101,13 @@ class TaskCard extends React.Component {
 	};
 
 	saveChanges = () => {
-		console.log('saved');
+		Relay.Store.commitUpdate(
+			new EditTaskMutation({
+				task: this.props.task,
+				title: this.state.title,
+				description: this.state.description,
+			}),
+		);
 	};
 
 	static styles = {
@@ -126,6 +190,7 @@ export default Relay.createContainer(TaskCard, {
 	fragments: {
 		task: () => Relay.QL`
 			fragment on Task {
+				${EditTaskMutation.getFragment('task')},
 				title,
 				description,
 				isArchived,

@@ -18,14 +18,14 @@ class ArchiveTaskMutation extends Relay.Mutation {
 	getMutation() {
 		return Relay.QL`
 			mutation {
-				archiveTask,
+				editTask,
 			}
 		`;
 	}
 
 	getFatQuery() {
 		return Relay.QL`
-			fragment on ArchiveTaskPayload {
+			fragment on EditTaskPayload {
 				task {
 					isArchived,
 				},
@@ -44,8 +44,8 @@ class ArchiveTaskMutation extends Relay.Mutation {
 
 	getVariables() {
 		return {
-			taskId: this.props.task.id,
-			newIsArchived: !this.props.task.isArchived,
+			id: this.props.task.id,
+			isArchived: !this.props.task.isArchived,
 		};
 	}
 

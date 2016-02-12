@@ -534,7 +534,7 @@ func init() {
 	})
 
 	editTaskMutation := relay.MutationWithClientMutationID(relay.MutationConfig{
-		Name: "editTask",
+		Name: "EditTask",
 		InputFields: graphql.InputObjectConfigFieldMap{
 			"id": &graphql.InputObjectFieldConfig{
 				Type: graphql.NewNonNull(graphql.ID),
