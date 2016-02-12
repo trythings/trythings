@@ -1,9 +1,9 @@
 import React from 'react';
 import Relay from 'react-relay';
 
-import AddTaskCard from './AddTaskCard.js';
 import Card from './Card.js';
 import resetStyles from './resetStyles.js';
+import TaskCard from './TaskCard.js';
 import TaskTile from './TaskTile.js';
 import theme from './theme.js';
 
@@ -11,6 +11,7 @@ class TaskList extends React.Component {
 	static propTypes = {
 		viewer: React.PropTypes.shape({
 			// ...TaskTile.propTypes.task
+			// ...TaskCard.propTypes.task
 			tasks: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
 		}).isRequired,
 	};
@@ -19,15 +20,23 @@ class TaskList extends React.Component {
 		focusedTaskId: null,
 	};
 
+	onTaskCardClose = () => {
+		this.setState({ focusedTaskId: null });
+	};
+
 	onFocus = (event) => {
 		this.setState({ focusedTaskId: event.currentTarget.dataset.taskid });
 		event.stopPropagation();
 	};
 
 	onBlur = (event) => {
-		if (!event.currentTarget.contains(event.relatedTarget)) {
-			this.setState({ focusedTaskId: null });
+		if (!event.currentTarget.contains(event.relatedTarget) && this.taskCard) {
+			this.taskCard.requestClose();
 		}
+	};
+
+	taskCardRef = (taskCard) => {
+		this.taskCard = taskCard && taskCard.refs.component;
 	};
 
 	static styles = {
@@ -40,7 +49,6 @@ class TaskList extends React.Component {
 		},
 		listItem: {
 			...resetStyles,
-			// backgroundColor: 'red',
 			flexDirection: 'column',
 			overflow: 'visible',
 		},
@@ -54,17 +62,25 @@ class TaskList extends React.Component {
 	render() {
 		return (
 			<Card>
-				<ol style={TaskList.styles.list} onBlur={this.onBlur}>
+				<ol style={TaskList.styles.list}>
 					{this.props.viewer.tasks.map((task, i, array) => (
 						<li
 							key={task.id}
 							data-taskid={task.id}
 							onFocus={this.onFocus}
+							onBlur={this.onBlur}
 							style={TaskList.styles.listItem}
 							tabIndex={-1}
 						>
 							{task.id === this.state.focusedTaskId
-								? <AddTaskCard autoFocus viewer={this.props.viewer}/>
+								? (
+										<TaskCard
+											autoFocus
+											onClose={this.onTaskCardClose}
+											ref={this.taskCardRef}
+											task={task}
+										/>
+									)
 								: <TaskTile task={task}/>
 							}
 							{i < array.length - 1
@@ -87,10 +103,10 @@ export default Relay.createContainer(TaskList, {
 	fragments: {
 		viewer: () => Relay.QL`
 			fragment on User {
-				${AddTaskCard.getFragment('viewer')},
 				tasks(query: $query) {
 					id,
 					${TaskTile.getFragment('task')},
+					${TaskCard.getFragment('task')},
 				},
 			}
 		`,
