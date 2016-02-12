@@ -89,10 +89,20 @@ class TaskCard extends React.Component {
 		this.setState({ description: event.target.value });
 	};
 
-	requestClose = () => {
-		const hasChanges = this.state.title !== this.props.task.title ||
+	onSaveClick = () => {
+		if (this.hasUnsavedChanges()) {
+			this.saveChanges();
+		}
+		this.props.onClose();
+	};
+
+	hasUnsavedChanges() {
+		return this.state.title !== this.props.task.title ||
 			this.state.description !== this.props.task.description;
-		if (hasChanges) {
+	}
+
+	requestClose = () => {
+		if (this.hasUnsavedChanges()) {
 			if (confirm('There are unsaved changes for this task. Would you like to save them?')) {
 				this.saveChanges();
 			}
@@ -139,10 +149,6 @@ class TaskCard extends React.Component {
 			paddingRight: 8,
 			paddingTop: 8,
 		},
-		actionSpacer: {
-			...resetStyles,
-			paddingLeft: 8,
-		},
 	};
 
 	render() {
@@ -168,16 +174,8 @@ class TaskCard extends React.Component {
 
 				<div style={TaskCard.styles.actionContainer}>
 					<FlatButton
-						color={theme.text.dark.primary.color}
-						onClick={this.requestClose}
-						label="Cancel"
-					/>
-
-					<div style={TaskCard.styles.actionSpacer}/>
-
-					<FlatButton
 						color={theme.colors.accentLight}
-						onClick={this.saveChanges}
+						onClick={this.onSaveClick}
 						label="Save"
 					/>
 				</div>
