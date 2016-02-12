@@ -47,6 +47,7 @@ export default class FlatButton extends React.Component {
 
 			borderRadius: 2,
 			height: 36,
+			justifyContent: 'center',
 			minWidth: 64,
 			paddingLeft: 8,
 			paddingRight: 8,
