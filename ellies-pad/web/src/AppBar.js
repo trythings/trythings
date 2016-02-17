@@ -64,12 +64,10 @@ export default class AppBar extends React.Component {
 			...resetStyles,
 			...theme.elevation[4],
 
+			alignItems: 'center',
 			backgroundColor: theme.colors.primary,
-
-			alignSelf: 'stretch',
-			justifyContent: 'space-between',
-
 			height: 56,
+			justifyContent: 'space-between',
 			minHeight: 56,
 			paddingLeft: 16,
 			paddingRight: 16,
@@ -78,13 +76,11 @@ export default class AppBar extends React.Component {
 			...resetStyles,
 			...theme.text.light.primary,
 
-			alignSelf: 'center',
 			fontSize: 20,
 		},
 		migrateButton: {
 			...resetStyles,
 
-			alignSelf: 'center',
 			borderRadius: '50%',
 
 			paddingBottom: 8,
