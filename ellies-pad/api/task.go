@@ -38,6 +38,26 @@ func version(timeStr string) time.Time {
 	return t
 }
 
+// reindexTasks adds all tasks from the datastore into the search index.
+var reindexTasks = func(ctx context.Context, ts *TaskService) error {
+	var tasks []*Task
+	_, err := datastore.NewQuery("Task").
+		Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
+		GetAll(ctx, &tasks)
+	if err != nil {
+		return err
+	}
+
+	for _, t := range tasks {
+		err = ts.Index(ctx, t)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 var migrations = []*Migration{
 	{
 		Version:     version("2016-02-03T18:52:00"),
@@ -70,24 +90,13 @@ var migrations = []*Migration{
 		Version:     version("2016-02-10T16:37:00"),
 		Author:      "annie, daniel",
 		Description: "Add tasks to search index.",
-		Run: func(ctx context.Context, ts *TaskService) error {
-			var tasks []*Task
-			_, err := datastore.NewQuery("Task").
-				Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
-				GetAll(ctx, &tasks)
-			if err != nil {
-				return err
-			}
-
-			for _, t := range tasks {
-				err = ts.Index(ctx, t)
-				if err != nil {
-					return err
-				}
-			}
-
-			return nil
-		},
+		Run:         reindexTasks,
+	},
+	{
+		Version:     version("2016-02-16T21:20:00"),
+		Author:      "annie, daniel",
+		Description: "Add task.IsArchived to search index.",
+		Run:         reindexTasks,
 	},
 }
 
@@ -205,9 +214,14 @@ func (t *Task) Load(fields []search.Field, meta *search.DocumentMetadata) error 
 }
 
 func (t *Task) Save() ([]search.Field, *search.DocumentMetadata, error) {
+	isArchived := search.Atom("false")
+	if t.IsArchived {
+		isArchived = search.Atom("true")
+	}
 	return []search.Field{
 		{Name: "Title", Value: t.Title},
 		{Name: "Description", Value: t.Description},
+		{Name: "IsArchived", Value: isArchived},
 	}, nil, nil
 }
 
