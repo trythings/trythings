@@ -71,10 +71,6 @@ class TaskTile extends React.Component {
 		isHovered: false,
 	};
 
-	shouldComponentUpdate() {
-		return false;
-	}
-
 	onMouseEnter = () => {
 		this.setState({ isHovered: true });
 	};
