@@ -42,7 +42,18 @@ export default class TaskSearch extends React.Component {
 			paddingBottom: 8,
 			paddingLeft: 16,
 		},
+		loading: {
+			...resetStyles,
+			...theme.text.dark.secondary,
+
+			alignSelf: 'center',
+			fontSize: 14,
+		},
 	};
+
+	renderLoading = () => (
+		<span style={TaskSearch.styles.loading}>Loading...</span>
+	);
 
 	render() {
 		return (
@@ -51,6 +62,7 @@ export default class TaskSearch extends React.Component {
 				<Relay.RootContainer
 					Component={TaskList}
 					route={new TaskSearchRoute({ query: this.props.query })}
+					renderLoading={this.renderLoading}
 				/>
 			</div>
 		);
