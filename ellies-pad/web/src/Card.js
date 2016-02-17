@@ -31,6 +31,7 @@ export default class Card extends React.Component {
 		card: {
 			...resetStyles,
 
+			alignItems: 'stretch',
 			borderRadius: 2,
 			backgroundColor: theme.colors.card,
 			flexDirection: 'column',
