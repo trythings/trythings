@@ -330,6 +330,8 @@ func (s *TaskService) Search(ctx context.Context, query string) ([]*Task, error)
 		}
 
 		// TODO Use GetMulti.
+		// FIXME Deleted tasks may still show up in the search index,
+		// so we should just not return them.
 		t, err := s.Get(ctx, id)
 		if err != nil {
 			return nil, err
