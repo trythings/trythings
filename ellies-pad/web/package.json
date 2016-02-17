@@ -7,7 +7,7 @@
   "license": "private",
   "scripts": {
     "lint": "eslint src",
-    "localhost": "env NODE_ENV=localhost webpack-dev-server --content-base static --history-api-fallback --inline --output-public-path http://localhost:3000/static/ --port 3000",
+    "localhost": "env NODE_ENV=localhost webpack-dev-server --content-base static --history-api-fallback --host 0.0.0.0 --inline --output-public-path http://localhost:3000/static/ --port 3000",
     "production": "env NODE_ENV=production webpack --bail",
     "test": "npm run lint"
   },
@@ -31,6 +31,7 @@
     "eslint-config-airbnb": "^4.0.0",
     "eslint-loader": "^1.2.1",
     "eslint-plugin-react": "^3.16.1",
+    "react-addons-perf": "^0.14.6",
     "style-loader": "^0.13.0",
     "webpack": "^2.0.5-beta",
     "webpack-dev-server": "^1.14.1"
@@ -40,6 +41,7 @@
     "normalize.css": "^3.0.3",
     "react": "^0.14.6",
     "react-dom": "^0.14.6",
+    "react-fastclick": "^2.0.0",
     "react-relay": "^0.6.1",
     "react-textarea-autosize": "^3.3.0"
   },
