@@ -87,6 +87,10 @@ class TaskTile extends React.Component {
 		);
 	};
 
+	onArchiveFocus = (event) => {
+		event.stopPropagation();
+	};
+
 	static styles = {
 		tile: {
 			...resetStyles,
@@ -149,7 +153,11 @@ class TaskTile extends React.Component {
 			>
 				{this.renderText()}
 				{this.state.isHovered ?
-					<button style={TaskTile.styles.archive} onClick={this.onArchiveClick}>
+					<button
+						style={TaskTile.styles.archive}
+						onClick={this.onArchiveClick}
+						onFocus={this.onArchiveFocus}
+					>
 						{this.props.task.isArchived ?
 							<Icon color={theme.text.dark.secondary.color} name="unarchive"/> :
 							<Icon color={theme.text.dark.secondary.color} name="archive"/>
