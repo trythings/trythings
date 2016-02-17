@@ -12,7 +12,6 @@ class AddTaskMutation extends Relay.Mutation {
 		viewer: () => Relay.QL`
 			fragment on User {
 				id,
-				tasks,
 			}
 		`,
 	};
