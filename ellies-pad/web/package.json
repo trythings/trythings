@@ -41,7 +41,6 @@
     "normalize.css": "^3.0.3",
     "react": "^0.14.6",
     "react-dom": "^0.14.6",
-    "react-fastclick": "^2.0.0",
     "react-relay": "^0.6.1",
     "react-textarea-autosize": "^3.3.0"
   },
