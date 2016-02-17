@@ -42,7 +42,9 @@ class App extends React.Component {
 		},
 		container: {
 			...resetStyles,
+			alignSelf: 'stretch',
 			flex: '1 1 auto',
+			flexDirection: 'column',
 		},
 		addTaskButton: {
 			...resetStyles,
@@ -54,6 +56,7 @@ class App extends React.Component {
 		},
 		content: {
 			...resetStyles,
+			alignSelf: 'stretch',
 			flex: '1 1 auto',
 			flexDirection: 'column',
 			padding: 24,
