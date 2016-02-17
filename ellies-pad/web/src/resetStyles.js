@@ -46,8 +46,6 @@ const noInherit = {
 
 const defaults = {
 	alignItems: 'flex-start',
-	// alignItems cannot be used by flex containers.
-	alignSelf: 'flex-start',
 	backgroundColor: 'transparent',
 
 	// border* can actually be broken down further.
@@ -57,7 +55,7 @@ const defaults = {
 	borderTop: 'none',
 
 	boxSizing: 'border-box',
-	display: 'flex',
+	// display: 'flex',
 	flex: '0 0 auto',
 
 	marginBottom: 0,

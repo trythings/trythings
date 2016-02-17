@@ -14,16 +14,14 @@ export default class ActionButton extends React.Component {
 			...resetStyles,
 			...theme.elevation[6],
 
-			backgroundColor: theme.colors.accent,
-
 			alignItems: 'center',
+			display: 'flex',
 			justifyContent: 'center',
 
-			minWidth: 56,
-			width: 56,
-			minHeight: 56,
-			height: 56,
+			backgroundColor: theme.colors.accent,
 			borderRadius: '50%',
+			height: 56,
+			width: 56,
 		},
 	};
 
