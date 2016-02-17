@@ -96,17 +96,19 @@ class App extends React.Component {
 							null
 						}
 
-						<TaskSearch name="#now" query="#now"/>
+						<TaskSearch name="#now" query="#now AND IsArchived: false"/>
 						<div style={App.styles.contentSpacer}/>
 
-						<TaskSearch name="Incoming" query="NOT #now AND NOT #next AND NOT #later"/>
+						<TaskSearch name="Incoming" query="NOT #now AND NOT #next AND NOT #later AND IsArchived: false"/>
 						<div style={App.styles.contentSpacer}/>
 
-						<TaskSearch name="#next" query="#next AND NOT #now"/>
+						<TaskSearch name="#next" query="#next AND NOT #now AND IsArchived: false"/>
 						<div style={App.styles.contentSpacer}/>
 
-						<TaskSearch name="#later" query="#later AND NOT #next AND NOT #now"/>
+						<TaskSearch name="#later" query="#later AND NOT #next AND NOT #now AND IsArchived: false"/>
 						<div style={App.styles.contentSpacer}/>
+
+						<TaskSearch name="Archived" query="IsArchived: true"/>
 					</div>
 				</div>
 			</div>
