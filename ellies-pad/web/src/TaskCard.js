@@ -123,6 +123,7 @@ class TaskCard extends React.Component {
 	static styles = {
 		header: {
 			...resetStyles,
+			alignItems: 'stretch',
 			flexDirection: 'column',
 			padding: 16,
 		},
