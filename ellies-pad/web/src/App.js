@@ -35,6 +35,7 @@ class App extends React.Component {
 	static styles = {
 		app: {
 			...resetStyles,
+			alignItems: 'stretch',
 			backgroundColor: theme.colors.canvas,
 			flexDirection: 'column',
 			height: '100%',
@@ -42,7 +43,7 @@ class App extends React.Component {
 		},
 		container: {
 			...resetStyles,
-			alignSelf: 'stretch',
+			alignItems: 'stretch',
 			flex: '1 1 auto',
 			flexDirection: 'column',
 		},
@@ -56,7 +57,7 @@ class App extends React.Component {
 		},
 		content: {
 			...resetStyles,
-			alignSelf: 'stretch',
+			alignItems: 'stretch',
 			flex: '1 1 auto',
 			flexDirection: 'column',
 			padding: 24,
