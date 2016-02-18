@@ -31,6 +31,7 @@ export default class TaskSearch extends React.Component {
 		container: {
 			...resetStyles,
 
+			alignItems: 'stretch',
 			flexDirection: 'column',
 			overflow: 'visible',
 		},
@@ -52,7 +53,9 @@ export default class TaskSearch extends React.Component {
 	};
 
 	renderLoading = () => (
-		<span style={TaskSearch.styles.loading}>Loading...</span>
+		<div style={TaskSearch.styles.container}>
+			<span style={TaskSearch.styles.loading}>Loading...</span>
+		</div>
 	);
 
 	render() {

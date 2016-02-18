@@ -7,6 +7,7 @@ export default class Card extends React.Component {
 	static propTypes = {
 		autoFocus: React.PropTypes.bool,
 		children: React.PropTypes.node,
+		flex: React.PropTypes.string,
 	};
 
 	state = {
@@ -34,25 +35,35 @@ export default class Card extends React.Component {
 			alignItems: 'stretch',
 			borderRadius: 2,
 			backgroundColor: theme.colors.card,
-			flex: '1 0 auto',
 			flexDirection: 'column',
 			overflow: 'visible',
 		},
 	};
 
 	cardStyle() {
+		let style = Card.styles.card;
 		if (this.state.hasFocus) {
-			return {
-				...Card.styles.card,
+			style = {
+				...style,
 				...theme.elevation[8],
 				marginLeft: -8,
 				marginRight: -8,
 			};
+		} else {
+			style = {
+				...style,
+				...theme.elevation[2],
+			};
 		}
-		return {
-			...Card.styles.card,
-			...theme.elevation[2],
-		};
+
+		if (this.props.flex) {
+			style = {
+				...style,
+				flex: this.props.flex,
+			};
+		}
+
+		return style;
 	}
 
 	render() {

@@ -68,6 +68,7 @@ class EditTaskMutation extends Relay.Mutation {
 class TaskCard extends React.Component {
 	static propTypes = {
 		autoFocus: React.PropTypes.bool,
+		flex: React.PropTypes.string,
 		task: React.PropTypes.shape({
 			title: React.PropTypes.string.isRequired,
 			description: React.PropTypes.string,
@@ -154,7 +155,7 @@ class TaskCard extends React.Component {
 
 	render() {
 		return (
-			<Card autoFocus={this.props.autoFocus}>
+			<Card autoFocus={this.props.autoFocus} flex={this.props.flex}>
 				<header style={TaskCard.styles.header}>
 					<input
 						placeholder="Title"

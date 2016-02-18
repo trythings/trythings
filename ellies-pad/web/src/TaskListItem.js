@@ -40,38 +40,34 @@ class TaskListItem extends React.Component {
 	};
 
 	static styles = {
-		listItem: {
+		item: {
 			...resetStyles,
-			flexDirection: 'column',
+			maxWidth: '100%',
 			overflow: 'visible',
 		},
 	};
 
 	render() {
 		return (
-			<li
+			<div
 				onFocus={this.onFocus}
 				onBlur={this.onBlur}
-				style={TaskListItem.styles.listItem}
+				style={TaskListItem.styles.item}
 				tabIndex={-1}
 			>
 				{this.state.isFocused
 					? (
 							<TaskCard
 								autoFocus
+								flex="1 0 auto"
 								onClose={this.close}
 								ref={this.taskCardRef}
 								task={this.props.task}
 							/>
 						)
-					: <TaskTile task={this.props.task}/>
+					: <TaskTile flex="1 1 auto" task={this.props.task}/>
 				}
-				{
-					// i < array.length - 1
-					// ? <hr style={TaskList.styles.divider}/>
-					// : null
-				}
-			</li>
+			</div>
 		);
 	}
 }

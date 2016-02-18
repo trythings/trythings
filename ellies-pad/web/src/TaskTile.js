@@ -60,6 +60,7 @@ class ArchiveTaskMutation extends Relay.Mutation {
 
 class TaskTile extends React.Component {
 	static propTypes = {
+		flex: React.PropTypes.string,
 		task: React.PropTypes.shape({
 			title: React.PropTypes.string.isRequired,
 			description: React.PropTypes.string,
@@ -101,11 +102,17 @@ class TaskTile extends React.Component {
 			alignItems: 'center',
 			justifyContent: 'space-between',
 		},
+		textContainer: {
+			...resetStyles,
+			alignItems: 'stretch',
+			flex: '0 1 auto',
+			flexDirection: 'column',
+		},
 		title: {
 			...resetStyles,
 			...theme.text.dark.primary,
 
-			display: 'inline',
+			display: 'block',
 			fontSize: 16,
 			textOverflow: 'ellipsis',
 			whiteSpace: 'nowrap',
@@ -114,21 +121,27 @@ class TaskTile extends React.Component {
 			...resetStyles,
 			...theme.text.dark.secondary,
 
-			display: 'inline',
+			display: 'block',
 			fontSize: 14,
 			textOverflow: 'ellipsis',
 			whiteSpace: 'nowrap',
-		},
-		textContainer: {
-			...resetStyles,
-			flex: '0 1 auto',
-			flexDirection: 'column',
 		},
 		archive: {
 			...resetStyles,
 			justifyContent: 'center',
 		},
 	};
+
+	style() {
+		let style = TaskTile.styles.tile;
+		if (this.props.flex) {
+			style = {
+				...style,
+				flex: this.props.flex,
+			};
+		}
+		return style;
+	}
 
 	renderText() {
 		const title = <span style={TaskTile.styles.title}>{this.props.task.title}</span>;
@@ -146,7 +159,7 @@ class TaskTile extends React.Component {
 	render() {
 		return (
 			<div
-				style={TaskTile.styles.tile}
+				style={this.style()}
 				onMouseEnter={this.onMouseEnter}
 				onMouseLeave={this.onMouseLeave}
 				tabIndex={-1}

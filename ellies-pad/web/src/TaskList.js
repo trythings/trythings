@@ -21,9 +21,16 @@ class TaskList extends React.Component {
 	static styles = {
 		list: {
 			...resetStyles,
+			alignItems: 'stretch',
 			flexDirection: 'column',
 			paddingTop: 4,
 			paddingBottom: 4,
+			overflow: 'visible',
+		},
+		listItem: {
+			...resetStyles,
+			alignItems: 'stretch',
+			flexDirection: 'column',
 			overflow: 'visible',
 		},
 		divider: {
@@ -37,11 +44,14 @@ class TaskList extends React.Component {
 		return (
 			<Card>
 				<ol style={TaskList.styles.list} onFocus={this.onFocus} tabIndex={-1}>
-					{this.props.viewer.tasks.map(task => (
-						<TaskListItem
-							key={task.id}
-							task={task}
-						/>
+					{this.props.viewer.tasks.map((task, i, array) => (
+						<li key={task.id} style={TaskList.styles.listItem}>
+							<TaskListItem task={task}/>
+							{i < array.length - 1
+								? <hr style={TaskList.styles.divider}/>
+								: null
+							}
+						</li>
 					))}
 				</ol>
 			</Card>
