@@ -14,8 +14,10 @@ export default class Card extends React.Component {
 		hasFocus: false,
 	};
 
-	onBlur = () => {
-		this.setState({ hasFocus: false });
+	onBlur = (event) => {
+		if (event.relatedTarget  && !event.currentTarget.contains(event.relatedTarget)) {
+			this.setState({ hasFocus: false });
+		}
 	};
 
 	onFocus = () => {

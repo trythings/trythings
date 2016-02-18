@@ -29,8 +29,10 @@ export default class FlatButton extends React.Component {
 		this.setState({ isFocused: true });
 	};
 
-	onBlur = () => {
-		this.setState({ isFocused: false, isActive: false });
+	onBlur = (event) => {
+		if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) {
+			this.setState({ isFocused: false, isActive: false });
+		}
 	};
 
 	onMouseDown = () => {

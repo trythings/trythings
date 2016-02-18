@@ -26,7 +26,7 @@ class TaskListItem extends React.Component {
 	};
 
 	onBlur = (event) => {
-		if (!event.currentTarget.contains(event.relatedTarget) && this.taskCard) {
+		if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) {
 			this.taskCard.requestClose();
 		}
 	};

@@ -71,7 +71,7 @@ class App extends React.Component {
 
 	render() {
 		return (
-			<div style={App.styles.app}>
+			<div style={App.styles.app} tabIndex={-1}>
 				<AppBar/>
 
 				<div style={App.styles.container}>
