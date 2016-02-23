@@ -105,6 +105,21 @@ class App extends React.Component {
 							null
 						}
 
+						{this.state.searchQuery ?
+							(
+								<TaskSearch
+									name="Search results"
+									query={this.state.searchQuery}
+								/>
+							) :
+							null
+						}
+
+						{this.state.searchQuery ?
+							<div style={App.styles.contentSpacer}/> :
+							null
+						}
+
 						<TaskSearch
 							name="#now"
 							query="#now AND IsArchived: false"
