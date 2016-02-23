@@ -3,6 +3,7 @@ import Relay from 'react-relay';
 
 import Icon from './Icon.js';
 import resetStyles from './resetStyles.js';
+import SearchField from './SearchField.js';
 import theme from './theme.js';
 
 // TODO: This is a temporary solution to enable us to run all of our migrations.
@@ -94,6 +95,8 @@ export default class AppBar extends React.Component {
 		return (
 			<div style={AppBar.styles.appBar}>
 				<span style={AppBar.styles.title}>Ellie's Pad</span>
+
+				<SearchField/>
 
 				<button
 					style={{
