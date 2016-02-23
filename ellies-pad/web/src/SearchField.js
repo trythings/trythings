@@ -1,22 +1,27 @@
-import _debounce from 'lodash/debounce';
 import React from 'react';
 
 import Icon from './Icon.js';
 
 export default class SearchField extends React.Component {
-	state = {
-		query: '',
+	static propTypes = {
+		initialQuery: React.PropTypes.string,
+		onQueryChange: React.PropTypes.func,
 	};
+
+	constructor(props, ...args) {
+		super(props, ...args);
+		this.state = {
+			query: props.initialQuery || '',
+		};
+	}
 
 	onChange = (event) => {
 		const query = event.target.value;
 		this.setState({ query });
-		this.sendQuery(query);
+		if (this.props.onQueryChange) {
+			this.props.onQueryChange(query);
+		}
 	};
-
-	sendQuery = _debounce((query) => {
-		console.log(query);
-	}, 200);
 
 	render() {
 		return (

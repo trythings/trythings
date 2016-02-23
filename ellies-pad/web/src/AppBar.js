@@ -42,6 +42,11 @@ class MigrateMutation extends Relay.Mutation {
 }
 
 export default class AppBar extends React.Component {
+	static propTypes = {
+		initialSearchQuery: React.PropTypes.string,
+		onSearchQueryChange: React.PropTypes.func,
+	};
+
 	state = {
 		isMigrateHovering: false,
 	};
@@ -96,7 +101,10 @@ export default class AppBar extends React.Component {
 			<div style={AppBar.styles.appBar}>
 				<span style={AppBar.styles.title}>Ellie's Pad</span>
 
-				<SearchField/>
+				<SearchField
+					initialQuery={this.props.initialSearchQuery}
+					onQueryChange={this.props.onSearchQueryChange}
+				/>
 
 				<button
 					style={{

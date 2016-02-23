@@ -1,3 +1,4 @@
+import _debounce from 'lodash/debounce';
 import React from 'react';
 import Relay from 'react-relay';
 
@@ -17,10 +18,7 @@ class App extends React.Component {
 	};
 
 	state = {
-		tags: '',
-		title: '',
-		description: '',
-
+		searchQuery: '',
 		isAddTaskFormVisible: true,
 	};
 
@@ -31,6 +29,10 @@ class App extends React.Component {
 	onPlusClick = () => {
 		this.setState({ isAddTaskFormVisible: true });
 	};
+
+	onSearchQueryChange = _debounce((query) => {
+		this.setState({ searchQuery: query });
+	}, 200);
 
 	static styles = {
 		app: {
@@ -72,7 +74,10 @@ class App extends React.Component {
 	render() {
 		return (
 			<div style={App.styles.app} tabIndex={-1}>
-				<AppBar/>
+				<AppBar
+					initialSearchQuery={this.state.searchQuery}
+					onSearchQueryChange={this.onSearchQueryChange}
+				/>
 
 				<div style={App.styles.container}>
 					{!this.state.isAddTaskFormVisible ?
