@@ -38,9 +38,26 @@ class TaskList extends React.Component {
 			height: 1,
 			backgroundColor: theme.text.dark.dividers.color,
 		},
+		empty: {
+			...resetStyles,
+			...theme.text.dark.secondary,
+
+			alignSelf: 'center',
+			fontSize: 14,
+		},
 	};
 
+	renderEmpty() {
+		return (
+			<span style={TaskList.styles.empty}>No results</span>
+		);
+	}
+
 	render() {
+		if (!this.props.viewer.tasks.length) {
+			return this.renderEmpty();
+		}
+
 		return (
 			<Card>
 				<ol style={TaskList.styles.list} onFocus={this.onFocus} tabIndex={-1}>
