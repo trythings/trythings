@@ -13,6 +13,7 @@ import (
 	"google.golang.org/appengine/delay"
 	"google.golang.org/appengine/log"
 	"google.golang.org/appengine/search"
+	"google.golang.org/appengine/user"
 )
 
 // Migration represents a batch update to existing entities in the datastore.
@@ -179,24 +180,62 @@ func (s *MigrationService) RunAll(ctx context.Context) error {
 }
 
 type User struct {
-	ID string `json:"id"`
+	ID        string    `json:"id"`
+	CreatedAt time.Time `json:"createdAt"`
+	GoogleID  string    `json:"-"`
+	Email     string    `json:"email"`
+	Name      string    `json:"name"`
 }
 
 type UserService struct {
 	user *User
 }
 
-func NewUserService(user *User) *UserService {
-	return &UserService{
-		user: user,
-	}
+func NewUserService() *UserService {
+	return &UserService{}
 }
 
-func (s *UserService) Get(ctx context.Context, id string) (*User, error) {
-	if id != s.user.ID {
-		return nil, fmt.Errorf("could not find user with id %q", id)
+func (s *UserService) ByGoogleID(ctx context.Context, googleID string) (*User, error) {
+	var us []*User
+	_, err := datastore.NewQuery("User").
+		Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
+		Filter("GoogleID =", googleID).
+		Limit(1).
+		GetAll(ctx, &us)
+	if err != nil {
+		return nil, err
 	}
-	return s.user, nil
+
+	if len(us) == 0 {
+		return nil, errors.New("user not found")
+	}
+
+	return us[0], nil
+}
+
+func (s *UserService) Create(ctx context.Context, u *User) error {
+	if u.ID != "" {
+		return fmt.Errorf("u already has id %q", u.ID)
+	}
+
+	if u.CreatedAt.IsZero() {
+		u.CreatedAt = time.Now()
+	}
+
+	id, _, err := datastore.AllocateIDs(ctx, "User", nil, 1)
+	if err != nil {
+		return err
+	}
+	u.ID = fmt.Sprintf("%x", id)
+
+	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
+	k := datastore.NewKey(ctx, "User", u.ID, 0, rootKey)
+	k, err = datastore.Put(ctx, k, u)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Task represents a particular action or piece of work to be completed.
@@ -381,9 +420,7 @@ func init() {
 
 	ms := NewMigrationService(ts)
 
-	us := NewUserService(&User{
-		ID: "ellie",
-	})
+	us := NewUserService()
 
 	nodeDefinitions = relay.NewNodeDefinitions(relay.NodeDefinitionsConfig{
 		IDFetcher: func(ctx context.Context, id string, info graphql.ResolveInfo) (interface{}, error) {
@@ -398,7 +435,7 @@ func init() {
 			case "Task":
 				return ts.Get(ctx, resolvedID.ID)
 			case "User":
-				return us.Get(ctx, resolvedID.ID)
+				return nil, errors.New("not implemented")
 			}
 			return nil, fmt.Errorf("unknown type %q", resolvedID.Type)
 		},
@@ -445,6 +482,10 @@ func init() {
 		Description: "User represents a person who can interact with the app.",
 		Fields: graphql.Fields{
 			"id": relay.GlobalIDField("User", nil),
+			"email": &graphql.Field{
+				Description: "The user's email primary address",
+				Type:        graphql.String,
+			},
 			"tasks": &graphql.Field{
 				Args: graphql.FieldConfigArgument{
 					"query": &graphql.ArgumentConfig{
@@ -477,7 +518,17 @@ func init() {
 				Description: "viewer is the person currently interacting with the app.",
 				Type:        userType,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					return us.Get(p.Context, "ellie")
+					gu := user.Current(p.Context)
+					log.Infof(p.Context, "%#v", gu)
+					// err := us.Create(p.Context, &User{
+					// 	GoogleID: gu.ID,
+					// 	Email:    gu.Email,
+					// 	Name:     gu.String(),
+					// })
+					// if err != nil {
+					// 	return nil, err
+					// }
+					return us.ByGoogleID(p.Context, gu.ID)
 				},
 			},
 		},
@@ -510,12 +561,6 @@ func init() {
 						return nil, err
 					}
 					return t, nil
-				},
-			},
-			"viewer": &graphql.Field{
-				Type: userType,
-				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					return us.Get(p.Context, "ellie")
 				},
 			},
 		},
