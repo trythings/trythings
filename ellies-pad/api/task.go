@@ -23,7 +23,7 @@ type Migration struct {
 	Author      string
 	Description string
 	RunAt       time.Time
-	Run         func(ctx context.Context, ts *TaskService) error `datastore:"-"`
+	Run         func(ctx context.Context, ss *SpaceService, ts *TaskService) error `datastore:"-"`
 }
 
 func version(timeStr string) time.Time {
@@ -40,7 +40,7 @@ func version(timeStr string) time.Time {
 }
 
 // reindexTasks adds all tasks from the datastore into the search index.
-var reindexTasks = func(ctx context.Context, ts *TaskService) error {
+var reindexTasks = func(ctx context.Context, ss *SpaceService, ts *TaskService) error {
 	var tasks []*Task
 	_, err := datastore.NewQuery("Task").
 		Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
@@ -64,7 +64,7 @@ var migrations = []*Migration{
 		Version:     version("2016-02-03T18:52:00"),
 		Author:      "annie",
 		Description: "Add createdAt time to existing tasks, defaulting to now.",
-		Run: func(ctx context.Context, ts *TaskService) error {
+		Run: func(ctx context.Context, ss *SpaceService, ts *TaskService) error {
 			// TODO#Perf: Consider using a cursor and/or a batch update.
 			var tasks []*Task
 			_, err := datastore.NewQuery("Task").
@@ -99,14 +99,61 @@ var migrations = []*Migration{
 		Description: "Add task.IsArchived to search index.",
 		Run:         reindexTasks,
 	},
+	{
+		Version:     version("2016-02-27T19:20:00"),
+		Author:      "annie, daniel",
+		Description: "Add Annie and Daniel's space.",
+		Run: func(ctx context.Context, ss *SpaceService, ts *TaskService) error {
+			numSpaces, err := datastore.NewQuery("Space").
+				Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
+				Count(ctx)
+			if err != nil {
+				return err
+			}
+
+			if numSpaces != 0 {
+				return nil
+			}
+
+			s := &Space{
+				Name: "Annie and Daniel",
+			}
+			err = ss.Create(ctx, s)
+			if err != nil {
+				return err
+			}
+
+			var tasks []*Task
+			_, err = datastore.NewQuery("Task").
+				Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
+				GetAll(ctx, &tasks)
+			if err != nil {
+				return err
+			}
+
+			for _, t := range tasks {
+				if t.SpaceID == "" {
+					t.SpaceID = s.ID
+					err = ts.Update(ctx, t)
+					if err != nil {
+						return err
+					}
+				}
+			}
+
+			return nil
+		},
+	},
 }
 
 type MigrationService struct {
+	ss *SpaceService
 	ts *TaskService
 }
 
-func NewMigrationService(ts *TaskService) *MigrationService {
+func NewMigrationService(ss *SpaceService, ts *TaskService) *MigrationService {
 	return &MigrationService{
+		ss: ss,
 		ts: ts,
 	}
 }
@@ -146,7 +193,7 @@ func (s *MigrationService) run(ctx context.Context, m *Migration) error {
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
 	k := datastore.NewIncompleteKey(ctx, "Migration", rootKey)
 
-	err := m.Run(ctx, s.ts)
+	err := m.Run(ctx, s.ss, s.ts)
 	if err != nil {
 		return err
 	}
@@ -245,6 +292,7 @@ type Task struct {
 	Title       string    `json:"title"`
 	Description string    `json:"description" datastore:",noindex"`
 	IsArchived  bool      `json:"isArchived"`
+	SpaceID     string    `json:"spaceId"`
 }
 
 func (t *Task) Load(fields []search.Field, meta *search.DocumentMetadata) error {
@@ -408,6 +456,44 @@ func (s *TaskService) Index(ctx context.Context, t *Task) error {
 	return nil
 }
 
+type Space struct {
+	ID        string    `json:"id"`
+	CreatedAt time.Time `json:"createdAt"`
+	Name      string    `json:"name"`
+}
+
+type SpaceService struct {
+}
+
+func NewSpaceService() *SpaceService {
+	return &SpaceService{}
+}
+
+func (ss *SpaceService) Create(ctx context.Context, s *Space) error {
+	if s.ID != "" {
+		return fmt.Errorf("s already has id %q", s.ID)
+	}
+
+	if s.CreatedAt.IsZero() {
+		s.CreatedAt = time.Now()
+	}
+
+	id, _, err := datastore.AllocateIDs(ctx, "Space", nil, 1)
+	if err != nil {
+		return err
+	}
+	s.ID = fmt.Sprintf("%x", id)
+
+	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
+	k := datastore.NewKey(ctx, "Space", s.ID, 0, rootKey)
+	k, err = datastore.Put(ctx, k, s)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 var taskType *graphql.Object
 var userType *graphql.Object
 
@@ -416,9 +502,11 @@ var nodeDefinitions *relay.NodeDefinitions
 var Schema graphql.Schema
 
 func init() {
+
+	ss := NewSpaceService()
 	ts := NewTaskService()
 
-	ms := NewMigrationService(ts)
+	ms := NewMigrationService(ss, ts)
 
 	us := NewUserService()
 
@@ -519,7 +607,6 @@ func init() {
 				Type:        userType,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					gu := user.Current(p.Context)
-					log.Infof(p.Context, "%#v", gu)
 					// err := us.Create(p.Context, &User{
 					// 	GoogleID: gu.ID,
 					// 	Email:    gu.Email,
