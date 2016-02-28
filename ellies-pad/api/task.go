@@ -207,6 +207,14 @@ func (s *MigrationService) run(ctx context.Context, m *Migration) error {
 }
 
 func (s *MigrationService) RunAll(ctx context.Context) error {
+	su, err := isSuperuser(ctx)
+	if err != nil {
+		return err
+	}
+	if !su {
+		return errors.New("must run migrations as superuser")
+	}
+
 	latest, err := s.latestVersion(ctx)
 	if err != nil {
 		return err
@@ -241,25 +249,9 @@ func NewUserService() *UserService {
 	return &UserService{}
 }
 
-func (s *UserService) byGoogleID(ctx context.Context, googleID string) (*User, error) {
-	var us []*User
-	_, err := datastore.NewQuery("User").
-		Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
-		Filter("GoogleID =", googleID).
-		Limit(1).
-		GetAll(ctx, &us)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(us) == 0 {
-		return nil, errors.New("user not found")
-	}
-
-	return us[0], nil
-}
-
 func (s *UserService) Create(ctx context.Context, u *User) error {
+	// TODO Make sure u.GoogleID == user.Current(ctx).ID
+
 	if u.ID != "" {
 		return fmt.Errorf("u already has id %q", u.ID)
 	}
@@ -284,6 +276,26 @@ func (s *UserService) Create(ctx context.Context, u *User) error {
 	return nil
 }
 
+func (s *UserService) byGoogleID(ctx context.Context, googleID string) (*User, error) {
+	var us []*User
+	_, err := datastore.NewQuery("User").
+		Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
+		Filter("GoogleID =", googleID).
+		Limit(1).
+		GetAll(ctx, &us)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(us) == 0 {
+		return nil, errors.New("user not found")
+	}
+
+	return us[0], nil
+}
+
+// FromContext should not be subject to access control,
+// because it would create a circular dependency.
 func (s *UserService) FromContext(ctx context.Context) (*User, error) {
 	gu := user.Current(ctx)
 	return s.byGoogleID(ctx, gu.ID)
@@ -327,6 +339,7 @@ func NewTaskService(spaces *SpaceService) *TaskService {
 }
 
 func (s *TaskService) IsVisible(ctx context.Context, t *Task) (bool, error) {
+
 	sp, err := s.spaces.ByID(ctx, t.SpaceID)
 	if err != nil {
 		return false, err
@@ -537,6 +550,15 @@ func (s *SpaceService) Create(ctx context.Context, sp *Space) error {
 }
 
 func (s *SpaceService) IsVisible(ctx context.Context, sp *Space) (bool, error) {
+	su, err := isSuperuser(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	if su {
+		return true, nil
+	}
+
 	u, err := s.users.FromContext(ctx)
 	if err != nil {
 		return false, err
@@ -824,11 +846,29 @@ func init() {
 	}
 }
 
+type key int
+
+const superuserKey key = 0
+
+func isSuperuser(ctx context.Context) (bool, error) {
+	v := ctx.Value(superuserKey)
+	if v == nil {
+		return false, nil
+	}
+
+	su, ok := v.(bool)
+	if !ok {
+		return false, errors.New("unexpected superuser type")
+	}
+
+	return su, nil
+}
+
 // migrateMutation should only be called once, from init().
 func migrateMutationConfig(ms *MigrationService) relay.MutationConfig {
 	// TODO Do we really want this to be separate from init()?
 	runAll := delay.Func("*MigrationService.RunAll", func(ctx context.Context) error {
-		return ms.RunAll(ctx)
+		return ms.RunAll(context.WithValue(ctx, superuserKey, true))
 	})
 	return relay.MutationConfig{
 		Name:         "Migrate",
