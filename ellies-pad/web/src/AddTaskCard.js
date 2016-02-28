@@ -28,20 +28,12 @@ class AddTaskMutation extends Relay.Mutation {
 		return Relay.QL`
 			fragment on AddTaskPayload {
 				task,
-				viewer {
-					tasks,
-				},
 			}
 		`;
 	}
 
 	getConfigs() {
-		return [{
-			type: 'FIELDS_CHANGE',
-			fieldIDs: {
-				viewer: this.props.viewer.id,
-			},
-		}];
+		return [];
 	}
 
 	getVariables() {
@@ -56,9 +48,6 @@ class AddTaskMutation extends Relay.Mutation {
 			task: {
 				title: this.props.title,
 				description: this.props.description,
-			},
-			viewer: {
-				id: this.props.viewer.id,
 			},
 		};
 	}
