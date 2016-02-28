@@ -235,14 +235,13 @@ type User struct {
 }
 
 type UserService struct {
-	user *User
 }
 
 func NewUserService() *UserService {
 	return &UserService{}
 }
 
-func (s *UserService) ByGoogleID(ctx context.Context, googleID string) (*User, error) {
+func (s *UserService) byGoogleID(ctx context.Context, googleID string) (*User, error) {
 	var us []*User
 	_, err := datastore.NewQuery("User").
 		Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
@@ -285,6 +284,11 @@ func (s *UserService) Create(ctx context.Context, u *User) error {
 	return nil
 }
 
+func (s *UserService) FromContext(ctx context.Context) (*User, error) {
+	gu := user.Current(ctx)
+	return s.byGoogleID(ctx, gu.ID)
+}
+
 // Task represents a particular action or piece of work to be completed.
 type Task struct {
 	ID          string    `json:"id"`
@@ -313,10 +317,21 @@ func (t *Task) Save() ([]search.Field, *search.DocumentMetadata, error) {
 }
 
 type TaskService struct {
+	spaces *SpaceService
 }
 
-func NewTaskService() *TaskService {
-	return &TaskService{}
+func NewTaskService(spaces *SpaceService) *TaskService {
+	return &TaskService{
+		spaces: spaces,
+	}
+}
+
+func (s *TaskService) IsVisible(ctx context.Context, t *Task) (bool, error) {
+	sp, err := s.spaces.ByID(ctx, t.SpaceID)
+	if err != nil {
+		return false, err
+	}
+	return s.spaces.IsVisible(ctx, sp)
 }
 
 var numGet = expvar.NewInt("api.*TaskService.Get")
@@ -347,7 +362,19 @@ func (s *TaskService) GetAll(ctx context.Context) ([]*Task, error) {
 	if err != nil {
 		return nil, err
 	}
-	return ts, nil
+
+	var visible []*Task
+	for _, t := range ts {
+		ok, err := s.IsVisible(ctx, t)
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			visible = append(visible, t)
+		}
+	}
+
+	return visible, nil
 }
 
 var numCreate = expvar.NewInt("api.*TaskService.Create")
@@ -460,38 +487,68 @@ type Space struct {
 	ID        string    `json:"id"`
 	CreatedAt time.Time `json:"createdAt"`
 	Name      string    `json:"name"`
+	UserIDs   []string  `json:"userIds"`
 }
 
 type SpaceService struct {
+	users *UserService
 }
 
-func NewSpaceService() *SpaceService {
-	return &SpaceService{}
+func NewSpaceService(users *UserService) *SpaceService {
+	return &SpaceService{
+		users: users,
+	}
 }
 
-func (ss *SpaceService) Create(ctx context.Context, s *Space) error {
-	if s.ID != "" {
-		return fmt.Errorf("s already has id %q", s.ID)
+func (s *SpaceService) ByID(ctx context.Context, id string) (*Space, error) {
+	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
+	k := datastore.NewKey(ctx, "Space", id, 0, rootKey)
+	var sp Space
+	err := datastore.Get(ctx, k, &sp)
+	if err != nil {
+		return nil, err
+	}
+	return &sp, nil
+}
+
+func (s *SpaceService) Create(ctx context.Context, sp *Space) error {
+	if sp.ID != "" {
+		return fmt.Errorf("sp already has id %q", sp.ID)
 	}
 
-	if s.CreatedAt.IsZero() {
-		s.CreatedAt = time.Now()
+	if sp.CreatedAt.IsZero() {
+		sp.CreatedAt = time.Now()
 	}
 
 	id, _, err := datastore.AllocateIDs(ctx, "Space", nil, 1)
 	if err != nil {
 		return err
 	}
-	s.ID = fmt.Sprintf("%x", id)
+	sp.ID = fmt.Sprintf("%x", id)
 
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
-	k := datastore.NewKey(ctx, "Space", s.ID, 0, rootKey)
-	k, err = datastore.Put(ctx, k, s)
+	k := datastore.NewKey(ctx, "Space", sp.ID, 0, rootKey)
+	k, err = datastore.Put(ctx, k, sp)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (s *SpaceService) IsVisible(ctx context.Context, sp *Space) (bool, error) {
+	u, err := s.users.FromContext(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	for _, id := range sp.UserIDs {
+		if u.ID == id {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 var taskType *graphql.Object
@@ -502,13 +559,10 @@ var nodeDefinitions *relay.NodeDefinitions
 var Schema graphql.Schema
 
 func init() {
-
-	ss := NewSpaceService()
-	ts := NewTaskService()
-
-	ms := NewMigrationService(ss, ts)
-
 	us := NewUserService()
+	ss := NewSpaceService(us)
+	ts := NewTaskService(ss)
+	ms := NewMigrationService(ss, ts)
 
 	nodeDefinitions = relay.NewNodeDefinitions(relay.NodeDefinitionsConfig{
 		IDFetcher: func(ctx context.Context, id string, info graphql.ResolveInfo) (interface{}, error) {
@@ -606,16 +660,7 @@ func init() {
 				Description: "viewer is the person currently interacting with the app.",
 				Type:        userType,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					gu := user.Current(p.Context)
-					// err := us.Create(p.Context, &User{
-					// 	GoogleID: gu.ID,
-					// 	Email:    gu.Email,
-					// 	Name:     gu.String(),
-					// })
-					// if err != nil {
-					// 	return nil, err
-					// }
-					return us.ByGoogleID(p.Context, gu.ID)
+					return us.FromContext(p.Context)
 				},
 			},
 		},
