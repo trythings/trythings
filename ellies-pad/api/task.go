@@ -144,6 +144,12 @@ var migrations = []*Migration{
 			return nil
 		},
 	},
+	{
+		Version:     version("2016-02-29T02:22:00"),
+		Author:      "annie, daniel",
+		Description: "Add task.SpaceID to search index.",
+		Run:         reindexTasks,
+	},
 }
 
 type MigrationService struct {
@@ -325,6 +331,7 @@ func (t *Task) Save() ([]search.Field, *search.DocumentMetadata, error) {
 		{Name: "Title", Value: t.Title},
 		{Name: "Description", Value: t.Description},
 		{Name: "IsArchived", Value: isArchived},
+		{Name: "SpaceID", Value: search.Atom(t.SpaceID)},
 	}, nil, nil
 }
 
