@@ -352,6 +352,12 @@ func (s *TaskService) IsVisible(ctx context.Context, t *Task) (bool, error) {
 	return s.spaces.IsVisible(ctx, sp)
 }
 
+type ErrAccessDenied struct{}
+
+func (e ErrAccessDenied) Error() string {
+	return "cannot access task"
+}
+
 func (s *TaskService) Get(ctx context.Context, id string) (*Task, error) {
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
 	k := datastore.NewKey(ctx, "Task", id, 0, rootKey)
@@ -367,7 +373,7 @@ func (s *TaskService) Get(ctx context.Context, id string) (*Task, error) {
 	}
 
 	if !ok {
-		return nil, errors.New("cannot access task")
+		return nil, ErrAccessDenied{}
 	}
 
 	return &t, nil
@@ -439,7 +445,7 @@ func (s *TaskService) Update(ctx context.Context, t *Task) error {
 
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
 	k := datastore.NewKey(ctx, "Task", t.ID, 0, rootKey)
-	_, err := datastore.Put(ctx, k, t)
+	_, err = datastore.Put(ctx, k, t)
 	if err != nil {
 		return err
 	}
@@ -452,7 +458,18 @@ func (s *TaskService) Update(ctx context.Context, t *Task) error {
 	return nil
 }
 
-func (s *TaskService) Search(ctx context.Context, query string) ([]*Task, error) {
+func (s *TaskService) Search(ctx context.Context, sp *Space, query string) ([]*Task, error) {
+	ok, err := s.spaces.IsVisible(ctx, sp)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, errors.New("cannot access space to search")
+	}
+
+	// Restrict the query to the space.
+	query = fmt.Sprintf("%s AND SpaceID: %q", query, sp.ID)
+
 	index, err := search.Open("Task")
 	if err != nil {
 		return nil, err
@@ -475,6 +492,9 @@ func (s *TaskService) Search(ctx context.Context, query string) ([]*Task, error)
 		// so we should just not return them.
 		t, err := s.Get(ctx, id)
 		if err != nil {
+			if _, ok := err.(ErrAccessDenied); ok {
+				continue
+			}
 			return nil, err
 		}
 
