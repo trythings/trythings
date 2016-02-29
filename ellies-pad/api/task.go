@@ -2,7 +2,6 @@ package api
 
 import (
 	"errors"
-	"expvar"
 	"fmt"
 	"time"
 
@@ -346,7 +345,6 @@ func NewTaskService(spaces *SpaceService) *TaskService {
 }
 
 func (s *TaskService) IsVisible(ctx context.Context, t *Task) (bool, error) {
-
 	sp, err := s.spaces.ByID(ctx, t.SpaceID)
 	if err != nil {
 		return false, err
@@ -354,11 +352,7 @@ func (s *TaskService) IsVisible(ctx context.Context, t *Task) (bool, error) {
 	return s.spaces.IsVisible(ctx, sp)
 }
 
-var numGet = expvar.NewInt("api.*TaskService.Get")
-
 func (s *TaskService) Get(ctx context.Context, id string) (*Task, error) {
-	numGet.Add(1)
-
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
 	k := datastore.NewKey(ctx, "Task", id, 0, rootKey)
 	var t Task
@@ -366,48 +360,39 @@ func (s *TaskService) Get(ctx context.Context, id string) (*Task, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &t, nil
-}
 
-var numGetAll = expvar.NewInt("api.*TaskService.GetAll")
-
-func (s *TaskService) GetAll(ctx context.Context) ([]*Task, error) {
-	numGetAll.Add(1)
-
-	var ts []*Task
-	_, err := datastore.NewQuery("Task").
-		Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
-		Order("-CreatedAt").
-		GetAll(ctx, &ts)
+	ok, err := s.IsVisible(ctx, &t)
 	if err != nil {
 		return nil, err
 	}
 
-	var visible []*Task
-	for _, t := range ts {
-		ok, err := s.IsVisible(ctx, t)
-		if err != nil {
-			return nil, err
-		}
-		if ok {
-			visible = append(visible, t)
-		}
+	if !ok {
+		return nil, errors.New("cannot access task")
 	}
 
-	return visible, nil
+	return &t, nil
 }
 
-var numCreate = expvar.NewInt("api.*TaskService.Create")
-
 func (s *TaskService) Create(ctx context.Context, t *Task) error {
-	numCreate.Add(1)
-
 	if t.ID != "" {
 		return fmt.Errorf("t already has id %q", t.ID)
 	}
 
 	if t.CreatedAt.IsZero() {
 		t.CreatedAt = time.Now()
+	}
+
+	if t.SpaceID == "" {
+		return errors.New("SpaceID is required")
+	}
+
+	ok, err := s.IsVisible(ctx, t)
+	if err != nil {
+		return err
+	}
+
+	if !ok {
+		return errors.New("cannot access space to create task")
 	}
 
 	id, _, err := datastore.AllocateIDs(ctx, "Task", nil, 1)
@@ -431,13 +416,25 @@ func (s *TaskService) Create(ctx context.Context, t *Task) error {
 	return nil
 }
 
-var numUpdate = expvar.NewInt("api.*TaskService.Update")
-
 func (s *TaskService) Update(ctx context.Context, t *Task) error {
-	numUpdate.Add(1)
-
 	if t.ID == "" {
 		return errors.New("cannot update task with no ID")
+	}
+
+	// Make sure we have access to the task to start.
+	_, err := s.Get(ctx, t.ID)
+	if err != nil {
+		return err
+	}
+
+	// Make sure we continue to have access to the task after our update.
+	ok, err := s.IsVisible(ctx, t)
+	if err != nil {
+		return err
+	}
+
+	if !ok {
+		return errors.New("cannot update task to lose access")
 	}
 
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
@@ -455,11 +452,7 @@ func (s *TaskService) Update(ctx context.Context, t *Task) error {
 	return nil
 }
 
-var numSearch = expvar.NewInt("api.*TaskService.Search")
-
 func (s *TaskService) Search(ctx context.Context, query string) ([]*Task, error) {
-	numSearch.Add(1)
-
 	index, err := search.Open("Task")
 	if err != nil {
 		return nil, err
