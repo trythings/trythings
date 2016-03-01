@@ -541,6 +541,15 @@ func (s *SpaceService) ByID(ctx context.Context, id string) (*Space, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	ok, err := s.IsVisible(ctx, &sp)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, errors.New("cannot access space")
+	}
+
 	return &sp, nil
 }
 
@@ -552,6 +561,16 @@ func (s *SpaceService) Create(ctx context.Context, sp *Space) error {
 	if sp.CreatedAt.IsZero() {
 		sp.CreatedAt = time.Now()
 	}
+
+	if len(sp.UserIDs) > 0 {
+		return errors.New("UserIDs must be empty")
+	}
+
+	u, err := s.users.FromContext(ctx)
+	if err != nil {
+		return err
+	}
+	sp.UserIDs = []string{u.ID}
 
 	id, _, err := datastore.AllocateIDs(ctx, "Space", nil, 1)
 	if err != nil {
