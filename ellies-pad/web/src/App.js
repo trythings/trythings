@@ -5,6 +5,7 @@ import Relay from 'react-relay';
 import ActionButton from './ActionButton.js';
 import AddTaskCard from './AddTaskCard.js';
 import AppBar from './AppBar.js';
+import NavigationDrawer from './NavigationDrawer.js';
 import resetStyles from './resetStyles.js';
 import TaskSearch from './TaskSearch.js';
 import theme from './theme.js';
@@ -15,6 +16,7 @@ class App extends React.Component {
 			space: React.PropTypes.shape({
 				// ...AddTaskCard.propTypes.space
 			}),
+			spaces: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
 		}).isRequired,
 	};
 
@@ -40,11 +42,16 @@ class App extends React.Component {
 			...resetStyles,
 			alignItems: 'stretch',
 			backgroundColor: theme.colors.canvas,
-			flexDirection: 'column',
 			height: '100%',
 			width: '100%',
 		},
-		container: {
+		appBarContainer: {
+			...resetStyles,
+			alignItems: 'stretch',
+			flex: '1 0 auto',
+			flexDirection: 'column',
+		},
+		contentContainer: {
 			...resetStyles,
 			alignItems: 'stretch',
 			flex: '1 1 auto',
@@ -75,80 +82,83 @@ class App extends React.Component {
 	render() {
 		return (
 			<div style={App.styles.app} tabIndex={-1}>
-				<AppBar
-					initialSearchQuery={this.state.searchQuery}
-					onSearchQueryChange={this.onSearchQueryChange}
-				/>
+				<NavigationDrawer spaces={this.props.viewer.spaces}/>
+				<div style={App.styles.appBarContainer}>
+					<AppBar
+						initialSearchQuery={this.state.searchQuery}
+						onSearchQueryChange={this.onSearchQueryChange}
+					/>
 
-				<div style={App.styles.container}>
-					{!this.state.isAddTaskFormVisible ?
-						(
-							<div style={App.styles.addTaskButton}>
-								<ActionButton onClick={this.onPlusClick}/>
-							</div>
-						) :
-						null
-					}
-					<div style={App.styles.content}>
-						{this.state.isAddTaskFormVisible ?
+					<div style={App.styles.contentContainer}>
+						{!this.state.isAddTaskFormVisible ?
 							(
-								<AddTaskCard
-									autoFocus
-									space={this.props.viewer.space}
-									onCancelClick={this.onCancelClick}
-								/>
+								<div style={App.styles.addTaskButton}>
+									<ActionButton onClick={this.onPlusClick}/>
+								</div>
 							) :
 							null
 						}
+						<div style={App.styles.content}>
+							{this.state.isAddTaskFormVisible ?
+								(
+									<AddTaskCard
+										autoFocus
+										space={this.props.viewer.space}
+										onCancelClick={this.onCancelClick}
+									/>
+								) :
+								null
+							}
 
-						{this.state.isAddTaskFormVisible ?
-							<div style={App.styles.contentSpacer}/> :
-							null
-						}
+							{this.state.isAddTaskFormVisible ?
+								<div style={App.styles.contentSpacer}/> :
+								null
+							}
 
-						{this.state.searchQuery ?
-							(
-								<TaskSearch
-									name="Search results"
-									query={this.state.searchQuery}
-								/>
-							) :
-							null
-						}
+							{this.state.searchQuery ?
+								(
+									<TaskSearch
+										name="Search results"
+										query={this.state.searchQuery}
+									/>
+								) :
+								null
+							}
 
-						{this.state.searchQuery ?
-							<div style={App.styles.contentSpacer}/> :
-							null
-						}
+							{this.state.searchQuery ?
+								<div style={App.styles.contentSpacer}/> :
+								null
+							}
 
-						<TaskSearch
-							name="#now"
-							query="#now AND IsArchived: false"
-						/>
-						<div style={App.styles.contentSpacer}/>
+							<TaskSearch
+								name="#now"
+								query="#now AND IsArchived: false"
+							/>
+							<div style={App.styles.contentSpacer}/>
 
-						<TaskSearch
-							name="Incoming"
-							query="NOT #now AND NOT #next AND NOT #later AND IsArchived: false"
-						/>
-						<div style={App.styles.contentSpacer}/>
+							<TaskSearch
+								name="Incoming"
+								query="NOT #now AND NOT #next AND NOT #later AND IsArchived: false"
+							/>
+							<div style={App.styles.contentSpacer}/>
 
-						<TaskSearch
-							name="#next"
-							query="#next AND NOT #now AND IsArchived: false"
-						/>
-						<div style={App.styles.contentSpacer}/>
+							<TaskSearch
+								name="#next"
+								query="#next AND NOT #now AND IsArchived: false"
+							/>
+							<div style={App.styles.contentSpacer}/>
 
-						<TaskSearch
-							name="#later"
-							query="#later AND NOT #next AND NOT #now AND IsArchived: false"
-						/>
-						<div style={App.styles.contentSpacer}/>
+							<TaskSearch
+								name="#later"
+								query="#later AND NOT #next AND NOT #now AND IsArchived: false"
+							/>
+							<div style={App.styles.contentSpacer}/>
 
-						<TaskSearch
-							name="Archived"
-							query="IsArchived: true"
-						/>
+							<TaskSearch
+								name="Archived"
+								query="IsArchived: true"
+							/>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -162,6 +172,9 @@ export default Relay.createContainer(App, {
 			fragment on User {
 				space {
 					${AddTaskCard.getFragment('space')},
+				},
+				spaces {
+					${NavigationDrawer.getFragment('spaces')},
 				},
 			}
 		`,
