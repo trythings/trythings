@@ -853,6 +853,9 @@ func init() {
 			"description": &graphql.InputObjectFieldConfig{
 				Type: graphql.String,
 			},
+			"spaceId": &graphql.InputObjectFieldConfig{
+				Type: graphql.NewNonNull(graphql.String),
+			},
 		},
 		OutputFields: graphql.Fields{
 			"task": &graphql.Field{
@@ -889,9 +892,19 @@ func init() {
 				}
 			}
 
+			spaceID, ok := inputMap["spaceId"].(string)
+			if !ok {
+				return nil, errors.New("could not cast spaceId to string")
+			}
+			resolvedSpaceID := relay.FromGlobalID(spaceID)
+			if resolvedSpaceID == nil {
+				return nil, fmt.Errorf("invalid id %q", spaceID)
+			}
+
 			t := &Task{
 				Title:       title,
 				Description: desc,
+				SpaceID:     resolvedSpaceID.ID,
 			}
 			err := ts.Create(ctx, t)
 			if err != nil {

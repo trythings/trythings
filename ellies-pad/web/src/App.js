@@ -12,8 +12,9 @@ import theme from './theme.js';
 class App extends React.Component {
 	static propTypes = {
 		viewer: React.PropTypes.shape({
-			// ...AddTaskCard.propTypes.viewer
-			// ...TaskList.propTypes.viewer
+			space: React.PropTypes.shape({
+				// ...AddTaskCard.propTypes.space
+			}),
 		}).isRequired,
 	};
 
@@ -93,7 +94,7 @@ class App extends React.Component {
 							(
 								<AddTaskCard
 									autoFocus
-									viewer={this.props.viewer}
+									space={this.props.viewer.space}
 									onCancelClick={this.onCancelClick}
 								/>
 							) :
@@ -159,7 +160,9 @@ export default Relay.createContainer(App, {
 	fragments: {
 		viewer: () => Relay.QL`
 			fragment on User {
-				${AddTaskCard.getFragment('viewer')},
+				space {
+					${AddTaskCard.getFragment('space')},
+				},
 			}
 		`,
 	},

@@ -9,8 +9,8 @@ import theme from './theme.js';
 
 class AddTaskMutation extends Relay.Mutation {
 	static fragments = {
-		viewer: () => Relay.QL`
-			fragment on User {
+		space: () => Relay.QL`
+			fragment on Space {
 				id,
 			}
 		`,
@@ -40,6 +40,7 @@ class AddTaskMutation extends Relay.Mutation {
 		return {
 			title: this.props.title,
 			description: this.props.description,
+			spaceId: this.props.space.id,
 		};
 	}
 
@@ -56,8 +57,8 @@ class AddTaskMutation extends Relay.Mutation {
 class AddTaskCard extends React.Component {
 	static propTypes = {
 		autoFocus: React.PropTypes.bool,
-		viewer: React.PropTypes.shape({
-			// ...AddTaskMutation.propTypes.viewer
+		space: React.PropTypes.shape({
+			// ...AddTaskMutation.propTypes.space
 		}).isRequired,
 		onCancelClick: React.PropTypes.func,
 	};
@@ -80,7 +81,7 @@ class AddTaskCard extends React.Component {
 			new AddTaskMutation({
 				title: `${this.state.title}`,
 				description: this.state.description || null,
-				viewer: this.props.viewer,
+				space: this.props.space,
 			}),
 		);
 		this.setState({
@@ -169,9 +170,9 @@ class AddTaskCard extends React.Component {
 
 export default Relay.createContainer(AddTaskCard, {
 	fragments: {
-		viewer: () => Relay.QL`
-			fragment on User {
-				${AddTaskMutation.getFragment('viewer')},
+		space: () => Relay.QL`
+			fragment on Space {
+				${AddTaskMutation.getFragment('space')},
 			}
 		`,
 	},
