@@ -736,9 +736,8 @@ func init() {
 
 	migrationAPI := &MigrationAPI{
 		migrations: ms,
-		mutation:   mutationType,
 	}
-	migrationAPI.AddMutations()
+	migrationAPI.AddMutations(mutationType)
 
 	var err error
 	Schema, err = graphql.NewSchema(graphql.SchemaConfig{

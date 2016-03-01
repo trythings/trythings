@@ -281,16 +281,15 @@ func (s *MigrationService) RunAll(ctx context.Context) error {
 
 type MigrationAPI struct {
 	migrations *MigrationService
-	mutation   *graphql.Object
 }
 
 // AddMutations should only be called once, from init().
-func (api *MigrationAPI) AddMutations() {
+func (api *MigrationAPI) AddMutations(parent *graphql.Object) {
 	runAll := delay.Func("*MigrationService.RunAll", func(ctx context.Context) error {
 		return api.migrations.RunAll(context.WithValue(ctx, superuserKey, true))
 	})
 
-	api.mutation.AddFieldConfig("migrate", relay.MutationWithClientMutationID(relay.MutationConfig{
+	parent.AddFieldConfig("migrate", relay.MutationWithClientMutationID(relay.MutationConfig{
 		Name:         "Migrate",
 		InputFields:  graphql.InputObjectConfigFieldMap{},
 		OutputFields: graphql.Fields{},
