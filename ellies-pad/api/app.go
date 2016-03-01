@@ -324,6 +324,25 @@ func init() {
 					return sps[0], nil
 				},
 			},
+			"spaces": &graphql.Field{
+				Type: graphql.NewList(spaceType),
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					u, ok := p.Source.(*User)
+					if !ok {
+						return nil, errors.New("expected user source")
+					}
+
+					var sps []*Space
+					_, err := datastore.NewQuery("Space").
+						Ancestor(datastore.NewKey(p.Context, "Root", "root", 0, nil)).
+						Filter("UserIDs =", u.ID).
+						GetAll(p.Context, &sps)
+					if err != nil {
+						return nil, err
+					}
+					return sps, nil
+				},
+			},
 		},
 		Interfaces: []*graphql.Interface{
 			nodeDefinitions.NodeInterface,
