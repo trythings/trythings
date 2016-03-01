@@ -656,6 +656,7 @@ func (s *SpaceService) IsVisible(ctx context.Context, sp *Space) (bool, error) {
 }
 
 var taskType *graphql.Object
+var spaceType *graphql.Object
 var userType *graphql.Object
 
 var nodeDefinitions *relay.NodeDefinitions
@@ -678,6 +679,8 @@ func init() {
 			}
 
 			switch resolvedID.Type {
+			case "Space":
+				return nil, errors.New("not implemented")
 			case "Task":
 				return ts.Get(ctx, resolvedID.ID)
 			case "User":
@@ -687,6 +690,8 @@ func init() {
 		},
 		TypeResolve: func(value interface{}, info graphql.ResolveInfo) *graphql.Object {
 			switch value.(type) {
+			case *Space:
+				return spaceType
 			case *Task:
 				return taskType
 			case *User:
@@ -723,13 +728,17 @@ func init() {
 		},
 	})
 
-	userType = graphql.NewObject(graphql.ObjectConfig{
-		Name:        "User",
-		Description: "User represents a person who can interact with the app.",
+	spaceType = graphql.NewObject(graphql.ObjectConfig{
+		Name:        "Space",
+		Description: "Space represents an access-controlled universe of tasks.",
 		Fields: graphql.Fields{
-			"id": relay.GlobalIDField("User", nil),
-			"email": &graphql.Field{
-				Description: "The user's email primary address",
+			"id": relay.GlobalIDField("Space", nil),
+			"createdAt": &graphql.Field{
+				Description: "When the space was first created.",
+				Type:        graphql.String,
+			},
+			"name": &graphql.Field{
+				Description: "The name to display for the space.",
 				Type:        graphql.String,
 			},
 			"tasks": &graphql.Field{
@@ -743,17 +752,76 @@ func init() {
 				Description: "tasks are all pieces of work that need to be completed for the user.",
 				Type:        graphql.NewList(taskType),
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					sp, ok := p.Source.(*Space)
+					if !ok {
+						return nil, errors.New("expected a space source")
+					}
+
 					q, ok := p.Args["query"].(string)
 					if !ok {
 						q = "" // Return all tasks.
 					}
 
-					sp, err := ss.ByID(p.Context, "9")
+					return ts.Search(p.Context, sp, q)
+				},
+			},
+		},
+	})
+
+	userType = graphql.NewObject(graphql.ObjectConfig{
+		Name:        "User",
+		Description: "User represents a person who can interact with the app.",
+		Fields: graphql.Fields{
+			"id": relay.GlobalIDField("User", nil),
+			"email": &graphql.Field{
+				Description: "The user's email primary address",
+				Type:        graphql.String,
+			},
+			"space": &graphql.Field{
+				Args: graphql.FieldConfigArgument{
+					"id": &graphql.ArgumentConfig{
+						Type:         graphql.String,
+						DefaultValue: "",
+						Description:  "id can be omitted, which will have space resolve to the user's default space.",
+					},
+				},
+				Description: "space is a disjoint universe of views, searches and tasks.",
+				Type:        spaceType,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					id, ok := p.Args["id"].(string)
+					if ok {
+						resolvedID := relay.FromGlobalID(id)
+						if resolvedID == nil {
+							return nil, fmt.Errorf("invalid id %q", id)
+						}
+
+						sp, err := ss.ByID(p.Context, resolvedID.ID)
+						if err != nil {
+							return nil, err
+						}
+						return sp, nil
+					}
+
+					u, ok := p.Source.(*User)
+					if !ok {
+						return nil, errors.New("expected user source")
+					}
+
+					var sps []*Space
+					_, err := datastore.NewQuery("Space").
+						Ancestor(datastore.NewKey(p.Context, "Root", "root", 0, nil)).
+						Filter("UserIDs =", u.ID).
+						Limit(1).
+						GetAll(p.Context, &sps)
 					if err != nil {
 						return nil, err
 					}
 
-					return ts.Search(p.Context, sp, q)
+					if len(sps) == 0 {
+						return nil, errors.New("could not find default space for user")
+					}
+
+					return sps[0], nil
 				},
 			},
 		},
