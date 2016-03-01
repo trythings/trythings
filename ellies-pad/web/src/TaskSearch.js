@@ -2,7 +2,7 @@ import React from 'react';
 import Relay from 'react-relay';
 
 import resetStyles from './resetStyles.js';
-import TaskList from './TaskList.js';
+import TaskSearchResults from './TaskSearchResults.js';
 import theme from './theme.js';
 
 class TaskSearchRoute extends Relay.Route {
@@ -63,7 +63,7 @@ export default class TaskSearch extends React.Component {
 			<div style={TaskSearch.styles.container}>
 				<h1 style={TaskSearch.styles.name}>{this.props.name}</h1>
 				<Relay.RootContainer
-					Component={TaskList}
+					Component={TaskSearchResults}
 					route={new TaskSearchRoute({ query: this.props.query })}
 					renderLoading={this.renderLoading}
 				/>

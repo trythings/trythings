@@ -8,12 +8,9 @@ import theme from './theme.js';
 
 class TaskList extends React.Component {
 	static propTypes = {
-		viewer: React.PropTypes.shape({
-			space: React.PropTypes.shape({
-				// ...TaskListItem.propTypes.task
-				tasks: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
-			}),
-		}).isRequired,
+		tasks: React.PropTypes.arrayOf(React.PropTypes.shape({
+			// ...TaskListItem.propTypes.task
+		})).isRequired,
 	};
 
 	onFocus = (event) => {
@@ -56,14 +53,14 @@ class TaskList extends React.Component {
 	}
 
 	render() {
-		if (!this.props.viewer.space.tasks.length) {
+		if (!this.props.tasks.length) {
 			return this.renderEmpty();
 		}
 
 		return (
 			<Card>
 				<ol style={TaskList.styles.list} onFocus={this.onFocus} tabIndex={-1}>
-					{this.props.viewer.space.tasks.map((task, i, array) => (
+					{this.props.tasks.map((task, i, array) => (
 						<li key={task.id} style={TaskList.styles.listItem}>
 							<TaskListItem task={task}/>
 							{i < array.length - 1
@@ -79,19 +76,11 @@ class TaskList extends React.Component {
 }
 
 export default Relay.createContainer(TaskList, {
-	initialVariables: {
-		query: null,
-	},
-
 	fragments: {
-		viewer: () => Relay.QL`
-			fragment on User {
-				space {
-					tasks(query: $query) {
-						id,
-						${TaskListItem.getFragment('task')},
-					},
-				},
+		tasks: () => Relay.QL`
+			fragment on Task @relay(plural: true) {
+				id,
+				${TaskListItem.getFragment('task')},
 			}
 		`,
 	},
