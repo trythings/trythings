@@ -8,8 +8,8 @@ import theme from './theme.js';
 
 class TaskList extends React.Component {
 	static propTypes = {
-		viewer: React.PropTypes.object.shape({
-			space: React.PropTypes.object.shape({
+		viewer: React.PropTypes.shape({
+			space: React.PropTypes.shape({
 				// ...TaskListItem.propTypes.task
 				tasks: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
 			}),
