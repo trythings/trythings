@@ -149,6 +149,49 @@ var migrations = []*Migration{
 		Description: "Add task.SpaceID to search index.",
 		Run:         reindexTasks,
 	},
+	{
+		Version:     version("2016-02-29T22:59:00"),
+		Author:      "annie, daniel",
+		Description: "Add users to default space.",
+		Run: func(ctx context.Context, ss *SpaceService, ts *TaskService) error {
+			root := datastore.NewKey(ctx, "Root", "root", 0, nil)
+
+			var sps []*Space
+			_, err := datastore.NewQuery("Space").
+				Ancestor(root).
+				Limit(1).
+				GetAll(ctx, &sps)
+			if err != nil {
+				return err
+			}
+
+			if len(sps) == 0 {
+				return errors.New("expected a space")
+			}
+			sp := sps[0]
+
+			var us []*User
+			_, err = datastore.NewQuery("User").
+				Ancestor(root).
+				GetAll(ctx, &us)
+			if err != nil {
+				return err
+			}
+
+			var ids []string
+			for _, u := range us {
+				ids = append(ids, u.ID)
+			}
+
+			sp.UserIDs = ids
+			_, err = datastore.Put(ctx, datastore.NewKey(ctx, "Space", sp.ID, 0, root), sp)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		},
+	},
 }
 
 type MigrationService struct {
@@ -704,7 +747,13 @@ func init() {
 					if !ok {
 						q = "" // Return all tasks.
 					}
-					return ts.Search(p.Context, q)
+
+					sp, err := ss.ByID(p.Context, "9")
+					if err != nil {
+						return nil, err
+					}
+
+					return ts.Search(p.Context, sp, q)
 				},
 			},
 		},
