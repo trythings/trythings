@@ -42,20 +42,21 @@ class App extends React.Component {
 			...resetStyles,
 			alignItems: 'stretch',
 			backgroundColor: theme.colors.canvas,
+			flexDirection: 'column',
 			height: '100%',
 			width: '100%',
 		},
-		appBarContainer: {
+		navigationContainer: {
 			...resetStyles,
 			alignItems: 'stretch',
-			flex: '1 0 auto',
-			flexDirection: 'column',
+			flex: '1 1 auto',
 		},
 		contentContainer: {
 			...resetStyles,
 			alignItems: 'stretch',
 			flex: '1 1 auto',
 			flexDirection: 'column',
+			overflow: 'scroll',
 		},
 		addTaskButton: {
 			...resetStyles,
@@ -71,7 +72,7 @@ class App extends React.Component {
 			flex: '1 1 auto',
 			flexDirection: 'column',
 			padding: 24,
-			overflow: 'scroll',
+			overflow: 'visible',
 		},
 		contentSpacer: {
 			...resetStyles,
@@ -82,22 +83,24 @@ class App extends React.Component {
 	render() {
 		return (
 			<div style={App.styles.app} tabIndex={-1}>
-				<NavigationDrawer spaces={this.props.viewer.spaces}/>
-				<div style={App.styles.appBarContainer}>
-					<AppBar
-						initialSearchQuery={this.state.searchQuery}
-						onSearchQueryChange={this.onSearchQueryChange}
-					/>
+				<AppBar
+					initialSearchQuery={this.state.searchQuery}
+					onSearchQueryChange={this.onSearchQueryChange}
+				/>
+
+				<div style={App.styles.navigationContainer}>
+					{!this.state.isAddTaskFormVisible ?
+						(
+							<div style={App.styles.addTaskButton}>
+								<ActionButton onClick={this.onPlusClick}/>
+							</div>
+						) :
+						null
+					}
+
+					<NavigationDrawer spaces={this.props.viewer.spaces}/>
 
 					<div style={App.styles.contentContainer}>
-						{!this.state.isAddTaskFormVisible ?
-							(
-								<div style={App.styles.addTaskButton}>
-									<ActionButton onClick={this.onPlusClick}/>
-								</div>
-							) :
-							null
-						}
 						<div style={App.styles.content}>
 							{this.state.isAddTaskFormVisible ?
 								(
