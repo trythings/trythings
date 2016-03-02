@@ -13,16 +13,30 @@ class NavigationDrawer extends React.Component {
 		nav: {
 			...resetStyles,
 			backgroundColor: theme.colors.card,
+			borderLeft: `1px solid ${theme.text.dark.dividers.color}`,
+			borderRight: `1px solid ${theme.text.dark.dividers.color}`,
+			paddingLeft: 16,
+			paddingRight: 16,
+			width: 240,
+		},
+		list: {
+			...resetStyles,
+		},
+		text: {
+			...resetStyles,
+			...theme.text.dark.primary,
+			fontSize: 14,
+			fontWeight: 500,
 		},
 	};
 
 	render() {
 		return (
 			<nav style={NavigationDrawer.styles.nav}>
-				<ul>
+				<ul style={NavigationDrawer.styles.list}>
 					{this.props.spaces.map(space => (
 						<li key={space.id}>
-							{space.name}
+							<span style={NavigationDrawer.styles.text}>{space.name}</span>
 						</li>
 					))}
 				</ul>
