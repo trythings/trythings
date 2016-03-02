@@ -41,7 +41,7 @@ class MigrateMutation extends Relay.Mutation {
 	}
 }
 
-export default class AppBar extends React.Component {
+class AppBar extends React.Component {
 	static propTypes = {
 		initialSearchQuery: React.PropTypes.string,
 		onSearchQueryChange: React.PropTypes.func,
@@ -123,3 +123,7 @@ export default class AppBar extends React.Component {
 		);
 	}
 }
+
+export default Relay.createContainer(AppBar, {
+	fragments: {},
+});
