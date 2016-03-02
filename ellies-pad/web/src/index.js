@@ -4,23 +4,22 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import Relay from 'react-relay';
 
-import App from './App.js';
+import AppBar from './AppBar.js';
 
 class AppRoute extends Relay.Route {
 	static routeName = 'AppRoute';
 
 	static queries = {
-		viewer: () => Relay.QL`
-			query {
-				viewer,
-			}
-		`,
+		// viewer: () => Relay.QL`
+		// 	query {
+		// 	}
+		// `,
 	};
 }
 
 const element = (
 	<Relay.RootContainer
-		Component={App}
+		Component={AppBar}
 		route={new AppRoute()}
 	/>
 );
