@@ -129,11 +129,17 @@ func (s *SpaceService) Create(ctx context.Context, sp *Space) error {
 		return errors.New("UserIDs must be empty")
 	}
 
-	u, err := s.users.FromContext(ctx)
+	su, err := isSuperuser(ctx)
 	if err != nil {
 		return err
 	}
-	sp.UserIDs = []string{u.ID}
+	if !su {
+		u, err := s.users.FromContext(ctx)
+		if err != nil {
+			return err
+		}
+		sp.UserIDs = []string{u.ID}
+	}
 
 	id, _, err := datastore.AllocateIDs(ctx, "Space", nil, 1)
 	if err != nil {
