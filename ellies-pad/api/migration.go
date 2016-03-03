@@ -111,10 +111,10 @@ var migrations = []*Migration{
 				return nil
 			}
 
-			s := &Space{
+			sp := &Space{
 				Name: "Annie and Daniel",
 			}
-			err = ss.Create(ctx, s)
+			err = ss.Create(ctx, sp)
 			if err != nil {
 				return err
 			}
@@ -129,7 +129,10 @@ var migrations = []*Migration{
 
 			for _, t := range tasks {
 				if t.SpaceID == "" {
-					t.SpaceID = s.ID
+					t.SpaceID = sp.ID
+
+					log.Infof(ctx, "Migration.Run task: %#v", t)
+
 					err = ts.Update(ctx, t)
 					if err != nil {
 						return err
