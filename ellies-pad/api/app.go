@@ -9,7 +9,6 @@ import (
 	"github.com/graphql-go/relay"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
-	"google.golang.org/appengine/log"
 	"google.golang.org/appengine/user"
 )
 
@@ -147,8 +146,6 @@ func (s *SpaceService) Create(ctx context.Context, sp *Space) error {
 		return err
 	}
 	sp.ID = fmt.Sprintf("%x", id)
-
-	log.Infof(ctx, "SpaceService.Create space: %#v", sp)
 
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
 	k := datastore.NewKey(ctx, "Space", sp.ID, 0, rootKey)

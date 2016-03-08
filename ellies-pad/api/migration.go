@@ -130,9 +130,6 @@ var migrations = []*Migration{
 			for _, t := range tasks {
 				if t.SpaceID == "" {
 					t.SpaceID = sp.ID
-
-					log.Infof(ctx, "Migration.Run task: %#v", t)
-
 					err = ts.Update(ctx, t)
 					if err != nil {
 						return err
