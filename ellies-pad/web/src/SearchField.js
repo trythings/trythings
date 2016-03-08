@@ -26,8 +26,8 @@ export default class SearchField extends React.Component {
 	render() {
 		return (
 			<div>
-				<Icon name="search"/>
-				<input onChange={this.onChange} value={this.state.query}/>
+				<Icon name="search" />
+				<input onChange={this.onChange} value={this.state.query} />
 			</div>
 		);
 	}

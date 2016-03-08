@@ -11,6 +11,26 @@ export default class FlatButton extends React.Component {
 		onClick: React.PropTypes.func,
 	};
 
+	static styles = {
+		button: {
+			...resetStyles,
+
+			borderRadius: 2,
+			height: 36,
+			justifyContent: 'center',
+			paddingLeft: 8,
+			paddingRight: 8,
+		},
+		label: {
+			...resetStyles,
+			...theme.text,
+
+			fontSize: 14,
+			fontWeight: 500,
+			textTransform: 'uppercase',
+		},
+	};
+
 	state = {
 		isFocused: false,
 		isHovered: false,
@@ -41,26 +61,6 @@ export default class FlatButton extends React.Component {
 
 	onMouseUp = () => {
 		this.setState({ isActive: false });
-	};
-
-	static styles = {
-		button: {
-			...resetStyles,
-
-			borderRadius: 2,
-			height: 36,
-			justifyContent: 'center',
-			paddingLeft: 8,
-			paddingRight: 8,
-		},
-		label: {
-			...resetStyles,
-			...theme.text,
-
-			fontSize: 14,
-			fontWeight: 500,
-			textTransform: 'uppercase',
-		},
 	};
 
 	buttonStateStyle() {

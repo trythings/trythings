@@ -47,24 +47,6 @@ class AppBar extends React.Component {
 		onSearchQueryChange: React.PropTypes.func,
 	};
 
-	state = {
-		isMigrateHovering: false,
-	};
-
-	onMigrateClick = () => {
-		Relay.Store.commitUpdate(
-			new MigrateMutation({}),
-		);
-	};
-
-	onMigrateMouseEnter = () => {
-		this.setState({ isMigrateHovering: true });
-	};
-
-	onMigrateMouseLeave = () => {
-		this.setState({ isMigrateHovering: false });
-	};
-
 	static styles = {
 		appBar: {
 			...resetStyles,
@@ -96,6 +78,24 @@ class AppBar extends React.Component {
 		},
 	};
 
+	state = {
+		isMigrateHovering: false,
+	};
+
+	onMigrateClick = () => {
+		Relay.Store.commitUpdate(
+			new MigrateMutation({}),
+		);
+	};
+
+	onMigrateMouseEnter = () => {
+		this.setState({ isMigrateHovering: true });
+	};
+
+	onMigrateMouseLeave = () => {
+		this.setState({ isMigrateHovering: false });
+	};
+
 	render() {
 		return (
 			<div style={AppBar.styles.appBar}>
@@ -117,7 +117,7 @@ class AppBar extends React.Component {
 					onMouseEnter={this.onMigrateMouseEnter}
 					onMouseLeave={this.onMigrateMouseLeave}
 				>
-					<Icon color={theme.text.light.primary.color} name="update"/>
+					<Icon color={theme.text.light.primary.color} name="update" />
 				</button>
 			</div>
 		);

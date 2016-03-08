@@ -17,6 +17,14 @@ class TaskListItem extends React.Component {
 		}).isRequired,
 	};
 
+	static styles = {
+		item: {
+			...resetStyles,
+			maxWidth: '100%',
+			overflow: 'visible',
+		},
+	};
+
 	state = {
 		isFocused: false,
 	};
@@ -39,14 +47,6 @@ class TaskListItem extends React.Component {
 		this.taskCard = taskCard && taskCard.refs.component;
 	};
 
-	static styles = {
-		item: {
-			...resetStyles,
-			maxWidth: '100%',
-			overflow: 'visible',
-		},
-	};
-
 	render() {
 		return (
 			<div
@@ -65,7 +65,7 @@ class TaskListItem extends React.Component {
 								task={this.props.task}
 							/>
 						)
-					: <TaskTile flex="1 1 auto" task={this.props.task}/>
+					: <TaskTile flex="1 1 auto" task={this.props.task} />
 				}
 			</div>
 		);

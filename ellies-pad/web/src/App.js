@@ -20,23 +20,6 @@ class App extends React.Component {
 		}).isRequired,
 	};
 
-	state = {
-		searchQuery: '',
-		isAddTaskFormVisible: true,
-	};
-
-	onCancelClick = () => {
-		this.setState({ isAddTaskFormVisible: false });
-	};
-
-	onPlusClick = () => {
-		this.setState({ isAddTaskFormVisible: true });
-	};
-
-	onSearchQueryChange = _debounce((query) => {
-		this.setState({ searchQuery: query });
-	}, 200);
-
 	static styles = {
 		app: {
 			...resetStyles,
@@ -80,6 +63,23 @@ class App extends React.Component {
 		},
 	};
 
+	state = {
+		searchQuery: '',
+		isAddTaskFormVisible: true,
+	};
+
+	onCancelClick = () => {
+		this.setState({ isAddTaskFormVisible: false });
+	};
+
+	onPlusClick = () => {
+		this.setState({ isAddTaskFormVisible: true });
+	};
+
+	onSearchQueryChange = _debounce((query) => {
+		this.setState({ searchQuery: query });
+	}, 200);
+
 	render() {
 		return (
 			<div style={App.styles.app} tabIndex={-1}>
@@ -92,13 +92,13 @@ class App extends React.Component {
 					{!this.state.isAddTaskFormVisible ?
 						(
 							<div style={App.styles.addTaskButton}>
-								<ActionButton onClick={this.onPlusClick}/>
+								<ActionButton onClick={this.onPlusClick} />
 							</div>
 						) :
 						null
 					}
 
-					<NavigationDrawer spaces={this.props.viewer.spaces}/>
+					<NavigationDrawer spaces={this.props.viewer.spaces} />
 
 					<div style={App.styles.contentContainer}>
 						<div style={App.styles.content}>
@@ -114,7 +114,7 @@ class App extends React.Component {
 							}
 
 							{this.state.isAddTaskFormVisible ?
-								<div style={App.styles.contentSpacer}/> :
+								<div style={App.styles.contentSpacer} /> :
 								null
 							}
 
@@ -129,7 +129,7 @@ class App extends React.Component {
 							}
 
 							{this.state.searchQuery ?
-								<div style={App.styles.contentSpacer}/> :
+								<div style={App.styles.contentSpacer} /> :
 								null
 							}
 
@@ -137,25 +137,25 @@ class App extends React.Component {
 								name="#now"
 								query="#now AND IsArchived: false"
 							/>
-							<div style={App.styles.contentSpacer}/>
+							<div style={App.styles.contentSpacer} />
 
 							<TaskSearch
 								name="Incoming"
 								query="NOT #now AND NOT #next AND NOT #later AND IsArchived: false"
 							/>
-							<div style={App.styles.contentSpacer}/>
+							<div style={App.styles.contentSpacer} />
 
 							<TaskSearch
 								name="#next"
 								query="#next AND NOT #now AND IsArchived: false"
 							/>
-							<div style={App.styles.contentSpacer}/>
+							<div style={App.styles.contentSpacer} />
 
 							<TaskSearch
 								name="#later"
 								query="#later AND NOT #next AND NOT #now AND IsArchived: false"
 							/>
-							<div style={App.styles.contentSpacer}/>
+							<div style={App.styles.contentSpacer} />
 
 							<TaskSearch
 								name="Archived"

@@ -10,6 +10,18 @@ export default class Card extends React.Component {
 		flex: React.PropTypes.string,
 	};
 
+	static styles = {
+		card: {
+			...resetStyles,
+
+			alignItems: 'stretch',
+			borderRadius: 2,
+			backgroundColor: theme.colors.card,
+			flexDirection: 'column',
+			overflow: 'visible',
+		},
+	};
+
 	state = {
 		hasFocus: false,
 	};
@@ -22,24 +34,6 @@ export default class Card extends React.Component {
 
 	onFocus = () => {
 		this.setState({ hasFocus: true });
-	};
-
-	ref = (node) => {
-		if (node && this.props.autoFocus) {
-			node.focus();
-		}
-	};
-
-	static styles = {
-		card: {
-			...resetStyles,
-
-			alignItems: 'stretch',
-			borderRadius: 2,
-			backgroundColor: theme.colors.card,
-			flexDirection: 'column',
-			overflow: 'visible',
-		},
 	};
 
 	cardStyle() {
@@ -67,6 +61,12 @@ export default class Card extends React.Component {
 
 		return style;
 	}
+
+	ref = (node) => {
+		if (node && this.props.autoFocus) {
+			node.focus();
+		}
+	};
 
 	render() {
 		return (

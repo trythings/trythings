@@ -63,33 +63,6 @@ class AddTaskCard extends React.Component {
 		onCancelClick: React.PropTypes.func,
 	};
 
-	state = {
-		title: '',
-		description: '',
-	};
-
-	onTitleChange = (event) => {
-		this.setState({ title: event.target.value });
-	};
-
-	onDescriptionChange = (event) => {
-		this.setState({ description: event.target.value });
-	};
-
-	onAddClick = () => {
-		Relay.Store.commitUpdate(
-			new AddTaskMutation({
-				title: `${this.state.title}`,
-				description: this.state.description || null,
-				space: this.props.space,
-			}),
-		);
-		this.setState({
-			title: '',
-			description: '',
-		});
-	};
-
 	static styles = {
 		header: {
 			...resetStyles,
@@ -126,6 +99,33 @@ class AddTaskCard extends React.Component {
 		},
 	};
 
+	state = {
+		title: '',
+		description: '',
+	};
+
+	onTitleChange = (event) => {
+		this.setState({ title: event.target.value });
+	};
+
+	onDescriptionChange = (event) => {
+		this.setState({ description: event.target.value });
+	};
+
+	onAddClick = () => {
+		Relay.Store.commitUpdate(
+			new AddTaskMutation({
+				title: `${this.state.title}`,
+				description: this.state.description || null,
+				space: this.props.space,
+			}),
+		);
+		this.setState({
+			title: '',
+			description: '',
+		});
+	};
+
 	render() {
 		return (
 			<Card>
@@ -138,7 +138,7 @@ class AddTaskCard extends React.Component {
 						style={AddTaskCard.styles.title}
 					/>
 
-					<div style={AddTaskCard.styles.titleSpacer}/>
+					<div style={AddTaskCard.styles.titleSpacer} />
 
 					<TextareaAutosize
 						placeholder="Description"
@@ -155,7 +155,7 @@ class AddTaskCard extends React.Component {
 						label="Cancel"
 					/>
 
-					<div style={AddTaskCard.styles.actionSpacer}/>
+					<div style={AddTaskCard.styles.actionSpacer} />
 
 					<FlatButton
 						color={theme.colors.accentLight}

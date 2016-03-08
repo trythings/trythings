@@ -77,6 +77,38 @@ class TaskCard extends React.Component {
 		onClose: React.PropTypes.func,
 	};
 
+	static styles = {
+		header: {
+			...resetStyles,
+			alignItems: 'stretch',
+			flexDirection: 'column',
+			padding: 16,
+		},
+		title: {
+			...resetStyles,
+			...theme.text.dark.primary,
+
+			fontSize: 24,
+			fontWeight: 300,
+		},
+		description: {
+			...resetStyles,
+			...theme.text.dark.secondary,
+			minHeight: 0,
+		},
+		titleSpacer: {
+			...resetStyles,
+			paddingTop: 16,
+		},
+		actionContainer: {
+			...resetStyles,
+			paddingBottom: 8,
+			paddingLeft: 8,
+			paddingRight: 8,
+			paddingTop: 8,
+		},
+	};
+
 	state = {
 		title: this.props.task.title,
 		description: this.props.task.description,
@@ -121,38 +153,6 @@ class TaskCard extends React.Component {
 		);
 	};
 
-	static styles = {
-		header: {
-			...resetStyles,
-			alignItems: 'stretch',
-			flexDirection: 'column',
-			padding: 16,
-		},
-		title: {
-			...resetStyles,
-			...theme.text.dark.primary,
-
-			fontSize: 24,
-			fontWeight: 300,
-		},
-		description: {
-			...resetStyles,
-			...theme.text.dark.secondary,
-			minHeight: 0,
-		},
-		titleSpacer: {
-			...resetStyles,
-			paddingTop: 16,
-		},
-		actionContainer: {
-			...resetStyles,
-			paddingBottom: 8,
-			paddingLeft: 8,
-			paddingRight: 8,
-			paddingTop: 8,
-		},
-	};
-
 	render() {
 		return (
 			<Card autoFocus={this.props.autoFocus} flex={this.props.flex}>
@@ -164,7 +164,7 @@ class TaskCard extends React.Component {
 						style={TaskCard.styles.title}
 					/>
 
-					<div style={TaskCard.styles.titleSpacer}/>
+					<div style={TaskCard.styles.titleSpacer} />
 
 					<TextareaAutosize
 						placeholder="Description"

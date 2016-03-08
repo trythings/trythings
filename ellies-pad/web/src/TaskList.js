@@ -13,10 +13,6 @@ class TaskList extends React.Component {
 		})).isRequired,
 	};
 
-	onFocus = (event) => {
-		event.stopPropagation();
-	};
-
 	static styles = {
 		list: {
 			...resetStyles,
@@ -46,6 +42,10 @@ class TaskList extends React.Component {
 		},
 	};
 
+	onFocus = (event) => {
+		event.stopPropagation();
+	};
+
 	renderEmpty() {
 		return (
 			<span style={TaskList.styles.empty}>No results</span>
@@ -62,9 +62,9 @@ class TaskList extends React.Component {
 				<ol style={TaskList.styles.list} onFocus={this.onFocus} tabIndex={-1}>
 					{this.props.tasks.map((task, i, array) => (
 						<li key={task.id} style={TaskList.styles.listItem}>
-							<TaskListItem task={task}/>
+							<TaskListItem task={task} />
 							{i < array.length - 1
-								? <hr style={TaskList.styles.divider}/>
+								? <hr style={TaskList.styles.divider} />
 								: null
 							}
 						</li>

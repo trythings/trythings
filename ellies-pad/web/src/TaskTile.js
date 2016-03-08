@@ -68,30 +68,6 @@ class TaskTile extends React.Component {
 		}).isRequired,
 	};
 
-	state = {
-		isHovered: false,
-	};
-
-	onMouseEnter = () => {
-		this.setState({ isHovered: true });
-	};
-
-	onMouseLeave = () => {
-		this.setState({ isHovered: false });
-	};
-
-	onArchiveClick = () => {
-		Relay.Store.commitUpdate(
-			new ArchiveTaskMutation({
-				task: this.props.task,
-			}),
-		);
-	};
-
-	onArchiveFocus = (event) => {
-		event.stopPropagation();
-	};
-
 	static styles = {
 		tile: {
 			...resetStyles,
@@ -130,6 +106,30 @@ class TaskTile extends React.Component {
 			...resetStyles,
 			justifyContent: 'center',
 		},
+	};
+
+	state = {
+		isHovered: false,
+	};
+
+	onMouseEnter = () => {
+		this.setState({ isHovered: true });
+	};
+
+	onMouseLeave = () => {
+		this.setState({ isHovered: false });
+	};
+
+	onArchiveClick = () => {
+		Relay.Store.commitUpdate(
+			new ArchiveTaskMutation({
+				task: this.props.task,
+			}),
+		);
+	};
+
+	onArchiveFocus = (event) => {
+		event.stopPropagation();
 	};
 
 	style() {
@@ -172,8 +172,8 @@ class TaskTile extends React.Component {
 						onFocus={this.onArchiveFocus}
 					>
 						{this.props.task.isArchived ?
-							<Icon color={theme.text.dark.secondary.color} name="unarchive"/> :
-							<Icon color={theme.text.dark.secondary.color} name="archive"/>
+							<Icon color={theme.text.dark.secondary.color} name="unarchive" /> :
+							<Icon color={theme.text.dark.secondary.color} name="archive" />
 						}
 					</button> :
 					null

@@ -14,7 +14,7 @@ class TaskSearchResults extends React.Component {
 	};
 
 	render() {
-		return <TaskList tasks={this.props.viewer.space.tasks}/>;
+		return <TaskList tasks={this.props.viewer.space.tasks} />;
 	}
 }
 
