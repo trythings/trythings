@@ -134,10 +134,10 @@ func (s *TaskService) Update(ctx context.Context, t *Task) error {
 	}
 
 	// Make sure we have access to the task to start.
-	// _, err := s.Get(ctx, t.ID)
-	// if err != nil {
-	// 	return err
-	// }
+	_, err := s.Get(ctx, t.ID)
+	if err != nil {
+		return err
+	}
 
 	// Make sure we continue to have access to the task after our update.
 	ok, err := s.IsVisible(ctx, t)
