@@ -363,6 +363,15 @@ func init() {
 				Description: "viewer is the person currently interacting with the app.",
 				Type:        userType,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					// gu := user.Current(p.Context)
+					// err := us.Create(p.Context, &User{
+					// 	GoogleID: gu.ID,
+					// 	Email:    gu.Email,
+					// 	Name:     gu.String(),
+					// })
+					// if err != nil {
+					// 	return nil, err
+					// }
 					return us.FromContext(p.Context)
 				},
 			},
