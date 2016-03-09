@@ -79,109 +79,6 @@ func (s *UserService) FromContext(ctx context.Context) (*User, error) {
 	return s.byGoogleID(ctx, gu.ID)
 }
 
-type Space struct {
-	ID        string    `json:"id"`
-	CreatedAt time.Time `json:"createdAt"`
-	Name      string    `json:"name"`
-	UserIDs   []string  `json:"userIds"`
-}
-
-type SpaceService struct {
-	users *UserService
-}
-
-func NewSpaceService(users *UserService) *SpaceService {
-	return &SpaceService{
-		users: users,
-	}
-}
-
-func (s *SpaceService) ByID(ctx context.Context, id string) (*Space, error) {
-	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
-	k := datastore.NewKey(ctx, "Space", id, 0, rootKey)
-	var sp Space
-	err := datastore.Get(ctx, k, &sp)
-	if err != nil {
-		return nil, err
-	}
-
-	ok, err := s.IsVisible(ctx, &sp)
-	if err != nil {
-		return nil, err
-	}
-	if !ok {
-		return nil, errors.New("cannot access space")
-	}
-
-	return &sp, nil
-}
-
-func (s *SpaceService) Create(ctx context.Context, sp *Space) error {
-	if sp.ID != "" {
-		return fmt.Errorf("sp already has id %q", sp.ID)
-	}
-
-	if sp.CreatedAt.IsZero() {
-		sp.CreatedAt = time.Now()
-	}
-
-	if len(sp.UserIDs) > 0 {
-		return errors.New("UserIDs must be empty")
-	}
-
-	su, err := isSuperuser(ctx)
-	if err != nil {
-		return err
-	}
-	if !su {
-		u, err := s.users.FromContext(ctx)
-		if err != nil {
-			return err
-		}
-		sp.UserIDs = []string{u.ID}
-	}
-
-	id, _, err := datastore.AllocateIDs(ctx, "Space", nil, 1)
-	if err != nil {
-		return err
-	}
-	sp.ID = fmt.Sprintf("%x", id)
-
-	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
-	k := datastore.NewKey(ctx, "Space", sp.ID, 0, rootKey)
-	k, err = datastore.Put(ctx, k, sp)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *SpaceService) IsVisible(ctx context.Context, sp *Space) (bool, error) {
-	su, err := isSuperuser(ctx)
-	if err != nil {
-		return false, err
-	}
-
-	if su {
-		return true, nil
-	}
-
-	u, err := s.users.FromContext(ctx)
-	if err != nil {
-		return false, err
-	}
-
-	for _, id := range sp.UserIDs {
-		if u.ID == id {
-			return true, nil
-		}
-	}
-
-	return false, nil
-}
-
-var spaceType *graphql.Object
 var userType *graphql.Object
 
 var nodeDefinitions *relay.NodeDefinitions
@@ -194,6 +91,7 @@ func init() {
 	ts := NewTaskService(ss)
 	ms := NewMigrationService(ss, ts)
 
+	var spaceAPI *SpaceAPI
 	var taskAPI *TaskAPI
 
 	nodeDefinitions = relay.NewNodeDefinitions(relay.NodeDefinitionsConfig{
@@ -218,7 +116,7 @@ func init() {
 		TypeResolve: func(value interface{}, info graphql.ResolveInfo) *graphql.Object {
 			switch value.(type) {
 			case *Space:
-				return spaceType
+				return spaceAPI.Type()
 			case *Task:
 				return taskAPI.Type()
 			case *User:
@@ -234,45 +132,13 @@ func init() {
 	}
 	taskAPI.Start()
 
-	spaceType = graphql.NewObject(graphql.ObjectConfig{
-		Name:        "Space",
-		Description: "Space represents an access-controlled universe of tasks.",
-		Fields: graphql.Fields{
-			"id": relay.GlobalIDField("Space", nil),
-			"createdAt": &graphql.Field{
-				Description: "When the space was first created.",
-				Type:        graphql.String,
-			},
-			"name": &graphql.Field{
-				Description: "The name to display for the space.",
-				Type:        graphql.String,
-			},
-			"tasks": &graphql.Field{
-				Args: graphql.FieldConfigArgument{
-					"query": &graphql.ArgumentConfig{
-						Type:         graphql.String,
-						DefaultValue: "",
-						Description:  "query filters the result to only tasks that contain particular terms in their title or description",
-					},
-				},
-				Description: "tasks are all pieces of work that need to be completed for the user.",
-				Type:        graphql.NewList(taskAPI.Type()),
-				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					sp, ok := p.Source.(*Space)
-					if !ok {
-						return nil, errors.New("expected a space source")
-					}
-
-					q, ok := p.Args["query"].(string)
-					if !ok {
-						q = "" // Return all tasks.
-					}
-
-					return ts.Search(p.Context, sp, q)
-				},
-			},
-		},
-	})
+	spaceAPI = &SpaceAPI{
+		spaces:          ss,
+		tasks:           ts,
+		taskAPI:         taskAPI,
+		nodeDefinitions: nodeDefinitions,
+	}
+	spaceAPI.Start()
 
 	userType = graphql.NewObject(graphql.ObjectConfig{
 		Name:        "User",
@@ -292,7 +158,7 @@ func init() {
 					},
 				},
 				Description: "space is a disjoint universe of views, searches and tasks.",
-				Type:        spaceType,
+				Type:        spaceAPI.Type(),
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					id, ok := p.Args["id"].(string)
 					if ok {
@@ -331,7 +197,7 @@ func init() {
 				},
 			},
 			"spaces": &graphql.Field{
-				Type: graphql.NewList(spaceType),
+				Type: graphql.NewList(spaceAPI.Type()),
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					u, ok := p.Source.(*User)
 					if !ok {
