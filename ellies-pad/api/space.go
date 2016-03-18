@@ -61,7 +61,7 @@ func (s *SpaceService) Create(ctx context.Context, sp *Space) error {
 		return errors.New("UserIDs must be empty")
 	}
 
-	su, err := isSuperuser(ctx)
+	su, err := IsSuperuser(ctx)
 	if err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func (s *SpaceService) Create(ctx context.Context, sp *Space) error {
 }
 
 func (s *SpaceService) IsVisible(ctx context.Context, sp *Space) (bool, error) {
-	su, err := isSuperuser(ctx)
+	su, err := IsSuperuser(ctx)
 	if err != nil {
 		return false, err
 	}

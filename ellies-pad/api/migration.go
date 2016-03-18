@@ -252,7 +252,7 @@ func (s *MigrationService) run(ctx context.Context, m *Migration) error {
 }
 
 func (s *MigrationService) RunAll(ctx context.Context) error {
-	su, err := isSuperuser(ctx)
+	su, err := IsSuperuser(ctx)
 	if err != nil {
 		return err
 	}
@@ -281,15 +281,15 @@ func (s *MigrationService) RunAll(ctx context.Context) error {
 
 type MigrationAPI struct {
 	migrations *MigrationService
+	mutation   *graphql.Object
 }
 
-// AddMutations should only be called once, from init().
-func (api *MigrationAPI) AddMutations(parent *graphql.Object) {
+func (api *MigrationAPI) Start() error {
 	runAll := delay.Func("*MigrationService.RunAll", func(ctx context.Context) error {
-		return api.migrations.RunAll(context.WithValue(ctx, superuserKey, true))
+		return api.migrations.RunAll(AsSuperuser(ctx))
 	})
 
-	parent.AddFieldConfig("migrate", relay.MutationWithClientMutationID(relay.MutationConfig{
+	api.mutation.AddFieldConfig("migrate", relay.MutationWithClientMutationID(relay.MutationConfig{
 		Name:         "Migrate",
 		InputFields:  graphql.InputObjectConfigFieldMap{},
 		OutputFields: graphql.Fields{},
@@ -302,4 +302,6 @@ func (api *MigrationAPI) AddMutations(parent *graphql.Object) {
 			return map[string]interface{}{}, nil
 		},
 	}))
+
+	return nil
 }

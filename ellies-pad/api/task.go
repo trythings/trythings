@@ -225,6 +225,7 @@ func (s *TaskService) Index(ctx context.Context, t *Task) error {
 type TaskAPI struct {
 	tasks           *TaskService
 	nodeDefinitions *relay.NodeDefinitions
+	mutation        *graphql.Object
 
 	typ *graphql.Object
 }
@@ -256,6 +257,157 @@ func (api *TaskAPI) Start() error {
 			api.nodeDefinitions.NodeInterface,
 		},
 	})
+
+	api.mutation.AddFieldConfig("addTask", relay.MutationWithClientMutationID(relay.MutationConfig{
+		Name: "AddTask",
+		InputFields: graphql.InputObjectConfigFieldMap{
+			"title": &graphql.InputObjectFieldConfig{
+				Type: graphql.NewNonNull(graphql.String),
+			},
+			"description": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"spaceId": &graphql.InputObjectFieldConfig{
+				Type: graphql.NewNonNull(graphql.String),
+			},
+		},
+		OutputFields: graphql.Fields{
+			"task": &graphql.Field{
+				Type: api.typ,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					payload, ok := p.Source.(map[string]interface{})
+					if !ok {
+						return nil, errors.New("could not cast payload to map")
+					}
+					id, ok := payload["taskId"].(string)
+					if !ok {
+						return nil, errors.New("could not cast taskId to string")
+					}
+					t, err := api.tasks.Get(p.Context, id)
+					if err != nil {
+						return nil, err
+					}
+					return t, nil
+				},
+			},
+		},
+		MutateAndGetPayload: func(inputMap map[string]interface{}, info graphql.ResolveInfo, ctx context.Context) (map[string]interface{}, error) {
+			title, ok := inputMap["title"].(string)
+			if !ok {
+				return nil, errors.New("could not cast title to string")
+			}
+
+			var desc string
+			descOrNil := inputMap["description"]
+			if descOrNil != nil {
+				desc, ok = descOrNil.(string)
+				if !ok {
+					return nil, errors.New("could not cast description to string")
+				}
+			}
+
+			spaceID, ok := inputMap["spaceId"].(string)
+			if !ok {
+				return nil, errors.New("could not cast spaceId to string")
+			}
+			resolvedSpaceID := relay.FromGlobalID(spaceID)
+			if resolvedSpaceID == nil {
+				return nil, fmt.Errorf("invalid id %q", spaceID)
+			}
+
+			t := &Task{
+				Title:       title,
+				Description: desc,
+				SpaceID:     resolvedSpaceID.ID,
+			}
+			err := api.tasks.Create(ctx, t)
+			if err != nil {
+				return nil, err
+			}
+
+			return map[string]interface{}{
+				"taskId": t.ID,
+			}, nil
+		},
+	}))
+
+	api.mutation.AddFieldConfig("editTask", relay.MutationWithClientMutationID(relay.MutationConfig{
+		Name: "EditTask",
+		InputFields: graphql.InputObjectConfigFieldMap{
+			"id": &graphql.InputObjectFieldConfig{
+				Type: graphql.NewNonNull(graphql.ID),
+			},
+			"title": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"description": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+			"isArchived": &graphql.InputObjectFieldConfig{
+				Type: graphql.Boolean,
+			},
+		},
+		OutputFields: graphql.Fields{
+			"task": &graphql.Field{
+				Type: api.typ,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					payload, ok := p.Source.(map[string]interface{})
+					if !ok {
+						return nil, errors.New("could not cast payload to map")
+					}
+					id, ok := payload["id"].(string)
+					if !ok {
+						return nil, errors.New("could not cast id to string")
+					}
+					t, err := api.tasks.Get(p.Context, id)
+					if err != nil {
+						return nil, err
+					}
+					return t, nil
+				},
+			},
+		},
+		MutateAndGetPayload: func(inputMap map[string]interface{}, info graphql.ResolveInfo, ctx context.Context) (map[string]interface{}, error) {
+			id, ok := inputMap["id"].(string)
+			if !ok {
+				return nil, errors.New("could not cast id to string")
+			}
+
+			resolvedID := relay.FromGlobalID(id)
+			if resolvedID == nil {
+				return nil, fmt.Errorf("invalid id %q", id)
+			}
+
+			t, err := api.tasks.Get(ctx, resolvedID.ID)
+			if err != nil {
+				return nil, err
+			}
+
+			title, ok := inputMap["title"].(string)
+			if ok {
+				t.Title = title
+			}
+
+			description, ok := inputMap["description"].(string)
+			if ok {
+				t.Description = description
+			}
+
+			isArchived, ok := inputMap["isArchived"].(bool)
+			if ok {
+				t.IsArchived = isArchived
+			}
+
+			err = api.tasks.Update(ctx, t)
+			if err != nil {
+				return nil, err
+			}
+
+			return map[string]interface{}{
+				"id": t.ID,
+			}, nil
+		},
+	}))
 
 	return nil
 }

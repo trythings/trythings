@@ -166,7 +166,7 @@ func (api *UserAPI) Start() error {
 			},
 		},
 		Interfaces: []*graphql.Interface{
-			nodeDefinitions.NodeInterface,
+			api.nodeDefinitions.NodeInterface,
 		},
 	})
 	return nil
