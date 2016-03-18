@@ -1,0 +1,11 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = git@github.com:facebookgo/inject.git
+	branch = master
+	commit = d5029152fecb2a8e68f7f8eb3c6391fc8ee70496
+	parent = e41090a51e3f1f7ef44c648ac61ad992330dcdf2
+	cmdver = 0.3.0
