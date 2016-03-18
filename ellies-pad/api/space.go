@@ -19,13 +19,7 @@ type Space struct {
 }
 
 type SpaceService struct {
-	users *UserService
-}
-
-func NewSpaceService(users *UserService) *SpaceService {
-	return &SpaceService{
-		users: users,
-	}
+	UserService *UserService `inject:""`
 }
 
 func (s *SpaceService) ByID(ctx context.Context, id string) (*Space, error) {
@@ -66,7 +60,7 @@ func (s *SpaceService) Create(ctx context.Context, sp *Space) error {
 		return err
 	}
 	if !su {
-		u, err := s.users.FromContext(ctx)
+		u, err := s.UserService.FromContext(ctx)
 		if err != nil {
 			return err
 		}
@@ -99,7 +93,7 @@ func (s *SpaceService) IsVisible(ctx context.Context, sp *Space) (bool, error) {
 		return true, nil
 	}
 
-	u, err := s.users.FromContext(ctx)
+	u, err := s.UserService.FromContext(ctx)
 	if err != nil {
 		return false, err
 	}
@@ -114,10 +108,10 @@ func (s *SpaceService) IsVisible(ctx context.Context, sp *Space) (bool, error) {
 }
 
 type SpaceAPI struct {
-	spaces          *SpaceService
-	tasks           *TaskService
-	taskAPI         *TaskAPI
-	nodeDefinitions *relay.NodeDefinitions
+	NodeInterface *graphql.Interface `inject:"node"`
+	SpaceService  *SpaceService      `inject:""`
+	TaskService   *TaskService       `inject:""`
+	TaskAPI       *TaskAPI           `inject:""`
 
 	typ *graphql.Object
 }
@@ -145,7 +139,7 @@ func (api *SpaceAPI) Start() error {
 					},
 				},
 				Description: "tasks are all pieces of work that need to be completed for the user.",
-				Type:        graphql.NewList(api.taskAPI.Type()),
+				Type:        graphql.NewList(api.TaskAPI.Type()),
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					sp, ok := p.Source.(*Space)
 					if !ok {
@@ -157,12 +151,12 @@ func (api *SpaceAPI) Start() error {
 						q = "" // Return all tasks.
 					}
 
-					return api.tasks.Search(p.Context, sp, q)
+					return api.TaskService.Search(p.Context, sp, q)
 				},
 			},
 		},
 		Interfaces: []*graphql.Interface{
-			api.nodeDefinitions.NodeInterface,
+			api.NodeInterface,
 		},
 	})
 

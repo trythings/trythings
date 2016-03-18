@@ -14,13 +14,13 @@ type View struct {
 }
 
 type ViewService struct {
-	spaces *SpaceService
+	SpaceService *SpaceService `inject:""`
 }
 
 func (s *ViewService) IsVisible(ctx context.Context, v *View) (bool, error) {
-	sp, err := s.spaces.ByID(ctx, v.SpaceID)
+	sp, err := s.SpaceService.ByID(ctx, v.SpaceID)
 	if err != nil {
 		return false, err
 	}
-	return s.spaces.IsVisible(ctx, sp)
+	return s.SpaceService.IsVisible(ctx, sp)
 }

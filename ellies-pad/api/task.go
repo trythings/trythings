@@ -41,21 +41,15 @@ func (t *Task) Save() ([]search.Field, *search.DocumentMetadata, error) {
 }
 
 type TaskService struct {
-	spaces *SpaceService
-}
-
-func NewTaskService(spaces *SpaceService) *TaskService {
-	return &TaskService{
-		spaces: spaces,
-	}
+	SpaceService *SpaceService `inject:""`
 }
 
 func (s *TaskService) IsVisible(ctx context.Context, t *Task) (bool, error) {
-	sp, err := s.spaces.ByID(ctx, t.SpaceID)
+	sp, err := s.SpaceService.ByID(ctx, t.SpaceID)
 	if err != nil {
 		return false, err
 	}
-	return s.spaces.IsVisible(ctx, sp)
+	return s.SpaceService.IsVisible(ctx, sp)
 }
 
 type ErrAccessDenied struct{}
@@ -165,7 +159,7 @@ func (s *TaskService) Update(ctx context.Context, t *Task) error {
 }
 
 func (s *TaskService) Search(ctx context.Context, sp *Space, query string) ([]*Task, error) {
-	ok, err := s.spaces.IsVisible(ctx, sp)
+	ok, err := s.SpaceService.IsVisible(ctx, sp)
 	if err != nil {
 		return nil, err
 	}
@@ -223,9 +217,9 @@ func (s *TaskService) Index(ctx context.Context, t *Task) error {
 }
 
 type TaskAPI struct {
-	tasks           *TaskService
-	nodeDefinitions *relay.NodeDefinitions
-	mutation        *graphql.Object
+	NodeInterface *graphql.Interface `inject:"node"`
+	Mutation      *graphql.Object    `inject:"mutation"`
+	TaskService   *TaskService       `inject:""`
 
 	typ *graphql.Object
 }
@@ -254,11 +248,11 @@ func (api *TaskAPI) Start() error {
 			},
 		},
 		Interfaces: []*graphql.Interface{
-			api.nodeDefinitions.NodeInterface,
+			api.NodeInterface,
 		},
 	})
 
-	api.mutation.AddFieldConfig("addTask", relay.MutationWithClientMutationID(relay.MutationConfig{
+	api.Mutation.AddFieldConfig("addTask", relay.MutationWithClientMutationID(relay.MutationConfig{
 		Name: "AddTask",
 		InputFields: graphql.InputObjectConfigFieldMap{
 			"title": &graphql.InputObjectFieldConfig{
@@ -283,7 +277,7 @@ func (api *TaskAPI) Start() error {
 					if !ok {
 						return nil, errors.New("could not cast taskId to string")
 					}
-					t, err := api.tasks.Get(p.Context, id)
+					t, err := api.TaskService.Get(p.Context, id)
 					if err != nil {
 						return nil, err
 					}
@@ -320,7 +314,7 @@ func (api *TaskAPI) Start() error {
 				Description: desc,
 				SpaceID:     resolvedSpaceID.ID,
 			}
-			err := api.tasks.Create(ctx, t)
+			err := api.TaskService.Create(ctx, t)
 			if err != nil {
 				return nil, err
 			}
@@ -331,7 +325,7 @@ func (api *TaskAPI) Start() error {
 		},
 	}))
 
-	api.mutation.AddFieldConfig("editTask", relay.MutationWithClientMutationID(relay.MutationConfig{
+	api.Mutation.AddFieldConfig("editTask", relay.MutationWithClientMutationID(relay.MutationConfig{
 		Name: "EditTask",
 		InputFields: graphql.InputObjectConfigFieldMap{
 			"id": &graphql.InputObjectFieldConfig{
@@ -359,7 +353,7 @@ func (api *TaskAPI) Start() error {
 					if !ok {
 						return nil, errors.New("could not cast id to string")
 					}
-					t, err := api.tasks.Get(p.Context, id)
+					t, err := api.TaskService.Get(p.Context, id)
 					if err != nil {
 						return nil, err
 					}
@@ -378,7 +372,7 @@ func (api *TaskAPI) Start() error {
 				return nil, fmt.Errorf("invalid id %q", id)
 			}
 
-			t, err := api.tasks.Get(ctx, resolvedID.ID)
+			t, err := api.TaskService.Get(ctx, resolvedID.ID)
 			if err != nil {
 				return nil, err
 			}
@@ -398,7 +392,7 @@ func (api *TaskAPI) Start() error {
 				t.IsArchived = isArchived
 			}
 
-			err = api.tasks.Update(ctx, t)
+			err = api.TaskService.Update(ctx, t)
 			if err != nil {
 				return nil, err
 			}

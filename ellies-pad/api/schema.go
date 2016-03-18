@@ -3,22 +3,25 @@ package api
 import (
 	"errors"
 
+	"github.com/facebookgo/inject"
+	"github.com/facebookgo/startstop"
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/relay"
 	"golang.org/x/net/context"
 )
 
+type apis struct {
+	MigrationAPI *MigrationAPI `inject:""`
+	SpaceAPI     *SpaceAPI     `inject:""`
+	TaskAPI      *TaskAPI      `inject:""`
+	UserAPI      *UserAPI      `inject:""`
+	UserService  *UserService  `inject:""`
+}
+
 var Schema graphql.Schema
 
 func init() {
-	us := NewUserService()
-	ss := NewSpaceService(us)
-	ts := NewTaskService(ss)
-	ms := NewMigrationService(ss, ts)
-
-	var spaceAPI *SpaceAPI
-	var taskAPI *TaskAPI
-	var userAPI *UserAPI
+	apis := &apis{}
 
 	nodeDefinitions := relay.NewNodeDefinitions(relay.NodeDefinitionsConfig{
 		IDFetcher: func(ctx context.Context, id string, info graphql.ResolveInfo) (interface{}, error) {
@@ -27,48 +30,49 @@ func init() {
 		TypeResolve: func(value interface{}, info graphql.ResolveInfo) *graphql.Object {
 			switch value.(type) {
 			case *Space:
-				return spaceAPI.Type()
+				return apis.SpaceAPI.Type()
 			case *Task:
-				return taskAPI.Type()
+				return apis.TaskAPI.Type()
 			case *User:
-				return userAPI.Type()
+				return apis.UserAPI.Type()
 			}
 			return nil
 		},
 	})
 
 	mutation := graphql.NewObject(graphql.ObjectConfig{
-		Name: "Mutation",
+		Name:   "Mutation",
+		Fields: graphql.Fields{},
 	})
 
-	migrationAPI := &MigrationAPI{
-		migrations: ms,
-		mutation:   mutation,
-	}
-	migrationAPI.Start()
+	// logger := log.New(os.Stderr, "", log.LstdFlags)
 
-	taskAPI = &TaskAPI{
-		tasks:           ts,
-		nodeDefinitions: nodeDefinitions,
-		mutation:        mutation,
+	graph := &inject.Graph{
+	// Logger: logger,
 	}
-	taskAPI.Start()
+	err := graph.Provide(
+		&inject.Object{
+			Value: apis,
+		},
+		&inject.Object{
+			Value: nodeDefinitions.NodeInterface,
+			Name:  "node",
+		},
+		&inject.Object{
+			Value: mutation,
+			Name:  "mutation",
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
 
-	spaceAPI = &SpaceAPI{
-		spaces:          ss,
-		tasks:           ts,
-		taskAPI:         taskAPI,
-		nodeDefinitions: nodeDefinitions,
+	err = graph.Populate()
+	if err != nil {
+		panic(err)
 	}
-	spaceAPI.Start()
 
-	userAPI = &UserAPI{
-		users:           us,
-		spaces:          ss,
-		spaceAPI:        spaceAPI,
-		nodeDefinitions: nodeDefinitions,
-	}
-	userAPI.Start()
+	startstop.Start(graph.Objects(), nil)
 
 	query := graphql.NewObject(graphql.ObjectConfig{
 		Name: "Query",
@@ -76,10 +80,10 @@ func init() {
 			"node": nodeDefinitions.NodeField,
 			"viewer": &graphql.Field{
 				Description: "viewer is the person currently interacting with the app.",
-				Type:        userAPI.Type(),
+				Type:        apis.UserAPI.Type(),
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					// gu := user.Current(p.Context)
-					// err := us.Create(p.Context, &User{
+					// err := apis.UserService.Create(p.Context, &User{
 					// 	GoogleID: gu.ID,
 					// 	Email:    gu.Email,
 					// 	Name:     gu.String(),
@@ -87,13 +91,12 @@ func init() {
 					// if err != nil {
 					// 	return nil, err
 					// }
-					return us.FromContext(p.Context)
+					return apis.UserService.FromContext(p.Context)
 				},
 			},
 		},
 	})
 
-	var err error
 	Schema, err = graphql.NewSchema(graphql.SchemaConfig{
 		Query:    query,
 		Mutation: mutation,

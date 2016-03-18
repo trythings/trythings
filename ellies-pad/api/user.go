@@ -23,10 +23,6 @@ type User struct {
 type UserService struct {
 }
 
-func NewUserService() *UserService {
-	return &UserService{}
-}
-
 func (s *UserService) Create(ctx context.Context, u *User) error {
 	// TODO Make sure u.GoogleID == user.Current(ctx).ID
 
@@ -80,10 +76,10 @@ func (s *UserService) FromContext(ctx context.Context) (*User, error) {
 }
 
 type UserAPI struct {
-	users           *UserService
-	spaces          *SpaceService
-	spaceAPI        *SpaceAPI
-	nodeDefinitions *relay.NodeDefinitions
+	NodeInterface *graphql.Interface `inject:"node"`
+	SpaceService  *SpaceService      `inject:""`
+	SpaceAPI      *SpaceAPI          `inject:""`
+	UserService   *UserService       `inject:""`
 
 	typ *graphql.Object
 }
@@ -107,7 +103,7 @@ func (api *UserAPI) Start() error {
 					},
 				},
 				Description: "space is a disjoint universe of views, searches and tasks.",
-				Type:        api.spaceAPI.Type(),
+				Type:        api.SpaceAPI.Type(),
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					id, ok := p.Args["id"].(string)
 					if ok {
@@ -116,7 +112,7 @@ func (api *UserAPI) Start() error {
 							return nil, fmt.Errorf("invalid id %q", id)
 						}
 
-						sp, err := api.spaces.ByID(p.Context, resolvedID.ID)
+						sp, err := api.SpaceService.ByID(p.Context, resolvedID.ID)
 						if err != nil {
 							return nil, err
 						}
@@ -146,7 +142,7 @@ func (api *UserAPI) Start() error {
 				},
 			},
 			"spaces": &graphql.Field{
-				Type: graphql.NewList(api.spaceAPI.Type()),
+				Type: graphql.NewList(api.SpaceAPI.Type()),
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					u, ok := p.Source.(*User)
 					if !ok {
@@ -166,7 +162,7 @@ func (api *UserAPI) Start() error {
 			},
 		},
 		Interfaces: []*graphql.Interface{
-			api.nodeDefinitions.NodeInterface,
+			api.NodeInterface,
 		},
 	})
 	return nil

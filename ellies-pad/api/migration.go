@@ -192,15 +192,8 @@ var migrations = []*Migration{
 }
 
 type MigrationService struct {
-	ss *SpaceService
-	ts *TaskService
-}
-
-func NewMigrationService(ss *SpaceService, ts *TaskService) *MigrationService {
-	return &MigrationService{
-		ss: ss,
-		ts: ts,
-	}
+	SpaceService *SpaceService `inject:""`
+	TaskService  *TaskService  `inject:""`
 }
 
 // latestVersion returns the largest version stored in the Migrations table.
@@ -238,7 +231,7 @@ func (s *MigrationService) run(ctx context.Context, m *Migration) error {
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
 	k := datastore.NewIncompleteKey(ctx, "Migration", rootKey)
 
-	err := m.Run(ctx, s.ss, s.ts)
+	err := m.Run(ctx, s.SpaceService, s.TaskService)
 	if err != nil {
 		return err
 	}
@@ -280,16 +273,16 @@ func (s *MigrationService) RunAll(ctx context.Context) error {
 }
 
 type MigrationAPI struct {
-	migrations *MigrationService
-	mutation   *graphql.Object
+	MigrationService *MigrationService `inject:""`
+	Mutation         *graphql.Object   `inject:"mutation"`
 }
 
 func (api *MigrationAPI) Start() error {
 	runAll := delay.Func("*MigrationService.RunAll", func(ctx context.Context) error {
-		return api.migrations.RunAll(AsSuperuser(ctx))
+		return api.MigrationService.RunAll(AsSuperuser(ctx))
 	})
 
-	api.mutation.AddFieldConfig("migrate", relay.MutationWithClientMutationID(relay.MutationConfig{
+	api.Mutation.AddFieldConfig("migrate", relay.MutationWithClientMutationID(relay.MutationConfig{
 		Name:         "Migrate",
 		InputFields:  graphql.InputObjectConfigFieldMap{},
 		OutputFields: graphql.Fields{},
