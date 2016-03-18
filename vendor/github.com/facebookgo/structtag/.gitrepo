@@ -1,0 +1,11 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = git@github.com:facebookgo/structtag.git
+	branch = master
+	commit = 217e25fb96916cc60332e399c9aa63f5c422ceed
+	parent = fb0dfb71567e797ca39bbf115a9ddbde98e21733
+	cmdver = 0.3.0
