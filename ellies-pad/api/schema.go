@@ -45,11 +45,7 @@ func init() {
 		Fields: graphql.Fields{},
 	})
 
-	// logger := log.New(os.Stderr, "", log.LstdFlags)
-
-	graph := &inject.Graph{
-	// Logger: logger,
-	}
+	graph := &inject.Graph{}
 	err := graph.Provide(
 		&inject.Object{
 			Value: apis,
