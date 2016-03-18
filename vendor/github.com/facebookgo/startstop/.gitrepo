@@ -1,0 +1,11 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = git@github.com:facebookgo/startstop.git
+	branch = master
+	commit = 69abd424c676eb577bb9bb917a98289d7d752b15
+	parent = 3ec262bdd0ce47ea1b956db98d1182e201f1bc96
+	cmdver = 0.3.0
