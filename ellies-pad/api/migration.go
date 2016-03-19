@@ -274,7 +274,7 @@ func (s *MigrationService) RunAll(ctx context.Context) error {
 
 type MigrationAPI struct {
 	MigrationService *MigrationService `inject:""`
-	Mutation         *graphql.Object   `inject:"mutation"`
+	Mutations        map[string]*graphql.Field
 }
 
 func (api *MigrationAPI) Start() error {
@@ -282,19 +282,21 @@ func (api *MigrationAPI) Start() error {
 		return api.MigrationService.RunAll(AsSuperuser(ctx))
 	})
 
-	api.Mutation.AddFieldConfig("migrate", relay.MutationWithClientMutationID(relay.MutationConfig{
-		Name:         "Migrate",
-		InputFields:  graphql.InputObjectConfigFieldMap{},
-		OutputFields: graphql.Fields{},
-		MutateAndGetPayload: func(inputMap map[string]interface{}, info graphql.ResolveInfo, ctx context.Context) (map[string]interface{}, error) {
-			err := runAll.Call(ctx)
-			if err != nil {
-				return nil, err
-			}
+	api.Mutations = map[string]*graphql.Field{
+		"migrate": relay.MutationWithClientMutationID(relay.MutationConfig{
+			Name:         "Migrate",
+			InputFields:  graphql.InputObjectConfigFieldMap{},
+			OutputFields: graphql.Fields{},
+			MutateAndGetPayload: func(inputMap map[string]interface{}, info graphql.ResolveInfo, ctx context.Context) (map[string]interface{}, error) {
+				err := runAll.Call(ctx)
+				if err != nil {
+					return nil, err
+				}
 
-			return map[string]interface{}{}, nil
-		},
-	}))
+				return map[string]interface{}{}, nil
+			},
+		}),
+	}
 
 	return nil
 }

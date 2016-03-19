@@ -3,8 +3,6 @@ package api
 import (
 	"errors"
 
-	"github.com/facebookgo/inject"
-	"github.com/facebookgo/startstop"
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/relay"
 	"golang.org/x/net/context"
@@ -16,14 +14,14 @@ type apis struct {
 	TaskAPI      *TaskAPI      `inject:""`
 	UserAPI      *UserAPI      `inject:""`
 	UserService  *UserService  `inject:""`
+
+	Schema          *graphql.Schema
+	NodeDefinitions *relay.NodeDefinitions
 }
 
-var Schema graphql.Schema
-
-func init() {
+func NewAPIs() *apis {
 	apis := &apis{}
-
-	nodeDefinitions := relay.NewNodeDefinitions(relay.NodeDefinitionsConfig{
+	apis.NodeDefinitions = relay.NewNodeDefinitions(relay.NodeDefinitionsConfig{
 		IDFetcher: func(ctx context.Context, id string, info graphql.ResolveInfo) (interface{}, error) {
 			return nil, errors.New("not implemented")
 		},
@@ -39,41 +37,14 @@ func init() {
 			return nil
 		},
 	})
+	return apis
+}
 
-	mutation := graphql.NewObject(graphql.ObjectConfig{
-		Name:   "Mutation",
-		Fields: graphql.Fields{},
-	})
-
-	graph := &inject.Graph{}
-	err := graph.Provide(
-		&inject.Object{
-			Value: apis,
-		},
-		&inject.Object{
-			Value: nodeDefinitions.NodeInterface,
-			Name:  "node",
-		},
-		&inject.Object{
-			Value: mutation,
-			Name:  "mutation",
-		},
-	)
-	if err != nil {
-		panic(err)
-	}
-
-	err = graph.Populate()
-	if err != nil {
-		panic(err)
-	}
-
-	startstop.Start(graph.Objects(), nil)
-
+func (apis *apis) Start() error {
 	query := graphql.NewObject(graphql.ObjectConfig{
 		Name: "Query",
 		Fields: graphql.Fields{
-			"node": nodeDefinitions.NodeField,
+			"node": apis.NodeDefinitions.NodeField,
 			"viewer": &graphql.Field{
 				Description: "viewer is the person currently interacting with the app.",
 				Type:        apis.UserAPI.Type,
@@ -93,11 +64,28 @@ func init() {
 		},
 	})
 
-	Schema, err = graphql.NewSchema(graphql.SchemaConfig{
+	mutation := graphql.NewObject(graphql.ObjectConfig{
+		Name:   "Mutation",
+		Fields: graphql.Fields{},
+	})
+
+	for n, f := range apis.MigrationAPI.Mutations {
+		mutation.AddFieldConfig(n, f)
+	}
+	for n, f := range apis.TaskAPI.Mutations {
+		mutation.AddFieldConfig(n, f)
+	}
+
+	schema, err := graphql.NewSchema(graphql.SchemaConfig{
 		Query:    query,
 		Mutation: mutation,
 	})
+
 	if err != nil {
-		panic(err)
+		return err
 	}
+
+	apis.Schema = &schema
+
+	return nil
 }
