@@ -18,12 +18,12 @@ type apis struct {
 	UserService  *UserService  `inject:""`
 
 	Schema          *graphql.Schema
-	NodeDefinitions *relay.NodeDefinitions
+	nodeDefinitions *relay.NodeDefinitions
 }
 
 func NewAPIs() (*apis, error) {
 	apis := &apis{}
-	apis.NodeDefinitions = relay.NewNodeDefinitions(relay.NodeDefinitionsConfig{
+	apis.nodeDefinitions = relay.NewNodeDefinitions(relay.NodeDefinitionsConfig{
 		IDFetcher: func(ctx context.Context, id string, info graphql.ResolveInfo) (interface{}, error) {
 			return nil, errors.New("not implemented")
 		},
@@ -46,7 +46,7 @@ func NewAPIs() (*apis, error) {
 			Value: apis,
 		},
 		&inject.Object{
-			Value: apis.NodeDefinitions.NodeInterface,
+			Value: apis.nodeDefinitions.NodeInterface,
 			Name:  "node",
 		},
 	)
@@ -71,7 +71,7 @@ func (apis *apis) Start() error {
 	query := graphql.NewObject(graphql.ObjectConfig{
 		Name: "Query",
 		Fields: graphql.Fields{
-			"node": apis.NodeDefinitions.NodeField,
+			"node": apis.nodeDefinitions.NodeField,
 			"viewer": &graphql.Field{
 				Description: "viewer is the person currently interacting with the app.",
 				Type:        apis.UserAPI.Type,
