@@ -3,6 +3,8 @@ package api
 import (
 	"errors"
 
+	"github.com/facebookgo/inject"
+	"github.com/facebookgo/startstop"
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/relay"
 	"golang.org/x/net/context"
@@ -19,7 +21,7 @@ type apis struct {
 	NodeDefinitions *relay.NodeDefinitions
 }
 
-func NewAPIs() *apis {
+func NewAPIs() (*apis, error) {
 	apis := &apis{}
 	apis.NodeDefinitions = relay.NewNodeDefinitions(relay.NodeDefinitionsConfig{
 		IDFetcher: func(ctx context.Context, id string, info graphql.ResolveInfo) (interface{}, error) {
@@ -37,7 +39,32 @@ func NewAPIs() *apis {
 			return nil
 		},
 	})
-	return apis
+
+	graph := &inject.Graph{}
+	err := graph.Provide(
+		&inject.Object{
+			Value: apis,
+		},
+		&inject.Object{
+			Value: apis.NodeDefinitions.NodeInterface,
+			Name:  "node",
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	err = graph.Populate()
+	if err != nil {
+		return nil, err
+	}
+
+	err = startstop.Start(graph.Objects(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return apis, nil
 }
 
 func (apis *apis) Start() error {
