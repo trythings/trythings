@@ -113,11 +113,11 @@ type SpaceAPI struct {
 	TaskService   *TaskService       `inject:""`
 	TaskAPI       *TaskAPI           `inject:""`
 
-	typ *graphql.Object
+	Type *graphql.Object
 }
 
 func (api *SpaceAPI) Start() error {
-	api.typ = graphql.NewObject(graphql.ObjectConfig{
+	api.Type = graphql.NewObject(graphql.ObjectConfig{
 		Name:        "Space",
 		Description: "Space represents an access-controlled universe of tasks.",
 		Fields: graphql.Fields{
@@ -139,7 +139,7 @@ func (api *SpaceAPI) Start() error {
 					},
 				},
 				Description: "tasks are all pieces of work that need to be completed for the user.",
-				Type:        graphql.NewList(api.TaskAPI.Type()),
+				Type:        graphql.NewList(api.TaskAPI.Type),
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					sp, ok := p.Source.(*Space)
 					if !ok {
@@ -161,8 +161,4 @@ func (api *SpaceAPI) Start() error {
 	})
 
 	return nil
-}
-
-func (api *SpaceAPI) Type() *graphql.Object {
-	return api.typ
 }

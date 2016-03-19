@@ -81,11 +81,11 @@ type UserAPI struct {
 	SpaceAPI      *SpaceAPI          `inject:""`
 	UserService   *UserService       `inject:""`
 
-	typ *graphql.Object
+	Type *graphql.Object
 }
 
 func (api *UserAPI) Start() error {
-	api.typ = graphql.NewObject(graphql.ObjectConfig{
+	api.Type = graphql.NewObject(graphql.ObjectConfig{
 		Name:        "User",
 		Description: "User represents a person who can interact with the app.",
 		Fields: graphql.Fields{
@@ -103,7 +103,7 @@ func (api *UserAPI) Start() error {
 					},
 				},
 				Description: "space is a disjoint universe of views, searches and tasks.",
-				Type:        api.SpaceAPI.Type(),
+				Type:        api.SpaceAPI.Type,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					id, ok := p.Args["id"].(string)
 					if ok {
@@ -142,7 +142,7 @@ func (api *UserAPI) Start() error {
 				},
 			},
 			"spaces": &graphql.Field{
-				Type: graphql.NewList(api.SpaceAPI.Type()),
+				Type: graphql.NewList(api.SpaceAPI.Type),
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					u, ok := p.Source.(*User)
 					if !ok {
@@ -166,8 +166,4 @@ func (api *UserAPI) Start() error {
 		},
 	})
 	return nil
-}
-
-func (api *UserAPI) Type() *graphql.Object {
-	return api.typ
 }

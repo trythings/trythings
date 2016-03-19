@@ -221,11 +221,11 @@ type TaskAPI struct {
 	Mutation      *graphql.Object    `inject:"mutation"`
 	TaskService   *TaskService       `inject:""`
 
-	typ *graphql.Object
+	Type *graphql.Object
 }
 
 func (api *TaskAPI) Start() error {
-	api.typ = graphql.NewObject(graphql.ObjectConfig{
+	api.Type = graphql.NewObject(graphql.ObjectConfig{
 		Name:        "Task",
 		Description: "Task represents a particular action or piece of work to be completed.",
 		Fields: graphql.Fields{
@@ -267,7 +267,7 @@ func (api *TaskAPI) Start() error {
 		},
 		OutputFields: graphql.Fields{
 			"task": &graphql.Field{
-				Type: api.typ,
+				Type: api.Type,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					payload, ok := p.Source.(map[string]interface{})
 					if !ok {
@@ -343,7 +343,7 @@ func (api *TaskAPI) Start() error {
 		},
 		OutputFields: graphql.Fields{
 			"task": &graphql.Field{
-				Type: api.typ,
+				Type: api.Type,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					payload, ok := p.Source.(map[string]interface{})
 					if !ok {
@@ -404,8 +404,4 @@ func (api *TaskAPI) Start() error {
 	}))
 
 	return nil
-}
-
-func (api *TaskAPI) Type() *graphql.Object {
-	return api.typ
 }

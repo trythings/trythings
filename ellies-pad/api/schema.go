@@ -30,11 +30,11 @@ func init() {
 		TypeResolve: func(value interface{}, info graphql.ResolveInfo) *graphql.Object {
 			switch value.(type) {
 			case *Space:
-				return apis.SpaceAPI.Type()
+				return apis.SpaceAPI.Type
 			case *Task:
-				return apis.TaskAPI.Type()
+				return apis.TaskAPI.Type
 			case *User:
-				return apis.UserAPI.Type()
+				return apis.UserAPI.Type
 			}
 			return nil
 		},
@@ -76,7 +76,7 @@ func init() {
 			"node": nodeDefinitions.NodeField,
 			"viewer": &graphql.Field{
 				Description: "viewer is the person currently interacting with the app.",
-				Type:        apis.UserAPI.Type(),
+				Type:        apis.UserAPI.Type,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					// gu := user.Current(p.Context)
 					// err := apis.UserService.Create(p.Context, &User{
