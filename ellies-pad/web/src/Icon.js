@@ -7,7 +7,9 @@ import resetStyles from './resetStyles.js';
 export default class Icon extends React.Component {
 	static propTypes = {
 		name: React.PropTypes.string.isRequired,
-		color: React.PropTypes.string,
+		style: React.PropTypes.shape({
+			color: React.PropTypes.string,
+		}),
 	};
 
 	static styles = {
@@ -24,7 +26,7 @@ export default class Icon extends React.Component {
 				className="material-icons"
 				style={{
 					...Icon.styles.icon,
-					color: this.props.color,
+					color: this.props.style && this.props.style.color,
 				}}
 			>
 				{this.props.name}

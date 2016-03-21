@@ -76,6 +76,10 @@ class AppBar extends React.Component {
 			paddingRight: 8,
 			paddingTop: 8,
 		},
+		migrateIcon: {
+			...resetStyles,
+			color: theme.text.light.primary.color,
+		},
 	};
 
 	state = {
@@ -117,7 +121,7 @@ class AppBar extends React.Component {
 					onMouseEnter={this.onMigrateMouseEnter}
 					onMouseLeave={this.onMigrateMouseLeave}
 				>
-					<Icon color={theme.text.light.primary.color} name="update" />
+					<Icon style={AppBar.styles.migrateIcon} name="update" />
 				</button>
 			</div>
 		);

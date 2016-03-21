@@ -23,6 +23,14 @@ class TaskListItem extends React.Component {
 			maxWidth: '100%',
 			overflow: 'visible',
 		},
+		taskCard: {
+			...resetStyles,
+			flex: '1 0 auto',
+		},
+		taskTile: {
+			...resetStyles,
+			flex: '1 1 auto',
+		},
 	};
 
 	state = {
@@ -59,13 +67,13 @@ class TaskListItem extends React.Component {
 					? (
 							<TaskCard
 								autoFocus
-								flex="1 0 auto"
+								style={TaskListItem.styles.taskCard}
 								onClose={this.close}
 								ref={this.taskCardRef}
 								task={this.props.task}
 							/>
 						)
-					: <TaskTile flex="1 1 auto" task={this.props.task} />
+					: <TaskTile style={TaskListItem.styles.taskTile} task={this.props.task} />
 				}
 			</div>
 		);

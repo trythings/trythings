@@ -97,6 +97,14 @@ class AddTaskCard extends React.Component {
 			...resetStyles,
 			paddingLeft: 8,
 		},
+		cancel: {
+			...resetStyles,
+			color: theme.text.dark.primary.color,
+		},
+		addTask: {
+			...resetStyles,
+			color: theme.colors.accentLight,
+		},
 	};
 
 	state = {
@@ -150,7 +158,7 @@ class AddTaskCard extends React.Component {
 
 				<div style={AddTaskCard.styles.actionContainer}>
 					<FlatButton
-						color={theme.text.dark.primary.color}
+						style={AddTaskCard.styles.cancel}
 						onClick={this.props.onCancelClick}
 						label="Cancel"
 					/>
@@ -158,7 +166,7 @@ class AddTaskCard extends React.Component {
 					<div style={AddTaskCard.styles.actionSpacer} />
 
 					<FlatButton
-						color={theme.colors.accentLight}
+						style={AddTaskCard.styles.addTask}
 						onClick={this.onAddClick}
 						label="Add Task"
 					/>

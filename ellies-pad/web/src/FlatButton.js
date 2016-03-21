@@ -6,9 +6,11 @@ import theme from './theme.js';
 
 export default class FlatButton extends React.Component {
 	static propTypes = {
-		color: React.PropTypes.string.isRequired,
 		label: React.PropTypes.string.isRequired,
 		onClick: React.PropTypes.func,
+		style: React.PropTypes.shape({
+			color: React.PropTypes.string.isRequired,
+		}).isRequired,
 	};
 
 	static styles = {
@@ -66,17 +68,17 @@ export default class FlatButton extends React.Component {
 	buttonStateStyle() {
 		if (this.state.isActive) {
 			return {
-				backgroundColor: color(this.props.color).alpha(0.38).rgbString(),
+				backgroundColor: color(this.props.style.color).alpha(0.38).rgbString(),
 			};
 		}
 		if (this.state.isFocused) {
 			return {
-				backgroundColor: color(this.props.color).alpha(0.24).rgbString(),
+				backgroundColor: color(this.props.style.color).alpha(0.24).rgbString(),
 			};
 		}
 		if (this.state.isHovered) {
 			return {
-				backgroundColor: color(this.props.color).alpha(0.12).rgbString(),
+				backgroundColor: color(this.props.style.color).alpha(0.12).rgbString(),
 			};
 		}
 		return {};
@@ -88,7 +90,7 @@ export default class FlatButton extends React.Component {
 				style={{
 					...FlatButton.styles.button,
 					...this.buttonStateStyle(),
-					color: this.props.color,
+					color: this.props.style.color,
 				}}
 				onClick={this.props.onClick}
 
@@ -102,7 +104,7 @@ export default class FlatButton extends React.Component {
 				<span
 					style={{
 						...FlatButton.styles.label,
-						color: this.props.color,
+						color: this.props.style.color,
 					}}
 				>
 					{this.props.label}

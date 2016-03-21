@@ -68,7 +68,9 @@ class EditTaskMutation extends Relay.Mutation {
 class TaskCard extends React.Component {
 	static propTypes = {
 		autoFocus: React.PropTypes.bool,
-		flex: React.PropTypes.string,
+		style: React.PropTypes.shape({
+			flex: React.PropTypes.string,
+		}),
 		task: React.PropTypes.shape({
 			title: React.PropTypes.string.isRequired,
 			description: React.PropTypes.string,
@@ -106,6 +108,10 @@ class TaskCard extends React.Component {
 			paddingLeft: 8,
 			paddingRight: 8,
 			paddingTop: 8,
+		},
+		save: {
+			...resetStyles,
+			color: theme.colors.accentLight,
 		},
 	};
 
@@ -155,7 +161,7 @@ class TaskCard extends React.Component {
 
 	render() {
 		return (
-			<Card autoFocus={this.props.autoFocus} flex={this.props.flex}>
+			<Card autoFocus={this.props.autoFocus} style={this.props.style}>
 				<header style={TaskCard.styles.header}>
 					<input
 						placeholder="Title"
@@ -176,7 +182,7 @@ class TaskCard extends React.Component {
 
 				<div style={TaskCard.styles.actionContainer}>
 					<FlatButton
-						color={theme.colors.accentLight}
+						style={TaskCard.styles.save}
 						onClick={this.onSaveClick}
 						label="Save"
 					/>

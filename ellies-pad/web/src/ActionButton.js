@@ -23,12 +23,16 @@ export default class ActionButton extends React.Component {
 			height: 56,
 			width: 56,
 		},
+		icon: {
+			...resetStyles,
+			color: theme.text.light.primary.color,
+		},
 	};
 
 	render() {
 		return (
 			<button onClick={this.props.onClick} style={ActionButton.styles.button}>
-				<Icon color={theme.text.light.primary.color} name="add" />
+				<Icon style={ActionButton.styles.icon} name="add" />
 			</button>
 		);
 	}

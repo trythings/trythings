@@ -7,7 +7,9 @@ export default class Card extends React.Component {
 	static propTypes = {
 		autoFocus: React.PropTypes.bool,
 		children: React.PropTypes.node,
-		flex: React.PropTypes.string,
+		style: React.PropTypes.shape({
+			flex: React.PropTypes.string,
+		}),
 	};
 
 	static styles = {
@@ -52,10 +54,10 @@ export default class Card extends React.Component {
 			};
 		}
 
-		if (this.props.flex) {
+		if (this.props.style && this.props.style.flex) {
 			style = {
 				...style,
-				flex: this.props.flex,
+				flex: this.props.style.flex,
 			};
 		}
 

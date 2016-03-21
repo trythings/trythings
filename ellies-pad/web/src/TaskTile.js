@@ -60,7 +60,9 @@ class ArchiveTaskMutation extends Relay.Mutation {
 
 class TaskTile extends React.Component {
 	static propTypes = {
-		flex: React.PropTypes.string,
+		style: React.PropTypes.shape({
+			flex: React.PropTypes.string,
+		}),
 		task: React.PropTypes.shape({
 			title: React.PropTypes.string.isRequired,
 			description: React.PropTypes.string,
@@ -106,6 +108,10 @@ class TaskTile extends React.Component {
 			...resetStyles,
 			justifyContent: 'center',
 		},
+		archiveIcon: {
+			...resetStyles,
+			color: theme.text.dark.secondary.color,
+		},
 	};
 
 	state = {
@@ -134,10 +140,10 @@ class TaskTile extends React.Component {
 
 	style() {
 		let style = TaskTile.styles.tile;
-		if (this.props.flex) {
+		if (this.props.style && this.props.style.flex) {
 			style = {
 				...style,
-				flex: this.props.flex,
+				flex: this.props.style.flex,
 			};
 		}
 		return style;
@@ -172,8 +178,8 @@ class TaskTile extends React.Component {
 						onFocus={this.onArchiveFocus}
 					>
 						{this.props.task.isArchived ?
-							<Icon color={theme.text.dark.secondary.color} name="unarchive" /> :
-							<Icon color={theme.text.dark.secondary.color} name="archive" />
+							<Icon style={TaskTile.styles.archiveIcon} name="unarchive" /> :
+							<Icon style={TaskTile.styles.archiveIcon} name="archive" />
 						}
 					</button> :
 					null
