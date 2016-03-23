@@ -1,11 +1,23 @@
 import React from 'react';
 
 import Icon from './Icon.js';
+import resetStyles from './resetStyles.js';
+import theme from './theme.js';
 
 export default class SearchField extends React.Component {
 	static propTypes = {
 		initialQuery: React.PropTypes.string,
 		onQueryChange: React.PropTypes.func,
+	};
+
+	static styles = {
+		container: {
+			...resetStyles,
+		},
+		icon: {
+			...resetStyles,
+			color: theme.text.light.primary.color,
+		},
 	};
 
 	constructor(props, ...args) {
@@ -25,8 +37,8 @@ export default class SearchField extends React.Component {
 
 	render() {
 		return (
-			<div>
-				<Icon name="search" />
+			<div style={SearchField.styles.container}>
+				<Icon name="search" style={SearchField.styles.icon} />
 				<input onChange={this.onChange} value={this.state.query} />
 			</div>
 		);
