@@ -110,7 +110,7 @@ class TaskTile extends React.Component {
 		},
 		archiveIcon: {
 			...resetStyles,
-			color: theme.text.dark.secondary.color,
+			...theme.text.dark.secondary,
 		},
 	};
 

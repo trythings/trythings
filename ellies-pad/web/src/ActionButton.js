@@ -25,7 +25,7 @@ export default class ActionButton extends React.Component {
 		},
 		icon: {
 			...resetStyles,
-			color: theme.text.light.primary.color,
+			...theme.text.light.primary,
 		},
 	};
 

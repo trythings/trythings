@@ -16,7 +16,7 @@ export default class SearchField extends React.Component {
 		},
 		icon: {
 			...resetStyles,
-			color: theme.text.light.primary.color,
+			...theme.text.light.primary,
 		},
 	};
 

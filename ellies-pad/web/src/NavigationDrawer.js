@@ -13,8 +13,8 @@ class NavigationDrawer extends React.Component {
 		nav: {
 			...resetStyles,
 			backgroundColor: theme.colors.card,
-			borderLeft: `1px solid ${theme.text.dark.dividers.color}`,
-			borderRight: `1px solid ${theme.text.dark.dividers.color}`,
+			borderLeft: `1px solid ${theme.colors.dividers.dark}`,
+			borderRight: `1px solid ${theme.colors.dividers.dark}`,
 			paddingLeft: 16,
 			paddingRight: 16,
 			width: 240,

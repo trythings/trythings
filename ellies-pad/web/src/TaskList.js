@@ -31,7 +31,7 @@ class TaskList extends React.Component {
 		divider: {
 			...resetStyles,
 			height: 1,
-			backgroundColor: theme.text.dark.dividers.color,
+			backgroundColor: theme.colors.dividers.dark,
 		},
 		empty: {
 			...resetStyles,

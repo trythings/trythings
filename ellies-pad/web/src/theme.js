@@ -31,6 +31,10 @@ const colors = {
 
 	canvas: grey[100],
 	card: white,
+	dividers: {
+		dark: 'rgba(0, 0, 0, 0.12)',
+		light: 'rgba(255, 255, 255, 0.12)',
+	},
 };
 
 const elevation = {
@@ -83,9 +87,6 @@ const text = {
 			color: 'rgba(255, 255, 255, 0.50)',
 			fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
 		},
-		dividers: {
-			color: 'rgba(255, 255, 255, 0.12)',
-		},
 	},
 	dark: {
 		primary: {
@@ -99,9 +100,6 @@ const text = {
 		disabled: {
 			color: 'rgba(0, 0, 0, 0.38)',
 			fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
-		},
-		dividers: {
-			color: 'rgba(0, 0, 0, 0.12)',
 		},
 	},
 };

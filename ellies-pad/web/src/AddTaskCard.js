@@ -99,7 +99,7 @@ class AddTaskCard extends React.Component {
 		},
 		cancel: {
 			...resetStyles,
-			color: theme.text.dark.primary.color,
+			...theme.text.dark.primary,
 		},
 		addTask: {
 			...resetStyles,

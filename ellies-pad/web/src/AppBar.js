@@ -78,7 +78,7 @@ class AppBar extends React.Component {
 		},
 		migrateIcon: {
 			...resetStyles,
-			color: theme.text.light.primary.color,
+			...theme.text.light.primary,
 		},
 	};
 
