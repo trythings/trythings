@@ -53,7 +53,7 @@ class AppBar extends React.Component {
 			...theme.elevation[4],
 
 			alignItems: 'center',
-			backgroundColor: theme.colors.primary,
+			backgroundColor: theme.colors.primary.default,
 			height: 56,
 			justifyContent: 'space-between',
 			minHeight: 56,
@@ -65,6 +65,15 @@ class AppBar extends React.Component {
 			...theme.text.light.primary,
 
 			fontSize: 20,
+			width: 240 - 16, // Align with the navigation drawer.
+		},
+		spacer: {
+			...resetStyles,
+			paddingLeft: 24,
+		},
+		searchField: {
+			...resetStyles,
+			flex: '1 0 auto',
 		},
 		migrateButton: {
 			...resetStyles,
@@ -105,10 +114,15 @@ class AppBar extends React.Component {
 			<div style={AppBar.styles.appBar}>
 				<span style={AppBar.styles.title}>Ellie's Pad</span>
 
+				<div style={AppBar.styles.spacer} />
+
 				<SearchField
 					initialQuery={this.props.initialSearchQuery}
 					onQueryChange={this.props.onSearchQueryChange}
+					style={AppBar.styles.searchField}
 				/>
+
+				<div style={AppBar.styles.spacer} />
 
 				<button
 					style={{

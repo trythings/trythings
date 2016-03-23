@@ -9,6 +9,9 @@ import './Roboto.css';
 // };
 
 const indigo = {
+	100: '#c5cae9',
+	200: '#9fa8da',
+	300: '#7986cb',
 	400: '#5c6bc0',
 };
 
@@ -25,9 +28,12 @@ const grey = {
 const white = '#ffffff';
 
 const colors = {
-	primary: indigo[400],
+	primary: {
+		default: indigo[400],
+		light: indigo[300],
+		xlight: indigo[200],
+	},
 	accent: red.A200,
-	accentLight: red.A200,
 
 	canvas: grey[100],
 	card: white,

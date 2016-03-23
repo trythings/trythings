@@ -111,7 +111,7 @@ class TaskCard extends React.Component {
 		},
 		save: {
 			...resetStyles,
-			color: theme.colors.accentLight,
+			color: theme.colors.accent,
 		},
 	};
 
