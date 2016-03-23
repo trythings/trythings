@@ -1,3 +1,5 @@
+import 'normalize.css';
+
 const noInherit = {
 	// all: 'initial',
 
