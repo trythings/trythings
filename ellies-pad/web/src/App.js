@@ -65,7 +65,7 @@ class App extends React.Component {
 
 	state = {
 		searchQuery: '',
-		isAddTaskFormVisible: true,
+		isAddTaskFormVisible: false,
 	};
 
 	onCancelClick = () => {
@@ -79,6 +79,66 @@ class App extends React.Component {
 	onSearchQueryChange = _debounce((query) => {
 		this.setState({ searchQuery: query });
 	}, 200);
+
+	renderContent() {
+		if (this.state.searchQuery) {
+			return (
+				<TaskSearch
+					name="Search results"
+					query={this.state.searchQuery}
+				/>
+			);
+		}
+
+		return (
+			<div>
+				{this.state.isAddTaskFormVisible ?
+					(
+						<AddTaskCard
+							autoFocus
+							space={this.props.viewer.space}
+							onCancelClick={this.onCancelClick}
+						/>
+					) :
+					null
+				}
+
+				{this.state.isAddTaskFormVisible ?
+					<div style={App.styles.contentSpacer} /> :
+					null
+				}
+
+				<TaskSearch
+					name="#now"
+					query="#now AND IsArchived: false"
+				/>
+				<div style={App.styles.contentSpacer} />
+
+				<TaskSearch
+					name="Incoming"
+					query="NOT #now AND NOT #next AND NOT #later AND IsArchived: false"
+				/>
+				<div style={App.styles.contentSpacer} />
+
+				<TaskSearch
+					name="#next"
+					query="#next AND NOT #now AND IsArchived: false"
+				/>
+				<div style={App.styles.contentSpacer} />
+
+				<TaskSearch
+					name="#later"
+					query="#later AND NOT #next AND NOT #now AND IsArchived: false"
+				/>
+				<div style={App.styles.contentSpacer} />
+
+				<TaskSearch
+					name="Archived"
+					query="IsArchived: true"
+				/>
+			</div>
+		);
+	}
 
 	render() {
 		return (
@@ -102,65 +162,7 @@ class App extends React.Component {
 
 					<div style={App.styles.contentContainer}>
 						<div style={App.styles.content}>
-							{this.state.isAddTaskFormVisible ?
-								(
-									<AddTaskCard
-										autoFocus
-										space={this.props.viewer.space}
-										onCancelClick={this.onCancelClick}
-									/>
-								) :
-								null
-							}
-
-							{this.state.isAddTaskFormVisible ?
-								<div style={App.styles.contentSpacer} /> :
-								null
-							}
-
-							{this.state.searchQuery ?
-								(
-									<TaskSearch
-										name="Search results"
-										query={this.state.searchQuery}
-									/>
-								) :
-								null
-							}
-
-							{this.state.searchQuery ?
-								<div style={App.styles.contentSpacer} /> :
-								null
-							}
-
-							<TaskSearch
-								name="#now"
-								query="#now AND IsArchived: false"
-							/>
-							<div style={App.styles.contentSpacer} />
-
-							<TaskSearch
-								name="Incoming"
-								query="NOT #now AND NOT #next AND NOT #later AND IsArchived: false"
-							/>
-							<div style={App.styles.contentSpacer} />
-
-							<TaskSearch
-								name="#next"
-								query="#next AND NOT #now AND IsArchived: false"
-							/>
-							<div style={App.styles.contentSpacer} />
-
-							<TaskSearch
-								name="#later"
-								query="#later AND NOT #next AND NOT #now AND IsArchived: false"
-							/>
-							<div style={App.styles.contentSpacer} />
-
-							<TaskSearch
-								name="Archived"
-								query="IsArchived: true"
-							/>
+							{this.renderContent()}
 						</div>
 					</div>
 				</div>

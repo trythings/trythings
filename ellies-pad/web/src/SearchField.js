@@ -1,3 +1,4 @@
+import color from 'color';
 import React from 'react';
 
 import Icon from './Icon.js';
@@ -9,15 +10,16 @@ export default class SearchField extends React.Component {
 		initialQuery: React.PropTypes.string,
 		onQueryChange: React.PropTypes.func,
 		style: React.PropTypes.shape({
+			backgroundColor: React.PropTypes.string.isRequired,
+			color: React.PropTypes.string.isRequired,
 			flex: React.PropTypes.string,
-		}),
+		}).isRequired,
 	};
 
 	static styles = {
 		container: {
 			...resetStyles,
 			alignItems: 'stretch',
-			backgroundColor: theme.colors.primary.light,
 			borderRadius: 2,
 			paddingBottom: 4,
 
@@ -29,11 +31,11 @@ export default class SearchField extends React.Component {
 		},
 		icon: {
 			...resetStyles,
-			...theme.text.light.primary,
+			...theme.text,
 		},
 		input: {
 			...resetStyles,
-			...theme.text.light.primary,
+			...theme.text,
 			flex: '1 0 auto',
 			fontWeight: 300,
 		},
@@ -58,6 +60,12 @@ export default class SearchField extends React.Component {
 		}
 	};
 
+	onClick = () => {
+		if (this.input) {
+			this.input.focus();
+		}
+	};
+
 	onMouseEnter = () => {
 		this.setState({ isHovered: true });
 	};
@@ -66,9 +74,17 @@ export default class SearchField extends React.Component {
 		this.setState({ isHovered: false });
 	};
 
+	inputRef = (input) => {
+		this.input = input;
+	};
+
 	render() {
-		let style = SearchField.styles.container;
-		if (this.props.style && this.props.style.flex) {
+		let style = {
+			...SearchField.styles.container,
+			backgroundColor: this.props.style.backgroundColor,
+		};
+
+		if (this.props.style.flex) {
 			style = {
 				...style,
 				flex: this.props.style.flex,
@@ -78,23 +94,34 @@ export default class SearchField extends React.Component {
 		if (this.state.isHovered) {
 			style = {
 				...style,
-				backgroundColor: theme.colors.primary.xlight,
+				backgroundColor: color(this.props.style.backgroundColor).lighten(0.12).hexString(),
 			};
 		}
 
 		return (
 			<div
+				onClick={this.onClick}
 				onMouseEnter={this.onMouseEnter}
 				onMouseLeave={this.onMouseLeave}
 				style={style}
 			>
 				<div style={SearchField.styles.spacer} />
-				<Icon name="search" style={SearchField.styles.icon} />
+				<Icon
+					name="search"
+					style={{
+						...SearchField.styles.icon,
+						color: this.props.style.color,
+					}}
+				/>
 				<div style={SearchField.styles.spacer} />
 				<input
 					onChange={this.onChange}
-					style={SearchField.styles.input}
+					style={{
+						...SearchField.styles.input,
+						color: this.props.style.color,
+					}}
 					value={this.state.query}
+					ref={this.inputRef}
 				/>
 			</div>
 		);

@@ -73,6 +73,8 @@ class AppBar extends React.Component {
 		},
 		searchField: {
 			...resetStyles,
+			...theme.text.light.primary,
+			backgroundColor: theme.colors.primary.light,
 			flex: '1 0 auto',
 		},
 		migrateButton: {
@@ -93,6 +95,7 @@ class AppBar extends React.Component {
 
 	state = {
 		isMigrateHovering: false,
+		searchQuery: '',
 	};
 
 	onMigrateClick = () => {
@@ -109,17 +112,55 @@ class AppBar extends React.Component {
 		this.setState({ isMigrateHovering: false });
 	};
 
+	onSearchQueryChange = (query) => {
+		this.props.onSearchQueryChange(query);
+		this.setState({ searchQuery: query });
+	};
+
 	render() {
+		let style = AppBar.styles.appBar;
+		if (this.state.searchQuery) {
+			style = {
+				...style,
+				backgroundColor: theme.colors.card,
+			};
+		}
+
+		let titleStyle = AppBar.styles.title;
+		if (this.state.searchQuery) {
+			titleStyle = {
+				...titleStyle,
+				...theme.text.dark.primary,
+			};
+		}
+
+		let searchFieldStyle = AppBar.styles.searchField;
+		if (this.state.searchQuery) {
+			searchFieldStyle = {
+				...searchFieldStyle,
+				...theme.text.dark.primary,
+				backgroundColor: theme.colors.card,
+			};
+		}
+
+		let migrateIconStyle = AppBar.styles.migrateIcon;
+		if (this.state.searchQuery) {
+			migrateIconStyle = {
+				...migrateIconStyle,
+				...theme.text.dark.primary,
+			};
+		}
+
 		return (
-			<div style={AppBar.styles.appBar}>
-				<span style={AppBar.styles.title}>Ellie's Pad</span>
+			<div style={style}>
+				<span style={titleStyle}>Ellie's Pad</span>
 
 				<div style={AppBar.styles.spacer} />
 
 				<SearchField
 					initialQuery={this.props.initialSearchQuery}
-					onQueryChange={this.props.onSearchQueryChange}
-					style={AppBar.styles.searchField}
+					onQueryChange={this.onSearchQueryChange}
+					style={searchFieldStyle}
 				/>
 
 				<div style={AppBar.styles.spacer} />
@@ -135,7 +176,7 @@ class AppBar extends React.Component {
 					onMouseEnter={this.onMigrateMouseEnter}
 					onMouseLeave={this.onMigrateMouseLeave}
 				>
-					<Icon style={AppBar.styles.migrateIcon} name="update" />
+					<Icon style={migrateIconStyle} name="update" />
 				</button>
 			</div>
 		);
