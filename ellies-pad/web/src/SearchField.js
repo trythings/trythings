@@ -37,7 +37,6 @@ export default class SearchField extends React.Component {
 			...resetStyles,
 			...theme.text,
 			flex: '1 0 auto',
-			fontWeight: 300,
 		},
 	};
 
