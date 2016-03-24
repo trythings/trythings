@@ -136,6 +136,7 @@ class App extends React.Component {
 					name="Archived"
 					query="IsArchived: true"
 				/>
+				<div style={App.styles.contentSpacer} />
 			</div>
 		);
 	}
