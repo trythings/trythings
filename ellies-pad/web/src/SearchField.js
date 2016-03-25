@@ -23,6 +23,7 @@ export default class SearchField extends React.Component {
 			...resetStyles,
 			alignItems: 'stretch',
 			borderRadius: 2,
+			cursor: 'text',
 			paddingBottom: 4,
 
 			paddingTop: 4,

@@ -15,7 +15,6 @@ export default class Icon extends React.Component {
 	static styles = {
 		icon: {
 			...resetStyles,
-			cursor: 'default',
 			fontFamily: 'default',
 			fontSize: 'default',
 		},
