@@ -167,8 +167,12 @@ func (s *TaskService) Search(ctx context.Context, sp *Space, query string) ([]*T
 		return nil, errors.New("cannot access space to search")
 	}
 
-	// Restrict the query to the space.
-	query = fmt.Sprintf("%s AND SpaceID: %q", query, sp.ID)
+	if query != "" {
+		// Restrict the query to the space.
+		query = fmt.Sprintf("%s AND SpaceID: %q", query, sp.ID)
+	} else {
+		query = fmt.Sprintf("SpaceID: %q", sp.ID)
+	}
 
 	index, err := search.Open("Task")
 	if err != nil {

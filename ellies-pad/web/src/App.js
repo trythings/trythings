@@ -1,4 +1,3 @@
-import _debounce from 'lodash/debounce';
 import React from 'react';
 import Relay from 'react-relay';
 
@@ -7,11 +6,17 @@ import AddTaskCard from './AddTaskCard.js';
 import AppBar from './AppBar.js';
 import NavigationDrawer from './NavigationDrawer.js';
 import resetStyles from './resetStyles.js';
-import TaskSearch from './TaskSearch.js';
 import theme from './theme.js';
 
 class App extends React.Component {
 	static propTypes = {
+		children: React.PropTypes.node,
+		location: React.PropTypes.shape({
+			pathname: React.PropTypes.string.isRequired,
+		}).isRequired,
+		params: React.PropTypes.shape({
+			query: React.PropTypes.string,
+		}).isRequired,
 		viewer: React.PropTypes.shape({
 			space: React.PropTypes.shape({
 				// ...AddTaskCard.propTypes.space
@@ -64,7 +69,6 @@ class App extends React.Component {
 	};
 
 	state = {
-		searchQuery: '',
 		isAddTaskFormVisible: false,
 	};
 
@@ -76,78 +80,76 @@ class App extends React.Component {
 		this.setState({ isAddTaskFormVisible: true });
 	};
 
-	onSearchQueryChange = _debounce((query) => {
-		this.setState({ searchQuery: query });
-	}, 200);
+	// renderContent() {
+	// 	if (this.state.searchQuery) {
+	// 		return (
+	// 			<TaskSearch
+	// 				name="Search results"
+	// 				query={this.state.searchQuery}
+	// 			/>
+	// 		);
+	// 	}
 
-	renderContent() {
-		if (this.state.searchQuery) {
-			return (
-				<TaskSearch
-					name="Search results"
-					query={this.state.searchQuery}
-				/>
-			);
+	// 	return (
+	// 		<div>
+	// 			{this.state.isAddTaskFormVisible ?
+	// 				(
+	// 					<AddTaskCard
+	// 						autoFocus
+	// 						space={this.props.viewer.space}
+	// 						onCancelClick={this.onCancelClick}
+	// 					/>
+	// 				) :
+	// 				null
+	// 			}
+
+	// 			{this.state.isAddTaskFormVisible ?
+	// 				<div style={App.styles.contentSpacer} /> :
+	// 				null
+	// 			}
+
+	// 			<TaskSearch
+	// 				name="#now"
+	// 				query="#now AND IsArchived: false"
+	// 			/>
+	// 			<div style={App.styles.contentSpacer} />
+
+	// 			<TaskSearch
+	// 				name="Incoming"
+	// 				query="NOT #now AND NOT #next AND NOT #later AND IsArchived: false"
+	// 			/>
+	// 			<div style={App.styles.contentSpacer} />
+
+	// 			<TaskSearch
+	// 				name="#next"
+	// 				query="#next AND NOT #now AND IsArchived: false"
+	// 			/>
+	// 			<div style={App.styles.contentSpacer} />
+
+	// 			<TaskSearch
+	// 				name="#later"
+	// 				query="#later AND NOT #next AND NOT #now AND IsArchived: false"
+	// 			/>
+	// 			<div style={App.styles.contentSpacer} />
+
+	// 			<TaskSearch
+	// 				name="Archived"
+	// 				query="IsArchived: true"
+	// 			/>
+	// 			<div style={App.styles.contentSpacer} />
+	// 		</div>
+	// 	);
+	// }
+
+	render() {
+		let searchQuery = this.props.params.query;
+		if (this.props.location.pathname === '/search/') {
+			searchQuery = '';
 		}
 
 		return (
-			<div>
-				{this.state.isAddTaskFormVisible ?
-					(
-						<AddTaskCard
-							autoFocus
-							space={this.props.viewer.space}
-							onCancelClick={this.onCancelClick}
-						/>
-					) :
-					null
-				}
-
-				{this.state.isAddTaskFormVisible ?
-					<div style={App.styles.contentSpacer} /> :
-					null
-				}
-
-				<TaskSearch
-					name="#now"
-					query="#now AND IsArchived: false"
-				/>
-				<div style={App.styles.contentSpacer} />
-
-				<TaskSearch
-					name="Incoming"
-					query="NOT #now AND NOT #next AND NOT #later AND IsArchived: false"
-				/>
-				<div style={App.styles.contentSpacer} />
-
-				<TaskSearch
-					name="#next"
-					query="#next AND NOT #now AND IsArchived: false"
-				/>
-				<div style={App.styles.contentSpacer} />
-
-				<TaskSearch
-					name="#later"
-					query="#later AND NOT #next AND NOT #now AND IsArchived: false"
-				/>
-				<div style={App.styles.contentSpacer} />
-
-				<TaskSearch
-					name="Archived"
-					query="IsArchived: true"
-				/>
-				<div style={App.styles.contentSpacer} />
-			</div>
-		);
-	}
-
-	render() {
-		return (
 			<div style={App.styles.app} tabIndex={-1}>
-				<AppBar
-					initialSearchQuery={this.state.searchQuery}
-					onSearchQueryChange={this.onSearchQueryChange}
-				/>
+				<AppBar searchQuery={searchQuery} />
 
 				<div style={App.styles.navigationContainer}>
 					{!this.state.isAddTaskFormVisible ?
@@ -163,7 +165,7 @@ class App extends React.Component {
 
 					<div style={App.styles.contentContainer}>
 						<div style={App.styles.content}>
-							{this.renderContent()}
+							{this.props.children}
 						</div>
 					</div>
 				</div>

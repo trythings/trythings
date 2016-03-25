@@ -1,3 +1,4 @@
+import _debounce from 'lodash/debounce';
 import React from 'react';
 import Relay from 'react-relay';
 
@@ -42,9 +43,12 @@ class MigrateMutation extends Relay.Mutation {
 }
 
 class AppBar extends React.Component {
+	static contextTypes = {
+		router: React.PropTypes.object.isRequired,
+	};
+
 	static propTypes = {
-		initialSearchQuery: React.PropTypes.string,
-		onSearchQueryChange: React.PropTypes.func,
+		searchQuery: React.PropTypes.string,
 	};
 
 	static styles = {
@@ -95,7 +99,6 @@ class AppBar extends React.Component {
 
 	state = {
 		isMigrateHovering: false,
-		searchQuery: '',
 	};
 
 	onMigrateClick = () => {
@@ -112,14 +115,25 @@ class AppBar extends React.Component {
 		this.setState({ isMigrateHovering: false });
 	};
 
-	onSearchQueryChange = (query) => {
-		this.props.onSearchQueryChange(query);
-		this.setState({ searchQuery: query });
+	onSearchFocus = () => {
+		if (this.props.searchQuery === undefined) {
+			this.context.router.push('/search/');
+		}
 	};
+
+	onSearchBlur = () => {
+		if (!this.props.searchQuery) {
+			this.context.router.push('/');
+		}
+	};
+
+	onSearchQueryChange = _debounce((query) => {
+		this.context.router.push(`/search/${encodeURIComponent(query)}`);
+	}, 200);
 
 	render() {
 		let style = AppBar.styles.appBar;
-		if (this.state.searchQuery) {
+		if (this.props.searchQuery !== undefined) {
 			style = {
 				...style,
 				backgroundColor: theme.colors.card,
@@ -127,7 +141,7 @@ class AppBar extends React.Component {
 		}
 
 		let titleStyle = AppBar.styles.title;
-		if (this.state.searchQuery) {
+		if (this.props.searchQuery !== undefined) {
 			titleStyle = {
 				...titleStyle,
 				...theme.text.dark.primary,
@@ -135,7 +149,7 @@ class AppBar extends React.Component {
 		}
 
 		let searchFieldStyle = AppBar.styles.searchField;
-		if (this.state.searchQuery) {
+		if (this.props.searchQuery !== undefined) {
 			searchFieldStyle = {
 				...searchFieldStyle,
 				...theme.text.dark.primary,
@@ -144,7 +158,7 @@ class AppBar extends React.Component {
 		}
 
 		let migrateIconStyle = AppBar.styles.migrateIcon;
-		if (this.state.searchQuery) {
+		if (this.props.searchQuery !== undefined) {
 			migrateIconStyle = {
 				...migrateIconStyle,
 				...theme.text.dark.primary,
@@ -158,8 +172,10 @@ class AppBar extends React.Component {
 				<div style={AppBar.styles.spacer} />
 
 				<SearchField
-					initialQuery={this.props.initialSearchQuery}
+					initialQuery={this.props.searchQuery}
 					onQueryChange={this.onSearchQueryChange}
+					onFocus={this.onSearchFocus}
+					onBlur={this.onSearchBlur}
 					style={searchFieldStyle}
 				/>
 

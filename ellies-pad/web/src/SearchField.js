@@ -8,6 +8,8 @@ import theme from './theme.js';
 export default class SearchField extends React.Component {
 	static propTypes = {
 		initialQuery: React.PropTypes.string,
+		onFocus: React.PropTypes.func,
+		onBlur: React.PropTypes.func,
 		onQueryChange: React.PropTypes.func,
 		style: React.PropTypes.shape({
 			backgroundColor: React.PropTypes.string.isRequired,
@@ -49,6 +51,7 @@ export default class SearchField extends React.Component {
 
 	state = {
 		isHovered: false,
+		hasFocus: false,
 	};
 
 	onChange = (event) => {
@@ -63,6 +66,20 @@ export default class SearchField extends React.Component {
 		if (this.input) {
 			this.input.focus();
 		}
+	};
+
+	onFocus = (...args) => {
+		if (this.props.onFocus) {
+			this.props.onFocus(...args);
+		}
+		this.setState({ hasFocus: true });
+	};
+
+	onBlur = (...args) => {
+		if (this.props.onBlur) {
+			this.props.onBlur(...args);
+		}
+		this.setState({ hasFocus: false });
 	};
 
 	onMouseEnter = () => {
@@ -90,10 +107,13 @@ export default class SearchField extends React.Component {
 			};
 		}
 
-		if (this.state.isHovered) {
+		if (this.state.isHovered || this.state.hasFocus) {
 			style = {
 				...style,
-				backgroundColor: color(this.props.style.backgroundColor).lighten(0.12).hexString(),
+				// Bring the background color closer to the text color.
+				backgroundColor: color(this.props.style.backgroundColor).
+					mix(color(this.props.style.color), 1 - 0.12).
+					hexString(),
 			};
 		}
 
@@ -115,6 +135,8 @@ export default class SearchField extends React.Component {
 				<div style={SearchField.styles.spacer} />
 				<input
 					onChange={this.onChange}
+					onFocus={this.onFocus}
+					onBlur={this.onBlur}
 					style={{
 						...SearchField.styles.input,
 						color: this.props.style.color,
