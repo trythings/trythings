@@ -1,10 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Route, browserHistory } from 'react-router';
+import { IndexRoute, Route, browserHistory } from 'react-router';
 import { RelayRouter } from 'react-router-relay';
 import Relay from 'react-relay';
 
 import App from './App.js';
+import DefaultView from './DefaultView.js';
 import TaskSearchResults from './TaskSearchResults.js';
 
 Relay.injectNetworkLayer(new Relay.DefaultNetworkLayer('/graphql', {
@@ -26,6 +27,7 @@ const element = (
 			component={App}
 			queries={queries}
 		>
+			<IndexRoute component={DefaultView} />
 			<Route
 				path="search/"
 				component={TaskSearchResults}

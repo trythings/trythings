@@ -57,9 +57,12 @@ class App extends React.Component {
 		content: {
 			...resetStyles,
 			alignItems: 'stretch',
-			flex: '1 1 auto',
+			flex: '1 0 auto',
 			flexDirection: 'column',
-			padding: 24,
+			paddingBottom: 24,
+			paddingLeft: 24,
+			paddingRight: 24,
+			paddingTop: 24,
 			overflow: 'visible',
 		},
 		contentSpacer: {
@@ -79,67 +82,6 @@ class App extends React.Component {
 	onPlusClick = () => {
 		this.setState({ isAddTaskFormVisible: true });
 	};
-
-	// renderContent() {
-	// 	if (this.state.searchQuery) {
-	// 		return (
-	// 			<TaskSearch
-	// 				name="Search results"
-	// 				query={this.state.searchQuery}
-	// 			/>
-	// 		);
-	// 	}
-
-	// 	return (
-	// 		<div>
-	// 			{this.state.isAddTaskFormVisible ?
-	// 				(
-	// 					<AddTaskCard
-	// 						autoFocus
-	// 						space={this.props.viewer.space}
-	// 						onCancelClick={this.onCancelClick}
-	// 					/>
-	// 				) :
-	// 				null
-	// 			}
-
-	// 			{this.state.isAddTaskFormVisible ?
-	// 				<div style={App.styles.contentSpacer} /> :
-	// 				null
-	// 			}
-
-	// 			<TaskSearch
-	// 				name="#now"
-	// 				query="#now AND IsArchived: false"
-	// 			/>
-	// 			<div style={App.styles.contentSpacer} />
-
-	// 			<TaskSearch
-	// 				name="Incoming"
-	// 				query="NOT #now AND NOT #next AND NOT #later AND IsArchived: false"
-	// 			/>
-	// 			<div style={App.styles.contentSpacer} />
-
-	// 			<TaskSearch
-	// 				name="#next"
-	// 				query="#next AND NOT #now AND IsArchived: false"
-	// 			/>
-	// 			<div style={App.styles.contentSpacer} />
-
-	// 			<TaskSearch
-	// 				name="#later"
-	// 				query="#later AND NOT #next AND NOT #now AND IsArchived: false"
-	// 			/>
-	// 			<div style={App.styles.contentSpacer} />
-
-	// 			<TaskSearch
-	// 				name="Archived"
-	// 				query="IsArchived: true"
-	// 			/>
-	// 			<div style={App.styles.contentSpacer} />
-	// 		</div>
-	// 	);
-	// }
 
 	render() {
 		let searchQuery = this.props.params.query;
@@ -165,6 +107,22 @@ class App extends React.Component {
 
 					<div style={App.styles.contentContainer}>
 						<div style={App.styles.content}>
+							{this.state.isAddTaskFormVisible ?
+								(
+									<AddTaskCard
+										autoFocus
+										space={this.props.viewer.space}
+										onCancelClick={this.onCancelClick}
+									/>
+								) :
+								null
+							}
+
+							{this.state.isAddTaskFormVisible ?
+								<div style={App.styles.contentSpacer} /> :
+								null
+							}
+
 							{this.props.children}
 						</div>
 					</div>
