@@ -33,6 +33,20 @@ class TaskList extends React.Component {
 			height: 1,
 			backgroundColor: theme.colors.dividers.dark,
 		},
+		showAll: {
+			...resetStyles,
+			alignSelf: 'stretch',
+			cursor: 'pointer',
+			justifyContent: 'center',
+			paddingBottom: 8,
+			paddingTop: 8,
+		},
+		showAllText: {
+			...resetStyles,
+			...theme.text.dark.secondary,
+			// alignSelf: 'center',
+			fontSize: 14,
+		},
 		empty: {
 			...resetStyles,
 			...theme.text.dark.secondary,
@@ -42,8 +56,16 @@ class TaskList extends React.Component {
 		},
 	};
 
+	state = {
+		isShowingAll: false,
+	};
+
 	onFocus = (event) => {
 		event.stopPropagation();
+	};
+
+	onShowAllClick = () => {
+		this.setState({ isShowingAll: true });
 	};
 
 	renderEmpty() {
@@ -57,10 +79,20 @@ class TaskList extends React.Component {
 			return this.renderEmpty();
 		}
 
+		const defaultNumShowing = 10;
+
+		let tasks = this.props.tasks;
+		if (!this.state.isShowingAll) {
+			tasks = tasks.slice(0, defaultNumShowing);
+		}
+
+		const isShowAllVisible = !this.state.isShowingAll &&
+			this.props.tasks.length > defaultNumShowing;
+
 		return (
 			<Card>
 				<ol style={TaskList.styles.list} onFocus={this.onFocus} tabIndex={-1}>
-					{this.props.tasks.map((task, i, array) => (
+					{tasks.map((task, i, array) => (
 						<li key={task.id} style={TaskList.styles.listItem}>
 							<TaskListItem task={task} />
 							{i < array.length - 1
@@ -69,6 +101,23 @@ class TaskList extends React.Component {
 							}
 						</li>
 					))}
+
+					{
+						isShowAllVisible ?
+							<hr style={TaskList.styles.divider} /> :
+							null
+					}
+					{
+						isShowAllVisible ?
+							(
+								<li style={TaskList.styles.showAll} onClick={this.onShowAllClick}>
+									<span style={TaskList.styles.showAllText}>
+										{`Show ${this.props.tasks.length - defaultNumShowing} remaining tasks`}
+									</span>
+								</li>
+							) :
+							null
+					}
 				</ol>
 			</Card>
 		);
