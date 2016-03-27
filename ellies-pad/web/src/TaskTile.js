@@ -66,7 +66,7 @@ class TaskTile extends React.Component {
 		task: React.PropTypes.shape({
 			title: React.PropTypes.string.isRequired,
 			description: React.PropTypes.string,
-			isArchived: React.PropTypes.boolean,
+			isArchived: React.PropTypes.bool,
 		}).isRequired,
 	};
 

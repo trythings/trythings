@@ -7,7 +7,7 @@ import theme from './theme.js';
 
 export default class SearchField extends React.Component {
 	static propTypes = {
-		autoFocus: React.PropTypes.boolean,
+		autoFocus: React.PropTypes.bool,
 		initialQuery: React.PropTypes.string,
 		onFocus: React.PropTypes.func,
 		onBlur: React.PropTypes.func,
