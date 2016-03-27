@@ -58,12 +58,14 @@ class TaskSearch extends React.Component {
 			...theme.text.dark.secondary,
 
 			alignSelf: 'center',
+			display: 'inline',
 			fontSize: 14,
 		},
 		spaceName: {
 			...resetStyles,
 			...theme.text.dark.secondary,
 
+			display: 'inline',
 			fontSize: 14,
 			fontWeight: 500,
 		},
@@ -78,8 +80,8 @@ class TaskSearch extends React.Component {
 			return (
 				<div style={TaskSearch.styles.container}>
 					<span style={TaskSearch.styles.noQuery}>
-						Enter #tags, @usernames, or keywords to find tasks in&nbsp;
-						<span style={TaskSearch.styles.spaceName}>{this.props.space.name}</span>
+						Enter #tags, @usernames, or keywords to find tasks in
+						<span style={TaskSearch.styles.spaceName}>&nbsp;{this.props.space.name}</span>
 					</span>
 				</div>
 			);
