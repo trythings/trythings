@@ -1,25 +1,40 @@
+import _debounce from 'lodash/debounce';
 import React from 'react';
 import Relay from 'react-relay';
 
 import ActionButton from './ActionButton.js';
 import AddTaskCard from './AddTaskCard.js';
 import AppBar from './AppBar.js';
+import DefaultView from './DefaultView.js';
 import NavigationDrawer from './NavigationDrawer.js';
 import resetStyles from './resetStyles.js';
+import SearchField from './SearchField.js';
+import TaskSearch from './TaskSearch.js';
 import theme from './theme.js';
 
 class App extends React.Component {
+	static contextTypes = {
+		router: React.PropTypes.shape({
+			push: React.PropTypes.func.isRequired,
+		}).isRequired,
+	};
+
 	static propTypes = {
 		children: React.PropTypes.node,
+
+		// Routing.
 		location: React.PropTypes.shape({
 			pathname: React.PropTypes.string.isRequired,
 		}).isRequired,
 		params: React.PropTypes.shape({
 			query: React.PropTypes.string,
 		}).isRequired,
+
 		viewer: React.PropTypes.shape({
 			space: React.PropTypes.shape({
-				// ...AddTaskCard.propTypes.space
+				// ...AddTaskCard.propTypes.space,
+				// ...DefaultView.propTypes.space,
+				// ...TaskSearch.propTypes.space,
 			}),
 			spaces: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
 		}).isRequired,
@@ -33,6 +48,17 @@ class App extends React.Component {
 			flexDirection: 'column',
 			height: '100%',
 			width: '100%',
+		},
+		appBar: {
+			...resetStyles,
+			...theme.text.light.primary,
+			backgroundColor: theme.colors.primary.default,
+		},
+		searchField: {
+			...resetStyles,
+			...theme.text.light.primary,
+			backgroundColor: theme.colors.primary.light,
+			flex: '1 0 auto',
 		},
 		navigationContainer: {
 			...resetStyles,
@@ -71,9 +97,18 @@ class App extends React.Component {
 		},
 	};
 
-	state = {
-		isAddTaskFormVisible: false,
-	};
+	constructor(props, ...args) {
+		super(props, ...args);
+
+		let searchQuery = this.props.params.query;
+		if (this.props.location.pathname === '/search/') {
+			searchQuery = '';
+		}
+		this.state = {
+			isAddTaskFormVisible: false,
+			searchQuery,
+		};
+	}
 
 	onCancelClick = () => {
 		this.setState({ isAddTaskFormVisible: false });
@@ -83,15 +118,83 @@ class App extends React.Component {
 		this.setState({ isAddTaskFormVisible: true });
 	};
 
+	onSearchFocus = () => {
+		if (this.state.searchQuery === undefined) {
+			this.setState({ searchQuery: '' });
+			this.context.router.push('/search/');
+		}
+	};
+
+	onSearchBlur = () => {
+		if (!this.state.searchQuery) {
+			this.setState({ searchQuery: undefined });
+			this.context.router.push('/');
+		}
+	};
+
+	onSearchQueryChange = (query) => {
+		this.updateSearchResults(query);
+		this.updateSearchPath(query);
+	};
+
+	updateSearchPath = _debounce((query) => {
+		// This undefined check exists because the user may have
+		// emptied and blurred the search field in quick succession,
+		// which could cause us to redirect from / to /search/${query}.
+		if (this.state.searchQuery !== undefined) {
+			this.context.router.push(`/search/${encodeURIComponent(query)}`);
+		}
+	}, 500);
+
+	updateSearchResults = _debounce((query) => {
+		this.setState({ searchQuery: query });
+	}, 200);
+
+	renderContent() {
+		if (this.state.searchQuery !== undefined) {
+			return (
+				<TaskSearch
+					name="Search results"
+					query={this.state.searchQuery}
+					space={this.props.viewer.space}
+				/>
+			);
+		}
+
+		return <DefaultView space={this.props.viewer.space} />;
+	}
+
 	render() {
-		let searchQuery = this.props.params.query;
-		if (this.props.location.pathname === '/search/') {
-			searchQuery = '';
+		let appBarStyle = App.styles.appBar;
+		if (this.state.searchQuery !== undefined) {
+			appBarStyle = {
+				...appBarStyle,
+				...theme.text.dark.primary,
+				backgroundColor: theme.colors.card,
+			};
+		}
+
+		let searchFieldStyle = App.styles.searchField;
+		if (this.state.searchQuery !== undefined) {
+			searchFieldStyle = {
+				...searchFieldStyle,
+				...theme.text.dark.primary,
+				backgroundColor: theme.colors.card,
+			};
 		}
 
 		return (
 			<div style={App.styles.app} tabIndex={-1}>
-				<AppBar searchQuery={searchQuery} />
+				<AppBar style={appBarStyle}>
+					<SearchField
+						autoFocus={this.state.searchQuery === ''}
+						initialQuery={this.state.searchQuery}
+						onQueryChange={this.onSearchQueryChange}
+						onFocus={this.onSearchFocus}
+						onBlur={this.onSearchBlur}
+						style={searchFieldStyle}
+					/>
+				</AppBar>
 
 				<div style={App.styles.navigationContainer}>
 					{!this.state.isAddTaskFormVisible ?
@@ -123,7 +226,7 @@ class App extends React.Component {
 								null
 							}
 
-							{this.props.children}
+							{this.renderContent()}
 						</div>
 					</div>
 				</div>
@@ -138,6 +241,8 @@ export default Relay.createContainer(App, {
 			fragment on User {
 				space {
 					${AddTaskCard.getFragment('space')},
+					${DefaultView.getFragment('space')},
+					${TaskSearch.getFragment('space')},
 				},
 				spaces {
 					${NavigationDrawer.getFragment('spaces')},

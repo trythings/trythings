@@ -21,10 +21,13 @@ class TaskSearchRoute extends Relay.Route {
 	};
 }
 
-export default class TaskSearch extends React.Component {
+class TaskSearch extends React.Component {
 	static propTypes = {
 		name: React.PropTypes.string,
 		query: React.PropTypes.string,
+		space: React.PropTypes.shape({
+			name: React.PropTypes.string.isRequired,
+		}).isRequired,
 	};
 
 	static styles = {
@@ -50,15 +53,38 @@ export default class TaskSearch extends React.Component {
 			alignSelf: 'center',
 			fontSize: 14,
 		},
+		noQuery: {
+			...resetStyles,
+			...theme.text.dark.secondary,
+
+			alignSelf: 'center',
+			fontSize: 14,
+		},
+		spaceName: {
+			...resetStyles,
+			...theme.text.dark.secondary,
+
+			fontSize: 14,
+			fontWeight: 500,
+		},
 	};
 
 	renderLoading = () => (
-		<div style={TaskSearch.styles.container}>
 			<span style={TaskSearch.styles.loading}>Loading...</span>
-		</div>
 	);
 
 	render() {
+		if (!this.props.query) {
+			return (
+				<div style={TaskSearch.styles.container}>
+					<span style={TaskSearch.styles.noQuery}>
+						Enter #tags, @usernames, or keywords to find tasks in&nbsp;
+						<span style={TaskSearch.styles.spaceName}>{this.props.space.name}</span>
+					</span>
+				</div>
+			);
+		}
+
 		return (
 			<div style={TaskSearch.styles.container}>
 				<h1 style={TaskSearch.styles.name}>{this.props.name}</h1>
@@ -71,3 +97,13 @@ export default class TaskSearch extends React.Component {
 		);
 	}
 }
+
+export default Relay.createContainer(TaskSearch, {
+	fragments: {
+		space: () => Relay.QL`
+			fragment on Space {
+				name,
+			},
+		`,
+	},
+});

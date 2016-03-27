@@ -7,6 +7,7 @@ import theme from './theme.js';
 
 export default class SearchField extends React.Component {
 	static propTypes = {
+		autoFocus: React.PropTypes.boolean,
 		initialQuery: React.PropTypes.string,
 		onFocus: React.PropTypes.func,
 		onBlur: React.PropTypes.func,
@@ -135,6 +136,7 @@ export default class SearchField extends React.Component {
 				/>
 				<div style={SearchField.styles.spacer} />
 				<input
+					autoFocus={this.props.autoFocus}
 					onChange={this.onChange}
 					onFocus={this.onFocus}
 					onBlur={this.onBlur}
