@@ -135,6 +135,8 @@ func (s *SpaceService) IsVisible(ctx context.Context, sp *Space) (bool, error) {
 
 type SpaceAPI struct {
 	NodeInterface *graphql.Interface `inject:"node"`
+	SearchService *SearchService     `inject:""`
+	SearchAPI     *SearchAPI         `inject:""`
 	SpaceService  *SpaceService      `inject:""`
 	TaskService   *TaskService       `inject:""`
 	TaskAPI       *TaskAPI           `inject:""`
@@ -157,6 +159,30 @@ func (api *SpaceAPI) Start() error {
 			"name": &graphql.Field{
 				Description: "The name to display for the space.",
 				Type:        graphql.String,
+			},
+			"search": &graphql.Field{
+				Args: graphql.FieldConfigArgument{
+					"id": &graphql.ArgumentConfig{
+						Type: graphql.String,
+					},
+				},
+				Type: api.SearchAPI.Type,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					id, ok := p.Args["id"].(string)
+					if !ok {
+						return nil, errors.New("id is required")
+					}
+					resolvedID := relay.FromGlobalID(id)
+					if resolvedID == nil {
+						return nil, fmt.Errorf("invalid id %q", id)
+					}
+
+					se, err := api.SearchService.ByID(p.Context, resolvedID.ID)
+					if err != nil {
+						return nil, err
+					}
+					return se, nil
+				},
 			},
 			"tasks": &graphql.Field{
 				Args: graphql.FieldConfigArgument{
