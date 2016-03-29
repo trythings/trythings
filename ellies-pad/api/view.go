@@ -118,8 +118,14 @@ func (s *ViewService) Create(ctx context.Context, v *View) error {
 	return nil
 }
 
+func (s *ViewService) Space(ctx context.Context, v *View) (*Space, error) {
+	return s.SpaceService.ByID(ctx, v.SpaceID)
+}
+
 type ViewAPI struct {
 	NodeInterface *graphql.Interface `inject:"node"`
+	SearchService *SearchService     `inject:""`
+	SearchAPI     *SearchAPI         `inject:""`
 
 	Type *graphql.Object
 }
@@ -136,6 +142,22 @@ func (api *ViewAPI) Start() error {
 			"name": &graphql.Field{
 				Description: "The name to display for the view.",
 				Type:        graphql.String,
+			},
+			"searches": &graphql.Field{
+				Type: graphql.NewList(api.SearchAPI.Type),
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					v, ok := p.Source.(*View)
+					if !ok {
+						return nil, errors.New("expected view source")
+					}
+
+					ss, err := api.SearchService.ByView(p.Context, v)
+					if err != nil {
+						return nil, err
+					}
+
+					return ss, nil
+				},
 			},
 		},
 		Interfaces: []*graphql.Interface{
