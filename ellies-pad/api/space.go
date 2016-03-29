@@ -47,7 +47,6 @@ func (s *SpaceService) ByUser(ctx context.Context, u *User) ([]*Space, error) {
 	_, err := datastore.NewQuery("Space").
 		Ancestor(datastore.NewKey(p.Context, "Root", "root", 0, nil)).
 		Filter("UserIDs =", u.ID).
-		Limit(1).
 		GetAll(p.Context, &sps)
 	if err != nil {
 		return nil, err
