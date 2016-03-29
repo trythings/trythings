@@ -199,6 +199,7 @@ func (s *TaskService) Search(ctx context.Context, sp *Space, query string) ([]*T
 			if _, ok := err.(ErrAccessDenied); ok {
 				continue
 			}
+			// TODO use multierror
 			return nil, err
 		}
 
