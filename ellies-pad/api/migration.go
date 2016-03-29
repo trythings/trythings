@@ -226,12 +226,87 @@ var migrations = []*Migration{
 			return nil
 		},
 	},
+	{
+		Version:     version("2016-03-29T15:18:00"),
+		Author:      "annie, daniel",
+		Description: "Add default searches to each view.",
+		Run: func(ctx context.Context, s *MigrationService) error {
+			root := datastore.NewKey(ctx, "Root", "root", 0, nil)
+
+			var vs []*View
+			_, err := datastore.NewQuery("View").
+				Ancestor(root).
+				GetAll(ctx, &vs)
+			if err != nil {
+				return err
+			}
+
+			for _, v := range vs {
+				ss, err := s.SearchService.ByView(ctx, v)
+				if err != nil {
+					return err
+				}
+
+				if len(ss) != 0 {
+					continue
+				}
+
+				err = s.SearchService.Create(ctx, &Search{
+					Name:   "#now",
+					ViewID: v.ID,
+					Query:  "#now AND IsArchived: false",
+				})
+				if err != nil {
+					return err
+				}
+
+				err = s.SearchService.Create(ctx, &Search{
+					Name:   "Incoming",
+					ViewID: v.ID,
+					Query:  "NOT #now AND NOT #next AND NOT #later AND IsArchived: false",
+				})
+				if err != nil {
+					return err
+				}
+
+				err = s.SearchService.Create(ctx, &Search{
+					Name:   "#next",
+					ViewID: v.ID,
+					Query:  "#next AND NOT #now AND IsArchived: false",
+				})
+				if err != nil {
+					return err
+				}
+
+				err = s.SearchService.Create(ctx, &Search{
+					Name:   "#later",
+					ViewID: v.ID,
+					Query:  "#later AND NOT #next AND NOT #now AND IsArchived: false",
+				})
+				if err != nil {
+					return err
+				}
+
+				err = s.SearchService.Create(ctx, &Search{
+					Name:   "Archived",
+					ViewID: v.ID,
+					Query:  "IsArchived: true",
+				})
+				if err != nil {
+					return err
+				}
+			}
+
+			return nil
+		},
+	},
 }
 
 type MigrationService struct {
-	SpaceService *SpaceService `inject:""`
-	TaskService  *TaskService  `inject:""`
-	ViewService  *ViewService  `inject:""`
+	SearchService *SearchService `inject:""`
+	SpaceService  *SpaceService  `inject:""`
+	TaskService   *TaskService   `inject:""`
+	ViewService   *ViewService   `inject:""`
 }
 
 // latestVersion returns the largest version stored in the Migrations table.
