@@ -138,6 +138,8 @@ type SpaceAPI struct {
 	SpaceService  *SpaceService      `inject:""`
 	TaskService   *TaskService       `inject:""`
 	TaskAPI       *TaskAPI           `inject:""`
+	ViewService   *ViewService       `inject:""`
+	ViewAPI       *ViewAPI           `inject:""`
 
 	Type *graphql.Object
 }
@@ -178,6 +180,63 @@ func (api *SpaceAPI) Start() error {
 					}
 
 					return api.TaskService.Search(p.Context, sp, q)
+				},
+			},
+			"view": &graphql.Field{
+				Args: graphql.FieldConfigArgument{
+					"id": &graphql.ArgumentConfig{
+						Type:         graphql.String,
+						DefaultValue: "",
+						Description:  "id can be omitted, which will have view resolve to the space's default view.",
+					},
+				},
+				Type: api.ViewAPI.Type,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					id, ok := p.Args["id"].(string)
+					if ok {
+						resolvedID := relay.FromGlobalID(id)
+						if resolvedID == nil {
+							return nil, fmt.Errorf("invalid id %q", id)
+						}
+
+						v, err := api.ViewService.ByID(p.Context, resolvedID.ID)
+						if err != nil {
+							return nil, err
+						}
+						return v, nil
+					}
+
+					sp, ok := p.Source.(*Space)
+					if !ok {
+						return nil, errors.New("expected space source")
+					}
+
+					vs, err := api.ViewService.BySpace(p.Context, sp)
+					if err != nil {
+						return nil, err
+					}
+
+					if len(vs) == 0 {
+						return nil, errors.New("could not find default view for space")
+					}
+
+					return vs[0], nil
+				},
+			},
+			"views": &graphql.Field{
+				Type: graphql.NewList(api.ViewAPI.Type),
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					sp, ok := p.Source.(*Space)
+					if !ok {
+						return nil, errors.New("expected space source")
+					}
+
+					vs, err := api.ViewService.BySpace(p.Context, sp)
+					if err != nil {
+						return nil, err
+					}
+
+					return vs, nil
 				},
 			},
 		},
