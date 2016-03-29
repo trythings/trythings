@@ -126,7 +126,7 @@ func (api *UserAPI) Start() error {
 
 					sps, err := api.SpaceService.ByUser(p.Context, u)
 					if err != nil {
-						return err
+						return nil, err
 					}
 
 					if len(sps) == 0 {
@@ -146,7 +146,7 @@ func (api *UserAPI) Start() error {
 
 					sps, err := api.SpaceService.ByUser(p.Context, u)
 					if err != nil {
-						return err
+						return nil, err
 					}
 
 					return sps, nil
