@@ -16,7 +16,7 @@ func main() {
 	}
 
 	res := graphql.Do(graphql.Params{
-		Schema:        apis.Schema,
+		Schema:        *apis.Schema,
 		RequestString: testutil.IntrospectionQuery,
 	})
 	if res.HasErrors() {
