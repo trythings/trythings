@@ -45,13 +45,27 @@ func (s *SpaceService) ByID(ctx context.Context, id string) (*Space, error) {
 func (s *SpaceService) ByUser(ctx context.Context, u *User) ([]*Space, error) {
 	var sps []*Space
 	_, err := datastore.NewQuery("Space").
-		Ancestor(datastore.NewKey(p.Context, "Root", "root", 0, nil)).
+		Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
 		Filter("UserIDs =", u.ID).
-		GetAll(p.Context, &sps)
+		GetAll(ctx, &sps)
 	if err != nil {
 		return nil, err
 	}
-	return sps, nil
+
+	var ac []*Space
+	for _, sp := range sps {
+		ok, err := s.IsVisible(ctx, sp)
+		if err != nil {
+			// TODO use multierror
+			return nil, err
+		}
+
+		if ok {
+			ac = append(ac, sp)
+		}
+	}
+
+	return ac, nil
 }
 
 func (s *SpaceService) Create(ctx context.Context, sp *Space) error {
