@@ -31,6 +31,26 @@ func (s *SearchService) IsVisible(ctx context.Context, se *Search) (bool, error)
 	return s.ViewService.IsVisible(ctx, v)
 }
 
+func (s *SearchService) ByID(ctx context.Context, id string) (*Search, error) {
+	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
+	k := datastore.NewKey(ctx, "Search", id, 0, rootKey)
+	var se Search
+	err := datastore.Get(ctx, k, &se)
+	if err != nil {
+		return nil, err
+	}
+
+	ok, err := s.IsVisible(ctx, &se)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, errors.New("cannot access search")
+	}
+
+	return &se, nil
+}
+
 func (s *SearchService) ByView(ctx context.Context, v *View) ([]*Search, error) {
 	var ss []*Search
 	_, err := datastore.NewQuery("Search").
