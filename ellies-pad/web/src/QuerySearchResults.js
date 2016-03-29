@@ -3,12 +3,13 @@ import Relay from 'react-relay';
 
 import TaskList from './TaskList.js';
 
-class TaskSearchResults extends React.Component {
+class QuerySearchResults extends React.Component {
 	static propTypes = {
 		viewer: React.PropTypes.shape({
 			space: React.PropTypes.shape({
-				// ...TaskList.propTypes.tasks
-				tasks: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
+				tasks: React.PropTypes.arrayOf(React.PropTypes.shape({
+					// ...TaskList.propTypes.tasks,
+				})).isRequired,
 			}).isRequired,
 		}).isRequired,
 	};
@@ -18,7 +19,7 @@ class TaskSearchResults extends React.Component {
 	}
 }
 
-export default Relay.createContainer(TaskSearchResults, {
+export default Relay.createContainer(QuerySearchResults, {
 	initialVariables: {
 		query: null,
 	},

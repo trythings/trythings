@@ -5,12 +5,12 @@ import Relay from 'react-relay';
 import ActionButton from './ActionButton.js';
 import AddTaskCard from './AddTaskCard.js';
 import AppBar from './AppBar.js';
-import DefaultView from './DefaultView.js';
 import NavigationDrawer from './NavigationDrawer.js';
+import QuerySearch from './QuerySearch.js';
 import resetStyles from './resetStyles.js';
 import SearchField from './SearchField.js';
-import TaskSearch from './TaskSearch.js';
 import theme from './theme.js';
+import View from './View.js';
 
 class App extends React.Component {
 	static contextTypes = {
@@ -34,8 +34,11 @@ class App extends React.Component {
 			space: React.PropTypes.shape({
 				// ...AddTaskCard.propTypes.space,
 				// ...DefaultView.propTypes.space,
-				// ...TaskSearch.propTypes.space,
-			}),
+				// ...QuerySearch.propTypes.space,
+				view: React.PropTypes.shape({
+					// ...View.propTypes.view,
+				}).isRequired,
+			}).isRequired,
 			spaces: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
 		}).isRequired,
 	};
@@ -153,7 +156,7 @@ class App extends React.Component {
 	renderContent() {
 		if (this.state.searchQuery !== undefined) {
 			return (
-				<TaskSearch
+				<QuerySearch
 					name="Search results"
 					query={this.state.searchQuery}
 					space={this.props.viewer.space}
@@ -161,7 +164,7 @@ class App extends React.Component {
 			);
 		}
 
-		return <DefaultView space={this.props.viewer.space} />;
+		return <View view={this.props.viewer.space.view} />;
 	}
 
 	render() {
@@ -240,9 +243,12 @@ export default Relay.createContainer(App, {
 		viewer: () => Relay.QL`
 			fragment on User {
 				space {
+					name,
 					${AddTaskCard.getFragment('space')},
-					${DefaultView.getFragment('space')},
-					${TaskSearch.getFragment('space')},
+					${QuerySearch.getFragment('space')},
+					view {
+						${View.getFragment('view')},
+					},
 				},
 				spaces {
 					${NavigationDrawer.getFragment('spaces')},

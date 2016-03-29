@@ -2,11 +2,11 @@ import React from 'react';
 import Relay from 'react-relay';
 
 import resetStyles from './resetStyles.js';
-import TaskSearchResults from './TaskSearchResults.js';
+import QuerySearchResults from './QuerySearchResults.js';
 import theme from './theme.js';
 
-class TaskSearchRoute extends Relay.Route {
-	static routeName = 'TaskSearchRoute';
+class QuerySearchRoute extends Relay.Route {
+	static routeName = 'QuerySearchRoute';
 
 	static paramDefinitions = {
 		query: { required: true },
@@ -21,9 +21,8 @@ class TaskSearchRoute extends Relay.Route {
 	};
 }
 
-class TaskSearch extends React.Component {
+class QuerySearch extends React.Component {
 	static propTypes = {
-		name: React.PropTypes.string,
 		query: React.PropTypes.string,
 		space: React.PropTypes.shape({
 			name: React.PropTypes.string.isRequired,
@@ -37,14 +36,6 @@ class TaskSearch extends React.Component {
 			alignItems: 'stretch',
 			flexDirection: 'column',
 			overflow: 'visible',
-		},
-		name: {
-			...resetStyles,
-			...theme.text.dark.secondary,
-
-			fontSize: 14,
-			paddingBottom: 8,
-			paddingLeft: 16,
 		},
 		loading: {
 			...resetStyles,
@@ -72,35 +63,33 @@ class TaskSearch extends React.Component {
 	};
 
 	renderLoading = () => (
-			<span style={TaskSearch.styles.loading}>Loading...</span>
+			<span style={QuerySearch.styles.loading}>Loading...</span>
 	);
 
 	render() {
-		if (!this.props.query) {
-			return (
-				<div style={TaskSearch.styles.container}>
-					<span style={TaskSearch.styles.noQuery}>
-						Enter #tags, @usernames, or keywords to find tasks in
-						<span style={TaskSearch.styles.spaceName}>&nbsp;{this.props.space.name}</span>
-					</span>
-				</div>
-			);
-		}
-
 		return (
-			<div style={TaskSearch.styles.container}>
-				<h1 style={TaskSearch.styles.name}>{this.props.name}</h1>
-				<Relay.RootContainer
-					Component={TaskSearchResults}
-					route={new TaskSearchRoute({ query: this.props.query })}
-					renderLoading={this.renderLoading}
-				/>
+			<div style={QuerySearch.styles.container}>
+				{this.props.query ?
+					(
+						<Relay.RootContainer
+							Component={QuerySearchResults}
+							route={new QuerySearchRoute({ query: this.props.query })}
+							renderLoading={this.renderLoading}
+						/>
+					) :
+					(
+						<span style={QuerySearch.styles.noQuery}>
+							Enter #tags, @usernames, or keywords to find tasks in
+							<span style={QuerySearch.styles.spaceName}>&nbsp;{this.props.space.name}</span>
+						</span>
+					)
+				}
 			</div>
 		);
 	}
 }
 
-export default Relay.createContainer(TaskSearch, {
+export default Relay.createContainer(QuerySearch, {
 	fragments: {
 		space: () => Relay.QL`
 			fragment on Space {
