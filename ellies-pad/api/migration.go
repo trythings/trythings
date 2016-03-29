@@ -19,7 +19,7 @@ type Migration struct {
 	Author      string
 	Description string
 	RunAt       time.Time
-	Run         func(ctx context.Context, ss *SpaceService, ts *TaskService) error `datastore:"-"`
+	Run         func(ctx context.Context, s *MigrationService) error `datastore:"-"`
 }
 
 func version(timeStr string) time.Time {
@@ -36,7 +36,7 @@ func version(timeStr string) time.Time {
 }
 
 // reindexTasks adds all tasks from the datastore into the search index.
-var reindexTasks = func(ctx context.Context, ss *SpaceService, ts *TaskService) error {
+var reindexTasks = func(ctx context.Context, s *MigrationService) error {
 	var tasks []*Task
 	_, err := datastore.NewQuery("Task").
 		Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
@@ -46,7 +46,7 @@ var reindexTasks = func(ctx context.Context, ss *SpaceService, ts *TaskService) 
 	}
 
 	for _, t := range tasks {
-		err = ts.Index(ctx, t)
+		err = s.TaskService.Index(ctx, t)
 		if err != nil {
 			return err
 		}
@@ -60,7 +60,7 @@ var migrations = []*Migration{
 		Version:     version("2016-02-03T18:52:00"),
 		Author:      "annie",
 		Description: "Add createdAt time to existing tasks, defaulting to now.",
-		Run: func(ctx context.Context, ss *SpaceService, ts *TaskService) error {
+		Run: func(ctx context.Context, s *MigrationService) error {
 			// TODO#Perf: Consider using a cursor and/or a batch update.
 			var tasks []*Task
 			_, err := datastore.NewQuery("Task").
@@ -73,7 +73,7 @@ var migrations = []*Migration{
 			for _, t := range tasks {
 				if t.CreatedAt.IsZero() {
 					t.CreatedAt = time.Now()
-					err = ts.Update(ctx, t)
+					err = s.TaskService.Update(ctx, t)
 					if err != nil {
 						return err
 					}
@@ -99,7 +99,7 @@ var migrations = []*Migration{
 		Version:     version("2016-02-27T19:20:00"),
 		Author:      "annie, daniel",
 		Description: "Add Annie and Daniel's space.",
-		Run: func(ctx context.Context, ss *SpaceService, ts *TaskService) error {
+		Run: func(ctx context.Context, s *MigrationService) error {
 			numSpaces, err := datastore.NewQuery("Space").
 				Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
 				Count(ctx)
@@ -114,7 +114,7 @@ var migrations = []*Migration{
 			sp := &Space{
 				Name: "Annie and Daniel",
 			}
-			err = ss.Create(ctx, sp)
+			err = s.SpaceService.Create(ctx, sp)
 			if err != nil {
 				return err
 			}
@@ -130,7 +130,7 @@ var migrations = []*Migration{
 			for _, t := range tasks {
 				if t.SpaceID == "" {
 					t.SpaceID = sp.ID
-					err = ts.Update(ctx, t)
+					err = s.TaskService.Update(ctx, t)
 					if err != nil {
 						return err
 					}
@@ -150,7 +150,7 @@ var migrations = []*Migration{
 		Version:     version("2016-02-29T22:59:00"),
 		Author:      "annie, daniel",
 		Description: "Add users to default space.",
-		Run: func(ctx context.Context, ss *SpaceService, ts *TaskService) error {
+		Run: func(ctx context.Context, s *MigrationService) error {
 			root := datastore.NewKey(ctx, "Root", "root", 0, nil)
 
 			var sps []*Space
@@ -189,11 +189,49 @@ var migrations = []*Migration{
 			return nil
 		},
 	},
+	{
+		Version:     version("2016-03-29T14:14:00"),
+		Author:      "annie, daniel",
+		Description: "Add default view to each space.",
+		Run: func(ctx context.Context, s *MigrationService) error {
+			root := datastore.NewKey(ctx, "Root", "root", 0, nil)
+
+			var sps []*Space
+			_, err := datastore.NewQuery("Space").
+				Ancestor(root).
+				GetAll(ctx, &sps)
+			if err != nil {
+				return err
+			}
+
+			for _, sp := range sps {
+				vs, err := s.ViewService.BySpace(ctx, sp)
+				if err != nil {
+					return err
+				}
+
+				if len(vs) != 0 {
+					continue
+				}
+
+				err = s.ViewService.Create(ctx, &View{
+					Name:    "Default",
+					SpaceID: sp.ID,
+				})
+				if err != nil {
+					return err
+				}
+			}
+
+			return nil
+		},
+	},
 }
 
 type MigrationService struct {
 	SpaceService *SpaceService `inject:""`
 	TaskService  *TaskService  `inject:""`
+	ViewService  *ViewService  `inject:""`
 }
 
 // latestVersion returns the largest version stored in the Migrations table.
@@ -231,7 +269,7 @@ func (s *MigrationService) run(ctx context.Context, m *Migration) error {
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
 	k := datastore.NewIncompleteKey(ctx, "Migration", rootKey)
 
-	err := m.Run(ctx, s.SpaceService, s.TaskService)
+	err := m.Run(ctx, s)
 	if err != nil {
 		return err
 	}

@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/graphql-go/graphql"
@@ -73,6 +74,48 @@ func (s *ViewService) BySpace(ctx context.Context, sp *Space) ([]*View, error) {
 	}
 
 	return ac, nil
+}
+
+func (s *ViewService) Create(ctx context.Context, v *View) error {
+	if v.ID != "" {
+		return fmt.Errorf("v already has id %q", v.ID)
+	}
+
+	if v.CreatedAt.IsZero() {
+		v.CreatedAt = time.Now()
+	}
+
+	if v.Name == "" {
+		return errors.New("Name is required")
+	}
+
+	if v.SpaceID == "" {
+		return errors.New("SpaceID is required")
+	}
+
+	ok, err := s.IsVisible(ctx, v)
+	if err != nil {
+		return err
+	}
+
+	if !ok {
+		return errors.New("cannot access space to create view")
+	}
+
+	id, _, err := datastore.AllocateIDs(ctx, "View", nil, 1)
+	if err != nil {
+		return err
+	}
+	v.ID = fmt.Sprintf("%x", id)
+
+	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
+	k := datastore.NewKey(ctx, "View", v.ID, 0, rootKey)
+	k, err = datastore.Put(ctx, k, v)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type ViewAPI struct {
