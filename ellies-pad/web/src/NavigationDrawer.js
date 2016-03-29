@@ -11,6 +11,10 @@ class NavigationDrawer extends React.Component {
 			name: React.PropTypes.string.isRequired,
 			view: React.PropTypes.shape({
 				id: React.PropTypes.string.isRequired,
+				searches: React.PropTypes.arrayOf(React.PropTypes.shape({
+					id: React.PropTypes.string.isRequired,
+					name: React.PropTypes.string.isRequired,
+				})).isRequired,
 			}).isRequired,
 			views: React.PropTypes.arrayOf(React.PropTypes.shape({
 				id: React.PropTypes.string.isRequired,
@@ -61,11 +65,26 @@ class NavigationDrawer extends React.Component {
 			fontSize: 14,
 			paddingBottom: 16,
 		},
-		selectedStyle: {
+		selectedViewName: {
 			...resetStyles,
 			...theme.text.dark.primary,
 			fontSize: 14,
 			fontWeight: 500,
+			paddingBottom: 16,
+		},
+		searches: {
+			...resetStyles,
+			flexDirection: 'column',
+			paddingLeft: 16 * 2,
+		},
+		search: {
+			...resetStyles,
+			flexDirection: 'column',
+		},
+		searchName: {
+			...resetStyles,
+			...theme.text.dark.secondary,
+			fontSize: 14,
 			paddingBottom: 16,
 		},
 	};
@@ -80,11 +99,25 @@ class NavigationDrawer extends React.Component {
 							<ul style={NavigationDrawer.styles.views}>
 								{space.views.map(view => {
 									const nameStyle = space.view.id === view.id ?
-											NavigationDrawer.styles.selectedStyle :
+											NavigationDrawer.styles.selectedViewName :
 											NavigationDrawer.styles.viewName;
 									return (
 										<li style={NavigationDrawer.styles.view} key={view.id}>
 											<span style={nameStyle}>{view.name}</span>
+											{space.view.id === view.id ?
+												(
+													<ul style={NavigationDrawer.styles.searches}>
+														{space.view.searches.map(search => (
+															<li style={NavigationDrawer.styles.search} key={search.id}>
+																<span style={NavigationDrawer.styles.searchName}>
+																	{search.name}
+																</span>
+															</li>
+														))}
+													</ul>
+												) :
+												null
+											}
 										</li>
 									);
 								})}
@@ -105,6 +138,10 @@ export default Relay.createContainer(NavigationDrawer, {
 				name,
 				view {
 					id,
+					searches {
+						id,
+						name,
+					},
 				},
 				views {
 					id,
