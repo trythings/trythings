@@ -42,6 +42,19 @@ func (s *SpaceService) ByID(ctx context.Context, id string) (*Space, error) {
 	return &sp, nil
 }
 
+func (s *SpaceService) ByUser(ctx context.Context, u *User) ([]*Space, error) {
+	var sps []*Space
+	_, err := datastore.NewQuery("Space").
+		Ancestor(datastore.NewKey(p.Context, "Root", "root", 0, nil)).
+		Filter("UserIDs =", u.ID).
+		Limit(1).
+		GetAll(p.Context, &sps)
+	if err != nil {
+		return nil, err
+	}
+	return sps, nil
+}
+
 func (s *SpaceService) Create(ctx context.Context, sp *Space) error {
 	if sp.ID != "" {
 		return fmt.Errorf("sp already has id %q", sp.ID)

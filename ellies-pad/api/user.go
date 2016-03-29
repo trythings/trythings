@@ -124,14 +124,9 @@ func (api *UserAPI) Start() error {
 						return nil, errors.New("expected user source")
 					}
 
-					var sps []*Space
-					_, err := datastore.NewQuery("Space").
-						Ancestor(datastore.NewKey(p.Context, "Root", "root", 0, nil)).
-						Filter("UserIDs =", u.ID).
-						Limit(1).
-						GetAll(p.Context, &sps)
+					sps, err := api.SpaceService.ByUser(p.Context, u)
 					if err != nil {
-						return nil, err
+						return err
 					}
 
 					if len(sps) == 0 {
@@ -149,14 +144,11 @@ func (api *UserAPI) Start() error {
 						return nil, errors.New("expected user source")
 					}
 
-					var sps []*Space
-					_, err := datastore.NewQuery("Space").
-						Ancestor(datastore.NewKey(p.Context, "Root", "root", 0, nil)).
-						Filter("UserIDs =", u.ID).
-						GetAll(p.Context, &sps)
+					sps, err := api.SpaceService.ByUser(p.Context, u)
 					if err != nil {
-						return nil, err
+						return err
 					}
+
 					return sps, nil
 				},
 			},
