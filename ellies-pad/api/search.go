@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/graphql-go/graphql"
@@ -54,6 +55,52 @@ func (s *SearchService) ByView(ctx context.Context, v *View) ([]*Search, error) 
 	}
 
 	return ac, nil
+}
+
+func (s *SearchService) Create(ctx context.Context, se *Search) error {
+	if se.ID != "" {
+		return fmt.Errorf("se already has id %q", se.ID)
+	}
+
+	if se.CreatedAt.IsZero() {
+		se.CreatedAt = time.Now()
+	}
+
+	if se.Name == "" {
+		return errors.New("Name is required")
+	}
+
+	if se.ViewID == "" {
+		return errors.New("ViewID is required")
+	}
+
+	if se.Query == "" {
+		return errors.New("Query is required")
+	}
+
+	ok, err := s.IsVisible(ctx, se)
+	if err != nil {
+		return err
+	}
+
+	if !ok {
+		return errors.New("cannot access view to create search")
+	}
+
+	id, _, err := datastore.AllocateIDs(ctx, "Search", nil, 1)
+	if err != nil {
+		return err
+	}
+	se.ID = fmt.Sprintf("%x", id)
+
+	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
+	k := datastore.NewKey(ctx, "Search", se.ID, 0, rootKey)
+	k, err = datastore.Put(ctx, k, se)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *SearchService) Space(ctx context.Context, se *Search) (*Space, error) {
