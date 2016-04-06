@@ -2,8 +2,6 @@ import _debounce from 'lodash/debounce';
 import React from 'react';
 import Relay from 'react-relay';
 
-import ActionButton from './ActionButton.js';
-import AddTaskCard from './AddTaskCard.js';
 import AppBar from './AppBar.js';
 import NavigationDrawer from './NavigationDrawer.js';
 import QuerySearch from './QuerySearch.js';
@@ -32,14 +30,15 @@ class App extends React.Component {
 
 		viewer: React.PropTypes.shape({
 			space: React.PropTypes.shape({
-				// ...AddTaskCard.propTypes.space,
-				// ...DefaultView.propTypes.space,
+				// ...AppBar.propTypes.space,
 				// ...QuerySearch.propTypes.space,
 				view: React.PropTypes.shape({
 					// ...View.propTypes.view,
 				}).isRequired,
 			}).isRequired,
-			spaces: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
+			spaces: React.PropTypes.arrayOf(React.PropTypes.shape({
+				// ...NavigationDrawer.propTypes.space,
+			})).isRequired,
 		}).isRequired,
 	};
 
@@ -75,14 +74,6 @@ class App extends React.Component {
 			flexDirection: 'column',
 			overflow: 'scroll',
 		},
-		addTaskButton: {
-			...resetStyles,
-			overflow: 'visible',
-			position: 'absolute',
-
-			right: 24,
-			top: 24,
-		},
 		content: {
 			...resetStyles,
 			alignItems: 'stretch',
@@ -107,19 +98,8 @@ class App extends React.Component {
 		if (this.props.location.pathname === '/search/') {
 			searchQuery = '';
 		}
-		this.state = {
-			isAddTaskFormVisible: false,
-			searchQuery,
-		};
+		this.state = { searchQuery };
 	}
-
-	onCancelClick = () => {
-		this.setState({ isAddTaskFormVisible: false });
-	};
-
-	onPlusClick = () => {
-		this.setState({ isAddTaskFormVisible: true });
-	};
 
 	onSearchFocus = () => {
 		if (this.state.searchQuery === undefined) {
@@ -192,7 +172,7 @@ class App extends React.Component {
 
 				<div style={App.styles.appBarContainer}>
 
-					<AppBar style={appBarStyle}>
+					<AppBar style={appBarStyle} space={this.props.viewer.space}>
 						<SearchField
 							autoFocus={this.state.searchQuery === ''}
 							initialQuery={this.state.searchQuery}
@@ -203,33 +183,8 @@ class App extends React.Component {
 						/>
 					</AppBar>
 
-					{!this.state.isAddTaskFormVisible ?
-						(
-							<div style={App.styles.addTaskButton}>
-								<ActionButton onClick={this.onPlusClick} />
-							</div>
-						) :
-						null
-					}
-
 					<div style={App.styles.contentContainer}>
 						<div style={App.styles.content}>
-							{this.state.isAddTaskFormVisible ?
-								(
-									<AddTaskCard
-										autoFocus
-										space={this.props.viewer.space}
-										onCancelClick={this.onCancelClick}
-									/>
-								) :
-								null
-							}
-
-							{this.state.isAddTaskFormVisible ?
-								<div style={App.styles.contentSpacer} /> :
-								null
-							}
-
 							{this.renderContent()}
 						</div>
 					</div>
@@ -246,7 +201,7 @@ export default Relay.createContainer(App, {
 			fragment on User {
 				space {
 					name,
-					${AddTaskCard.getFragment('space')},
+					${AppBar.getFragment('space')},
 					${QuerySearch.getFragment('space')},
 					view {
 						${View.getFragment('view')},

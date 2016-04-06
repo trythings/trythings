@@ -2,6 +2,8 @@
 import React from 'react';
 import Relay from 'react-relay';
 
+import ActionButton from './ActionButton.js';
+import AddTaskCard from './AddTaskCard.js';
 import Icon from './Icon.js';
 import resetStyles from './resetStyles.js';
 import theme from './theme.js';
@@ -48,6 +50,9 @@ class AppBar extends React.Component {
 			backgroundColor: React.PropTypes.string,
 			color: React.PropTypes.string,
 		}),
+		space: React.PropTypes.shape({
+			// ...AddTaskCard.propTypes.space,
+		}).isRequired,
 	};
 
 	static styles = {
@@ -61,7 +66,8 @@ class AppBar extends React.Component {
 			justifyContent: 'space-between',
 			minHeight: 56,
 			paddingLeft: 16,
-			paddingRight: 16,
+			paddingRight: 16 + 16 + 56,
+			overflow: 'visible',
 		},
 		title: {
 			...resetStyles,
@@ -74,6 +80,15 @@ class AppBar extends React.Component {
 			flex: '1 0 auto',
 			paddingLeft: 24,
 		},
+		addTaskButton: {
+			...resetStyles,
+			overflow: 'visible',
+			position: 'absolute',
+
+			right: 16,
+			top: 24,
+		},
+
 		migrateButton: {
 			...resetStyles,
 
@@ -91,7 +106,16 @@ class AppBar extends React.Component {
 	};
 
 	state = {
+		isAddTaskFormVisible: false,
 		isMigrateHovering: false,
+	};
+
+	onCancelClick = () => {
+		this.setState({ isAddTaskFormVisible: false });
+	};
+
+	onPlusClick = () => {
+		this.setState({ isAddTaskFormVisible: true });
 	};
 
 	onMigrateClick = () => {
@@ -159,11 +183,31 @@ class AppBar extends React.Component {
 					{this.props.children}
 				</div>
 
+				{this.state.isAddTaskFormVisible ?
+					(
+						<AddTaskCard
+							autoFocus
+							space={this.props.space}
+							onCancelClick={this.onCancelClick}
+						/>
+					) :
+					(
+						<div style={AppBar.styles.addTaskButton}>
+							<ActionButton onClick={this.onPlusClick} />
+						</div>
+					)
+				}
 			</div>
 		);
 	}
 }
 
 export default Relay.createContainer(AppBar, {
-	fragments: {},
+	fragments: {
+		space: () => Relay.QL`
+			fragment on Space {
+				${AddTaskCard.getFragment('space')},
+			},
+		`,
+	},
 });
