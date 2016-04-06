@@ -68,13 +68,11 @@ class AppBar extends React.Component {
 			...theme.text.light.primary,
 
 			fontSize: 20,
-			width: 240 - 16, // Align with the navigation drawer.
 		},
 		children: {
 			...resetStyles,
 			flex: '1 0 auto',
 			paddingLeft: 24,
-			paddingRight: 24,
 		},
 		migrateButton: {
 			...resetStyles,
@@ -110,6 +108,32 @@ class AppBar extends React.Component {
 		this.setState({ isMigrateHovering: false });
 	};
 
+	renderMigrateButton() {
+		let migrateIconStyle = AppBar.styles.migrateIcon;
+		if (this.props.style && this.props.style.color) {
+			migrateIconStyle = {
+				...migrateIconStyle,
+				color: this.props.style.color,
+			};
+		}
+
+		return (
+			<button
+				style={{
+					...AppBar.styles.migrateButton,
+					backgroundColor: this.state.isMigrateHovering ?
+						'rgba(255, 255, 255, 0.12)' :
+						'rgba(255, 255, 255, 0)',
+				}}
+				onClick={this.onMigrateClick}
+				onMouseEnter={this.onMigrateMouseEnter}
+				onMouseLeave={this.onMigrateMouseLeave}
+			>
+				<Icon style={migrateIconStyle} name="update" />
+			</button>
+		);
+	}
+
 	render() {
 		let style = AppBar.styles.appBar;
 		if (this.props.style && this.props.style.backgroundColor) {
@@ -127,14 +151,6 @@ class AppBar extends React.Component {
 			};
 		}
 
-		let migrateIconStyle = AppBar.styles.migrateIcon;
-		if (this.props.style && this.props.style.color) {
-			migrateIconStyle = {
-				...migrateIconStyle,
-				color: this.props.style.color,
-			};
-		}
-
 		return (
 			<div style={style}>
 				<span style={titleStyle}>Ellie's Pad</span>
@@ -143,19 +159,6 @@ class AppBar extends React.Component {
 					{this.props.children}
 				</div>
 
-				<button
-					style={{
-						...AppBar.styles.migrateButton,
-						backgroundColor: this.state.isMigrateHovering ?
-							'rgba(255, 255, 255, 0.12)' :
-							'rgba(255, 255, 255, 0)',
-					}}
-					onClick={this.onMigrateClick}
-					onMouseEnter={this.onMigrateMouseEnter}
-					onMouseLeave={this.onMigrateMouseLeave}
-				>
-					<Icon style={migrateIconStyle} name="update" />
-				</button>
 			</div>
 		);
 	}

@@ -32,7 +32,7 @@ class NavigationDrawer extends React.Component {
 			paddingBottom: 16,
 			paddingLeft: 16,
 			paddingRight: 16,
-			paddingTop: 16,
+			paddingTop: 16 + 56, // 56 to temporarily align with the app bar.
 			width: 240,
 		},
 		spaces: {
