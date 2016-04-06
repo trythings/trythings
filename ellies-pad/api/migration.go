@@ -300,6 +300,44 @@ var migrations = []*Migration{
 			return nil
 		},
 	},
+	{
+		Version:     version("2016-03-29T22:57:00"),
+		Author:      "annie, daniel",
+		Description: "Add ranks to searches.",
+		Run: func(ctx context.Context, s *MigrationService) error {
+			root := datastore.NewKey(ctx, "Root", "root", 0, nil)
+
+			var vs []*View
+			_, err := datastore.NewQuery("View").
+				Ancestor(root).
+				GetAll(ctx, &vs)
+			if err != nil {
+				return err
+			}
+
+			for _, v := range vs {
+				ss, err := s.SearchService.ByView(ctx, v)
+				if err != nil {
+					return err
+				}
+
+				rs, err := NewRanks(len(ss))
+				if err != nil {
+					return err
+				}
+
+				for i, se := range ss {
+					se.ViewRank = rs[i]
+					err := s.SearchService.Update(ctx, se)
+					if err != nil {
+						return err
+					}
+				}
+			}
+
+			return nil
+		},
+	},
 }
 
 type MigrationService struct {

@@ -16,6 +16,7 @@ type Search struct {
 	CreatedAt time.Time `json:"createdAt"`
 	Name      string    `json:"name"`
 	ViewID    string    `json:"viewId"`
+	ViewRank  int64     `json:"viewRank"`
 	Query     string    `json:"query"`
 }
 
@@ -56,6 +57,7 @@ func (s *SearchService) ByView(ctx context.Context, v *View) ([]*Search, error) 
 	_, err := datastore.NewQuery("Search").
 		Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
 		Filter("ViewID =", v.ID).
+		Order("ViewRank").
 		GetAll(ctx, &ss)
 	if err != nil {
 		return nil, err
@@ -116,6 +118,37 @@ func (s *SearchService) Create(ctx context.Context, se *Search) error {
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
 	k := datastore.NewKey(ctx, "Search", se.ID, 0, rootKey)
 	k, err = datastore.Put(ctx, k, se)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *SearchService) Update(ctx context.Context, se *Search) error {
+	if se.ID == "" {
+		return errors.New("cannot update search with no ID")
+	}
+
+	// Make sure we have access to the search before it was modified.
+	_, err := s.ByID(ctx, se.ID)
+	if err != nil {
+		return err
+	}
+
+	// Make sure we continue to have access to the task after our update.
+	ok, err := s.IsVisible(ctx, se)
+	if err != nil {
+		return err
+	}
+
+	if !ok {
+		return errors.New("cannot update search to lose access")
+	}
+
+	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
+	k := datastore.NewKey(ctx, "Search", se.ID, 0, rootKey)
+	_, err = datastore.Put(ctx, k, se)
 	if err != nil {
 		return err
 	}
