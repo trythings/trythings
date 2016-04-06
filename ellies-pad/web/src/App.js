@@ -48,9 +48,14 @@ class App extends React.Component {
 			...resetStyles,
 			alignItems: 'stretch',
 			backgroundColor: theme.colors.canvas,
-			flexDirection: 'column',
 			height: '100%',
 			width: '100%',
+		},
+		appBarContainer: {
+			...resetStyles,
+			alignItems: 'stretch',
+			flexDirection: 'column',
+			flex: '1 1 auto',
 		},
 		appBar: {
 			...resetStyles,
@@ -62,11 +67,6 @@ class App extends React.Component {
 			...theme.text.light.primary,
 			backgroundColor: theme.colors.primary.light,
 			flex: '1 0 auto',
-		},
-		navigationContainer: {
-			...resetStyles,
-			alignItems: 'stretch',
-			flex: '1 1 auto',
 		},
 		contentContainer: {
 			...resetStyles,
@@ -188,18 +188,21 @@ class App extends React.Component {
 
 		return (
 			<div style={App.styles.app} tabIndex={-1}>
-				<AppBar style={appBarStyle}>
-					<SearchField
-						autoFocus={this.state.searchQuery === ''}
-						initialQuery={this.state.searchQuery}
-						onQueryChange={this.onSearchQueryChange}
-						onFocus={this.onSearchFocus}
-						onBlur={this.onSearchBlur}
-						style={searchFieldStyle}
-					/>
-				</AppBar>
+				<NavigationDrawer spaces={this.props.viewer.spaces} />
 
-				<div style={App.styles.navigationContainer}>
+				<div style={App.styles.appBarContainer}>
+
+					<AppBar style={appBarStyle}>
+						<SearchField
+							autoFocus={this.state.searchQuery === ''}
+							initialQuery={this.state.searchQuery}
+							onQueryChange={this.onSearchQueryChange}
+							onFocus={this.onSearchFocus}
+							onBlur={this.onSearchBlur}
+							style={searchFieldStyle}
+						/>
+					</AppBar>
+
 					{!this.state.isAddTaskFormVisible ?
 						(
 							<div style={App.styles.addTaskButton}>
@@ -208,8 +211,6 @@ class App extends React.Component {
 						) :
 						null
 					}
-
-					<NavigationDrawer spaces={this.props.viewer.spaces} />
 
 					<div style={App.styles.contentContainer}>
 						<div style={App.styles.content}>
@@ -232,6 +233,7 @@ class App extends React.Component {
 							{this.renderContent()}
 						</div>
 					</div>
+
 				</div>
 			</div>
 		);
