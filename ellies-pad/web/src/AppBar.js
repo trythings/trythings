@@ -183,6 +183,8 @@ class AppBar extends React.Component {
 					{this.props.children}
 				</div>
 
+				{this.renderMigrateButton()}
+
 				{this.state.isAddTaskFormVisible ?
 					(
 						<AddTaskCard
