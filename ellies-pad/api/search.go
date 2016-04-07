@@ -57,7 +57,7 @@ func (s *SearchService) ByView(ctx context.Context, v *View) ([]*Search, error) 
 	_, err := datastore.NewQuery("Search").
 		Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
 		Filter("ViewID =", v.ID).
-		// Order("ViewRank").
+		Order("ViewRank").
 		GetAll(ctx, &ss)
 	if err != nil {
 		return nil, err
