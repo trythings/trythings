@@ -1,18 +1,20 @@
 package api
 
 import (
+	"bytes"
 	"fmt"
-	"math"
 	"math/big"
 )
 
-const (
-	MaxRank = math.MaxInt64
-	MinRank = math.MinInt64
+type Rank []byte
+
+var (
+	MinRank = Rank{0x00}
+	MaxRank = Rank{0xff}
 )
 
-func NewRanks(n int) ([]int64, error) {
-	rs := make([]int64, n)
+func NewRanks(num int) ([]Rank, error) {
+	rs := make([]Rank, num)
 	err := newRanks(rs, MinRank, MaxRank)
 	if err != nil {
 		return nil, err
@@ -20,7 +22,7 @@ func NewRanks(n int) ([]int64, error) {
 	return rs, nil
 }
 
-func newRanks(ranks []int64, prev, next int64) error {
+func newRanks(ranks []Rank, prev, next Rank) error {
 	if len(ranks) == 0 {
 		return nil
 	}
@@ -49,12 +51,36 @@ func newRanks(ranks []int64, prev, next int64) error {
 	return nil
 }
 
-func NewRank(prev, next int64) (int64, error) {
-	sum := new(big.Int).Add(big.NewInt(prev), big.NewInt(next))
-	quo := new(big.Int).Div(sum, big.NewInt(2))
-	r := quo.Int64()
-	if r == prev || r == next {
-		return 0, fmt.Errorf("cannot create new rank between %d and %d", prev, next)
+func NewRank(prev, next Rank) (Rank, error) {
+	// We want to align the most significant (leftmost) digits
+	// of prev and next before we add them.
+	// This is equivalent to aligning the radix points at beginning of the numbers.
+	numBytes := len(prev)
+	if len(next) > numBytes {
+		numBytes = len(next)
 	}
+	// We add padding because we don't want to lose a trailing one during integer division.
+	// We will trim trailing zeros after division.
+	numBytes++
+
+	paddedPrev := make([]byte, numBytes)
+	copy(paddedPrev, prev)
+	p := new(big.Int).SetBytes(paddedPrev)
+
+	paddedNext := make([]byte, numBytes)
+	copy(paddedNext, next)
+	n := new(big.Int).SetBytes(paddedNext)
+
+	if p.Cmp(n) == 0 {
+		return nil, fmt.Errorf("cannot generate rank between %s and %s", prev, next)
+	}
+
+	// Find the average of the two ranks.
+	sum := new(big.Int).Add(p, n)
+	quo := new(big.Int).Div(sum, big.NewInt(2))
+
+	r := quo.Bytes()
+	r = bytes.TrimRight(r, "\000")
+
 	return r, nil
 }

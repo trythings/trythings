@@ -327,7 +327,7 @@ var migrations = []*Migration{
 				}
 
 				for i, se := range ss {
-					se.ViewRank = rs[i]
+					se.ViewRank = datastore.ByteString(rs[i])
 					err := s.SearchService.Update(ctx, se)
 					if err != nil {
 						return err

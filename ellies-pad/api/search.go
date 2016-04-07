@@ -12,12 +12,12 @@ import (
 )
 
 type Search struct {
-	ID        string    `json:"id"`
-	CreatedAt time.Time `json:"createdAt"`
-	Name      string    `json:"name"`
-	ViewID    string    `json:"viewId"`
-	ViewRank  int64     `json:"viewRank"`
-	Query     string    `json:"query"`
+	ID        string               `json:"id"`
+	CreatedAt time.Time            `json:"createdAt"`
+	Name      string               `json:"name"`
+	ViewID    string               `json:"viewId"`
+	ViewRank  datastore.ByteString `json:"viewRank"`
+	Query     string               `json:"query"`
 }
 
 type SearchService struct {
@@ -57,7 +57,7 @@ func (s *SearchService) ByView(ctx context.Context, v *View) ([]*Search, error) 
 	_, err := datastore.NewQuery("Search").
 		Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
 		Filter("ViewID =", v.ID).
-		Order("ViewRank").
+		// Order("ViewRank").
 		GetAll(ctx, &ss)
 	if err != nil {
 		return nil, err
