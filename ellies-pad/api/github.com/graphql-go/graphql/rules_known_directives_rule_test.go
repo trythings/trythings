@@ -1,1 +1,0 @@
-../../../../../vendor/github.com/graphql-go/graphql/rules_known_directives_rule_test.go

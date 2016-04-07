@@ -1,1 +1,0 @@
-../../../../../vendor/github.com/graphql-go/graphql/rules_overlapping_fields_can_be_merged_test.go

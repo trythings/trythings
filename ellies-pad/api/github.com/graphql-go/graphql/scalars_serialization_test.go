@@ -1,1 +1,0 @@
-../../../../../vendor/github.com/graphql-go/graphql/scalars_serialization_test.go

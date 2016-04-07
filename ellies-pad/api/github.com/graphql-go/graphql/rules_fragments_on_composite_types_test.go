@@ -1,1 +1,0 @@
-../../../../../vendor/github.com/graphql-go/graphql/rules_fragments_on_composite_types_test.go

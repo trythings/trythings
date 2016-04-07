@@ -1,1 +1,0 @@
-../../../../../vendor/github.com/graphql-go/graphql/rules_possible_fragment_spreads_test.go

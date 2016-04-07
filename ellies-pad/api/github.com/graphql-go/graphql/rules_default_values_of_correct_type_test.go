@@ -1,1 +1,0 @@
-../../../../../vendor/github.com/graphql-go/graphql/rules_default_values_of_correct_type_test.go

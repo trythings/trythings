@@ -1,1 +1,0 @@
-../../../../../vendor/github.com/graphql-go/graphql/rules_unique_fragment_names_test.go
