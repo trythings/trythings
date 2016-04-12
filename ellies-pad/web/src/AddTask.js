@@ -2,13 +2,13 @@ import React from 'react';
 import Relay from 'react-relay';
 
 import ActionButton from './ActionButton.js';
-import AddTaskCard from './AddTaskCard.js';
+import AddTaskMole from './AddTaskMole.js';
 import resetStyles from './resetStyles.js';
 
 class AddTask extends React.Component {
 	static propTypes = {
 		space: React.PropTypes.shape({
-			// ...AddTaskCard.propTypes.space,
+			// ...AddTaskMole.propTypes.space,
 		}).isRequired,
 	};
 
@@ -40,7 +40,7 @@ class AddTask extends React.Component {
 	render() {
 		if (this.state.isAddTaskFormVisible) {
 			return (
-				<AddTaskCard
+				<AddTaskMole
 					autoFocus
 					space={this.props.space}
 					onCancelClick={this.onCancelClick}
@@ -60,7 +60,7 @@ export default Relay.createContainer(AddTask, {
 	fragments: {
 		space: () => Relay.QL`
 			fragment on Space {
-				${AddTaskCard.getFragment('space')},
+				${AddTaskMole.getFragment('space')},
 			},
 		`,
 	},

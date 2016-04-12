@@ -54,7 +54,7 @@ class AddTaskMutation extends Relay.Mutation {
 	}
 }
 
-class AddTaskCard extends React.Component {
+class AddTaskMole extends React.Component {
 	static propTypes = {
 		autoFocus: React.PropTypes.bool,
 		space: React.PropTypes.shape({
@@ -137,36 +137,36 @@ class AddTaskCard extends React.Component {
 	render() {
 		return (
 			<Card>
-				<header style={AddTaskCard.styles.header}>
+				<header style={AddTaskMole.styles.header}>
 					<input
 						autoFocus={this.props.autoFocus}
 						placeholder="Title"
 						value={this.state.title}
 						onChange={this.onTitleChange}
-						style={AddTaskCard.styles.title}
+						style={AddTaskMole.styles.title}
 					/>
 
-					<div style={AddTaskCard.styles.titleSpacer} />
+					<div style={AddTaskMole.styles.titleSpacer} />
 
 					<TextareaAutosize
 						placeholder="Description"
 						value={this.state.description}
 						onChange={this.onDescriptionChange}
-						style={AddTaskCard.styles.description}
+						style={AddTaskMole.styles.description}
 					/>
 				</header>
 
-				<div style={AddTaskCard.styles.actionContainer}>
+				<div style={AddTaskMole.styles.actionContainer}>
 					<FlatButton
-						style={AddTaskCard.styles.cancel}
+						style={AddTaskMole.styles.cancel}
 						onClick={this.props.onCancelClick}
 						label="Cancel"
 					/>
 
-					<div style={AddTaskCard.styles.actionSpacer} />
+					<div style={AddTaskMole.styles.actionSpacer} />
 
 					<FlatButton
-						style={AddTaskCard.styles.addTask}
+						style={AddTaskMole.styles.addTask}
 						onClick={this.onAddClick}
 						label="Add Task"
 					/>
@@ -176,7 +176,7 @@ class AddTaskCard extends React.Component {
 	}
 }
 
-export default Relay.createContainer(AddTaskCard, {
+export default Relay.createContainer(AddTaskMole, {
 	fragments: {
 		space: () => Relay.QL`
 			fragment on Space {
