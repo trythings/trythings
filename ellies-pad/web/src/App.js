@@ -2,6 +2,7 @@ import _debounce from 'lodash/debounce';
 import React from 'react';
 import Relay from 'react-relay';
 
+import AddTask from './AddTask.js';
 import AppBar from './AppBar.js';
 import NavigationDrawer from './NavigationDrawer.js';
 import QuerySearch from './QuerySearch.js';
@@ -30,7 +31,7 @@ class App extends React.Component {
 
 		viewer: React.PropTypes.shape({
 			space: React.PropTypes.shape({
-				// ...AppBar.propTypes.space,
+				// ...AddTask.propTypes.space,
 				// ...QuerySearch.propTypes.space,
 				view: React.PropTypes.shape({
 					// ...View.propTypes.view,
@@ -172,7 +173,7 @@ class App extends React.Component {
 
 				<div style={App.styles.appBarContainer}>
 
-					<AppBar style={appBarStyle} space={this.props.viewer.space}>
+					<AppBar style={appBarStyle}>
 						<SearchField
 							autoFocus={this.state.searchQuery === ''}
 							initialQuery={this.state.searchQuery}
@@ -187,6 +188,8 @@ class App extends React.Component {
 						<div style={App.styles.content}>
 							{this.renderContent()}
 						</div>
+
+						<AddTask space={this.props.viewer.space} />
 					</div>
 
 				</div>
@@ -201,7 +204,7 @@ export default Relay.createContainer(App, {
 			fragment on User {
 				space {
 					name,
-					${AppBar.getFragment('space')},
+					${AddTask.getFragment('space')},
 					${QuerySearch.getFragment('space')},
 					view {
 						${View.getFragment('view')},
