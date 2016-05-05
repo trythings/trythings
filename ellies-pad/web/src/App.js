@@ -68,6 +68,35 @@ class App extends React.Component {
 			backgroundColor: theme.colors.primary.light,
 			flex: '1 0 auto',
 		},
+		overlayContainer: {
+			...resetStyles,
+			alignItems: 'stretch',
+			flex: '1 1 auto',
+		},
+		addTaskContainer: {
+			...resetStyles,
+
+			alignItems: 'flex-end',
+			justifyContent: 'flex-end',
+
+			position: 'absolute',
+			bottom: 0,
+			left: 0,
+			right: 0,
+			top: 0,
+
+			pointerEvents: 'none',
+			flexDirection: 'column',
+		},
+		addTaskSpacer: {
+			...resetStyles,
+			paddingTop: 56,
+		},
+		addTask: {
+			...resetStyles,
+			flex: '1 1 auto',
+			pointerEvents: 'auto',
+		},
 		contentContainer: {
 			...resetStyles,
 			alignItems: 'stretch',
@@ -184,14 +213,21 @@ class App extends React.Component {
 						/>
 					</AppBar>
 
-					<div style={App.styles.contentContainer}>
-						<div style={App.styles.content}>
-							{this.renderContent()}
+					<div style={App.styles.overlayContainer}>
+						<div style={App.styles.contentContainer}>
+							<div style={App.styles.content}>
+								{this.renderContent()}
+							</div>
 						</div>
 
-						<AddTask space={this.props.viewer.space} />
+						<div style={App.styles.addTaskContainer}>
+							<div style={App.styles.addTaskSpacer} />
+							<AddTask
+								space={this.props.viewer.space}
+								style={App.styles.addTask}
+							/>
+						</div>
 					</div>
-
 				</div>
 			</div>
 		);

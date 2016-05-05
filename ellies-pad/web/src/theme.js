@@ -76,6 +76,22 @@ const elevation = {
 		].join(','),
 		zIndex: 8,
 	},
+	10: {
+		boxShadow: [
+			'0 4px 18px 3px rgba(0, 0, 0, 0.12)', // Ambient.
+			'0 10px 14px 1px rgba(0, 0, 0, 0.14)', // Penumbra.
+			'0 6px 6px -3px rgba(0, 0, 0, 0.20)', // Umbra.
+		].join(','),
+		zIndex: 10,
+	},
+	12: {
+		boxShadow: [
+			'0 5px 22px 4px rgba(0, 0, 0, 0.12)', // Ambient.
+			'0 12px 17px 2px rgba(0, 0, 0, 0.14)', // Penumbra.
+			'0 7px 8px -4px rgba(0, 0, 0, 0.20)', // Umbra.
+		].join(','),
+		zIndex: 12,
+	},
 };
 
 const text = {

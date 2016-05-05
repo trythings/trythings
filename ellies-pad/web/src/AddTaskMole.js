@@ -2,7 +2,6 @@ import React from 'react';
 import Relay from 'react-relay';
 import TextareaAutosize from 'react-textarea-autosize';
 
-import Card from './Card.js';
 import FlatButton from './FlatButton.js';
 import resetStyles from './resetStyles.js';
 import theme from './theme.js';
@@ -61,9 +60,23 @@ class AddTaskMole extends React.Component {
 			// ...AddTaskMutation.propTypes.space
 		}).isRequired,
 		onCancelClick: React.PropTypes.func,
+		style: React.PropTypes.shape({
+			flex: React.PropTypes.string,
+		}),
 	};
 
 	static styles = {
+		container: {
+			...resetStyles,
+			...theme.elevation[12],
+
+			alignItems: 'stretch',
+			backgroundColor: theme.colors.card,
+			borderRadius: '5px 5px 0 0',
+			flexDirection: 'column',
+
+			width: 360,
+		},
 		header: {
 			...resetStyles,
 			alignItems: 'stretch',
@@ -135,8 +148,16 @@ class AddTaskMole extends React.Component {
 	};
 
 	render() {
+		let style = AddTaskMole.styles.container;
+		if (this.props.style && this.props.style.flex) {
+			style = {
+				...style,
+				flex: this.props.style.flex,
+			};
+		}
+
 		return (
-			<Card>
+			<div style={style}>
 				<header style={AddTaskMole.styles.header}>
 					<input
 						autoFocus={this.props.autoFocus}
@@ -171,7 +192,7 @@ class AddTaskMole extends React.Component {
 						label="Add Task"
 					/>
 				</div>
-			</Card>
+			</div>
 		);
 	}
 }

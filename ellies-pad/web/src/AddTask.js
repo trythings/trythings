@@ -10,18 +10,39 @@ class AddTask extends React.Component {
 		space: React.PropTypes.shape({
 			// ...AddTaskMole.propTypes.space,
 		}).isRequired,
+		style: React.PropTypes.shape({
+			flex: React.PropTypes.string,
+			pointerEvents: React.PropTypes.string,
+		}),
 	};
 
 	static styles = {
-		addTaskButton: {
+		container: {
 			...resetStyles,
 
+			justifyContent: 'flex-end',
+			maxHeight: 360,
+			flexDirection: 'column',
 			overflow: 'visible',
-			paddingRight: 24,
+		},
+		addTaskMoleContainer: {
+			...resetStyles,
+
+			flex: '1 1 auto',
+			flexDirection: 'column',
+			paddingRight: 16,
+			overflow: 'visible',
+		},
+		addTaskButtonContainer: {
+			...resetStyles,
+
 			paddingBottom: 24,
-			position: 'absolute',
-			right: 0,
-			bottom: 0,
+			paddingRight: 24,
+			overflow: 'visible',
+		},
+		addTaskMole: {
+			...resetStyles,
+			flex: '1 1 auto',
 		},
 	};
 
@@ -38,19 +59,40 @@ class AddTask extends React.Component {
 	};
 
 	render() {
-		if (this.state.isAddTaskFormVisible) {
-			return (
-				<AddTaskMole
-					autoFocus
-					space={this.props.space}
-					onCancelClick={this.onCancelClick}
-				/>
-			);
+		let style = AddTask.styles.container;
+		if (this.props.style && this.props.style.flex) {
+			style = {
+				...style,
+				flex: this.props.style.flex,
+			};
+		}
+
+		if (this.props.style && this.props.style.pointerEvents) {
+			style = {
+				...style,
+				pointerEvents: this.props.style.pointerEvents,
+			};
 		}
 
 		return (
-			<div style={AddTask.styles.addTaskButton}>
-				<ActionButton onClick={this.onPlusClick} />
+			<div style={style}>
+				{this.state.isAddTaskFormVisible ?
+					(
+						<div style={AddTask.styles.addTaskMoleContainer}>
+							<AddTaskMole
+								autoFocus
+								space={this.props.space}
+								onCancelClick={this.onCancelClick}
+								style={AddTask.styles.addTaskMole}
+							/>
+						</div>
+					) :
+					(
+						<div style={AddTask.styles.addTaskButtonContainer}>
+							<ActionButton onClick={this.onPlusClick} />
+						</div>
+					)
+				}
 			</div>
 		);
 	}
