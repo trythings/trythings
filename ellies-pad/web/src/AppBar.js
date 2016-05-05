@@ -41,7 +41,7 @@ class MigrateMutation extends Relay.Mutation {
 	}
 }
 
-export default class AppBar extends React.Component {
+class AppBar extends React.Component {
 	static propTypes = {
 		children: React.PropTypes.node,
 		style: React.PropTypes.shape({
@@ -165,3 +165,7 @@ export default class AppBar extends React.Component {
 		);
 	}
 }
+
+export default Relay.createContainer(AppBar, {
+	fragments: {},
+});
