@@ -252,45 +252,50 @@ var migrations = []*Migration{
 				}
 
 				err = s.SearchService.Create(ctx, &Search{
-					Name:   "#now",
-					ViewID: v.ID,
-					Query:  "#now AND IsArchived: false",
+					Name:     "#now",
+					ViewID:   v.ID,
+					Query:    "#now AND IsArchived: false",
+					ViewRank: datastore.ByteString("0"),
 				})
 				if err != nil {
 					return err
 				}
 
 				err = s.SearchService.Create(ctx, &Search{
-					Name:   "Incoming",
-					ViewID: v.ID,
-					Query:  "NOT #now AND NOT #next AND NOT #later AND IsArchived: false",
+					Name:     "Incoming",
+					ViewID:   v.ID,
+					Query:    "NOT #now AND NOT #next AND NOT #later AND IsArchived: false",
+					ViewRank: datastore.ByteString("1"),
 				})
 				if err != nil {
 					return err
 				}
 
 				err = s.SearchService.Create(ctx, &Search{
-					Name:   "#next",
-					ViewID: v.ID,
-					Query:  "#next AND NOT #now AND IsArchived: false",
+					Name:     "#next",
+					ViewID:   v.ID,
+					Query:    "#next AND NOT #now AND IsArchived: false",
+					ViewRank: datastore.ByteString("2"),
 				})
 				if err != nil {
 					return err
 				}
 
 				err = s.SearchService.Create(ctx, &Search{
-					Name:   "#later",
-					ViewID: v.ID,
-					Query:  "#later AND NOT #next AND NOT #now AND IsArchived: false",
+					Name:     "#later",
+					ViewID:   v.ID,
+					Query:    "#later AND NOT #next AND NOT #now AND IsArchived: false",
+					ViewRank: datastore.ByteString("3"),
 				})
 				if err != nil {
 					return err
 				}
 
 				err = s.SearchService.Create(ctx, &Search{
-					Name:   "Archived",
-					ViewID: v.ID,
-					Query:  "IsArchived: true",
+					Name:     "Archived",
+					ViewID:   v.ID,
+					Query:    "IsArchived: true",
+					ViewRank: datastore.ByteString("4"),
 				})
 				if err != nil {
 					return err
