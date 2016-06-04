@@ -10,6 +10,9 @@ module.exports = {
 		path: path.resolve(__dirname, 'static'),
 		filename: 'bundle.js',
 	},
+	externals: {
+		gapi: 'gapi',
+	},
 	plugins: [
 		new webpack.EnvironmentPlugin(['NODE_ENV']),
 		new webpack.NoErrorsPlugin(),

@@ -1,3 +1,4 @@
+import gapi from 'gapi';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Route, browserHistory } from 'react-router';
@@ -31,4 +32,9 @@ const element = (
 	</RelayRouter>
 );
 
-ReactDOM.render(element, document.getElementById('App'));
+gapi.load('auth2', () => {
+	gapi.auth2.init({
+		client_id: '695504958192-8k3tf807271m7jcllcvlauddeqhbr0hg.apps.googleusercontent.com',
+	});
+	ReactDOM.render(element, document.getElementById('App'));
+});
