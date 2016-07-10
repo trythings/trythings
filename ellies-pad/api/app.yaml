@@ -20,6 +20,8 @@ handlers:
   static_dir: static
   login: admin
   secure: always
+- url: /.well-known
+  static_dir: static/.well-known
 - url: /.*
   static_files: static/index.html
   upload: static/index.html
