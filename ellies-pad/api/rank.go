@@ -8,18 +8,27 @@ import (
 
 type Rank []byte
 
+func (r Rank) String() string {
+	return fmt.Sprintf("%#x", []byte(r))
+}
+
 var (
 	MinRank = Rank{0x00}
 	MaxRank = Rank{0xff}
 )
 
-func NewRanks(num int) ([]Rank, error) {
+func NewRanks(num int) []Rank {
+	if num == 0 {
+		return nil
+	}
+
 	rs := make([]Rank, num)
 	err := newRanks(rs, MinRank, MaxRank)
 	if err != nil {
-		return nil, err
+		// This could only happen if MinRank == MaxRank.
+		panic(err)
 	}
-	return rs, nil
+	return rs
 }
 
 func newRanks(ranks []Rank, prev, next Rank) error {
@@ -51,6 +60,10 @@ func newRanks(ranks []Rank, prev, next Rank) error {
 	return nil
 }
 
+// wobble reduces the likelihood of two ranks colliding
+// if they are generated between the same prev and next.
+var wobble byte
+
 func NewRank(prev, next Rank) (Rank, error) {
 	// We want to align the most significant (leftmost) digits
 	// of prev and next before we add them.
@@ -81,6 +94,11 @@ func NewRank(prev, next Rank) (Rank, error) {
 
 	r := quo.Bytes()
 	r = bytes.TrimRight(r, "\000")
+	if wobble > 0 {
+		r = append(r, wobble)
+	}
+	// It is intended that wobble overflow and wrap to from 255 to 0.
+	wobble++
 
 	return r, nil
 }
