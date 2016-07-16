@@ -9,7 +9,7 @@ import (
 type Rank []byte
 
 func (r Rank) String() string {
-	return fmt.Sprintf("%#x", []byte(r))
+	return fmt.Sprintf("Rank{%#x}", []byte(r))
 }
 
 var (
