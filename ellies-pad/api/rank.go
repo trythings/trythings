@@ -90,9 +90,9 @@ func NewRank(prev, next Rank) (Rank, error) {
 
 	// Find the average of the two ranks.
 	sum := new(big.Int).Add(p, n)
-	quo := new(big.Int).Div(sum, big.NewInt(2))
+	avg := new(big.Int).Div(sum, big.NewInt(2))
 
-	r := quo.Bytes()
+	r := avg.Bytes()
 	r = bytes.TrimRight(r, "\000")
 	if wobble > 0 {
 		r = append(r, wobble)
