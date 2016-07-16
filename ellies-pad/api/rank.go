@@ -97,7 +97,7 @@ func NewRank(prev, next Rank) (Rank, error) {
 	if wobble > 0 {
 		r = append(r, wobble)
 	}
-	// It is intended that wobble overflow and wrap to from 255 to 0.
+	// It is intended that wobble overflow and wrap from 255 to 0.
 	wobble++
 
 	return r, nil
