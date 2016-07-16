@@ -326,11 +326,7 @@ var migrations = []*Migration{
 					return err
 				}
 
-				rs, err := NewRanks(len(ss))
-				if err != nil {
-					return err
-				}
-
+				rs := NewRanks(len(ss))
 				for i, se := range ss {
 					se.ViewRank = datastore.ByteString(rs[i])
 					err := s.SearchService.Update(ctx, se)
@@ -353,7 +349,8 @@ type MigrationService struct {
 }
 
 // latestVersion returns the largest version stored in the Migrations table.
-// Since versions are expected to be strictly increasing, any Migration with a version > latestVersion is expected to have not yet been run.
+// Since versions are expected to be strictly increasing,
+// any Migration with a version > latestVersion is expected to have not yet been run.
 // If no Migrations have been run against the datastore, latestVersion returns the zero time.
 func (s *MigrationService) latestVersion(ctx context.Context) (time.Time, error) {
 	var ms []*Migration
