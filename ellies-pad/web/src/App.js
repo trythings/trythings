@@ -151,6 +151,12 @@ class App extends React.Component {
 		this.updateSearchPath(query);
 	};
 
+	refetch = () => {
+		if (this.view) {
+			this.view.refetch();
+		}
+	};
+
 	updateSearchPath = _debounce((query) => {
 		// This undefined check exists because the user may have
 		// emptied and blurred the search field in quick succession,
@@ -164,6 +170,10 @@ class App extends React.Component {
 		this.setState({ searchQuery: query });
 	}, 200);
 
+	viewRef = (view) => {
+		this.view = view.refs.component;
+	};
+
 	renderContent() {
 		if (this.state.searchQuery !== undefined) {
 			return (
@@ -175,7 +185,7 @@ class App extends React.Component {
 			);
 		}
 
-		return <View view={this.props.viewer.space.view} />;
+		return <View ref={this.viewRef} view={this.props.viewer.space.view} />;
 	}
 
 	render() {
@@ -226,6 +236,7 @@ class App extends React.Component {
 						<div style={App.styles.addTaskContainer}>
 							<div style={App.styles.addTaskSpacer} />
 							<AddTask
+								refetch={this.refetch}
 								space={this.props.viewer.space}
 								style={App.styles.addTask}
 							/>

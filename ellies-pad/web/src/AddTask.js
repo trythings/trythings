@@ -7,6 +7,7 @@ import resetStyles from './resetStyles.js';
 
 class AddTask extends React.Component {
 	static propTypes = {
+		refetch: React.PropTypes.func.isRequired,
 		space: React.PropTypes.shape({
 			// ...AddTaskMole.propTypes.space,
 		}).isRequired,
@@ -81,6 +82,7 @@ class AddTask extends React.Component {
 						<div style={AddTask.styles.addTaskMoleContainer}>
 							<AddTaskMole
 								autoFocus
+								refetch={this.props.refetch}
 								space={this.props.space}
 								onCancelClick={this.onCancelClick}
 								style={AddTask.styles.addTaskMole}

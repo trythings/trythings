@@ -56,6 +56,7 @@ class AddTaskMutation extends Relay.Mutation {
 class AddTaskMole extends React.Component {
 	static propTypes = {
 		autoFocus: React.PropTypes.bool,
+		refetch: React.PropTypes.func.isRequired,
 		space: React.PropTypes.shape({
 			// ...AddTaskMutation.propTypes.space
 		}).isRequired,
@@ -125,6 +126,12 @@ class AddTaskMole extends React.Component {
 		description: '',
 	};
 
+	componentWillUnmount() {
+		if (this.timeout) {
+			clearTimeout(this.timeout);
+		}
+	}
+
 	onTitleChange = (event) => {
 		this.setState({ title: event.target.value });
 	};
@@ -145,6 +152,10 @@ class AddTaskMole extends React.Component {
 			title: '',
 			description: '',
 		});
+		this.timeout = setTimeout(() => {
+			this.props.refetch();
+			this.timeout = null;
+		}, 1 * 1000);
 	};
 
 	render() {
