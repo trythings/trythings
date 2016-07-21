@@ -54,6 +54,25 @@ class SavedSearch extends React.Component {
 		},
 	};
 
+	constructor(...args) {
+		super(...args);
+		this.state = {
+			forceFetch: false,
+		};
+	}
+
+	componentDidMount() {
+		this.interval = setInterval(this.refetch, 5000);
+	}
+
+	componentWillUnmount() {
+		clearInterval(this.interval);
+	}
+
+	refetch = () => {
+		this.setState({ forceFetch: !this.state.forceFetch });
+	};
+
 	renderLoading = () => (
 			<span style={SavedSearch.styles.loading}>Loading...</span>
 	);
@@ -66,6 +85,7 @@ class SavedSearch extends React.Component {
 					Component={SavedSearchResults}
 					route={new SavedSearchRoute({ searchId: this.props.search.id })}
 					renderLoading={this.renderLoading}
+					forceFetch={this.state.forceFetch}
 				/>
 			</div>
 		);
