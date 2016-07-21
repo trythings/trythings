@@ -62,15 +62,26 @@ class SavedSearch extends React.Component {
 	}
 
 	componentDidMount() {
-		this.interval = setInterval(this.refetch, 5000);
+		this.interval = setInterval(this.refetch, 10 * 1000);
 	}
 
 	componentWillUnmount() {
 		clearInterval(this.interval);
+		if (this.timeout) {
+			clearTimeout(this.timeout);
+		}
 	}
 
 	refetch = () => {
-		this.setState({ forceFetch: !this.state.forceFetch });
+		if (this.state.forceFetch) {
+			this.setState({ forceFetch: false });
+			this.timeout = setTimeout(() => {
+				this.setState({ forceFetch: true });
+				this.timeout = null;
+			}, 0);
+		} else {
+			this.setState({ forceFetch: true });
+		}
 	};
 
 	renderLoading = () => (
