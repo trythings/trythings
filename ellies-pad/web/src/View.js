@@ -26,15 +26,29 @@ export default class View extends React.Component {
 		},
 	};
 
+	constructor(...args) {
+		super(...args);
+		this.savedSearches = [];
+	}
+
+	savedSearchRef = (savedSearch) => {
+		console.log(this);
+		this.savedSearches.push(savedSearch.refs.component);
+	};
+
+	refetch = () => {
+		this.savedSearches.forEach(s => s.refetch());
+	}
+
 	render() {
 		return (
 			<div style={View.styles.container}>
 				{this.props.view.searches.map((search, i, searches) => {
 					if (i === searches.length - 1) {
-						return <SavedSearch search={search} />;
+						return <SavedSearch search={search} ref={this.savedSearchRef} />;
 					}
 					return [
-						<SavedSearch search={search} />,
+						<SavedSearch search={search} ref={this.savedSearchRef} />,
 						<div style={View.styles.spacer} />,
 					];
 				})}
