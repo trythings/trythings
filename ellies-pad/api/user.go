@@ -12,6 +12,8 @@ import (
 	"google.golang.org/appengine/user"
 )
 
+var errUserNotFound = errors.New("user not found")
+
 type User struct {
 	ID        string    `json:"id"`
 	CreatedAt time.Time `json:"createdAt"`
@@ -62,7 +64,7 @@ func (s *UserService) byGoogleID(ctx context.Context, googleID string) (*User, e
 	}
 
 	if len(us) == 0 {
-		return nil, errors.New("user not found")
+		return nil, errUserNotFound
 	}
 
 	return us[0], nil
