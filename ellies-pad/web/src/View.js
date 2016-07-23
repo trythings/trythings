@@ -32,7 +32,6 @@ export default class View extends React.Component {
 	}
 
 	savedSearchRef = (savedSearch) => {
-		console.log(this);
 		this.savedSearches.push(savedSearch.refs.component);
 	};
 
