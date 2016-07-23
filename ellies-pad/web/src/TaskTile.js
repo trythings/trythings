@@ -1,3 +1,4 @@
+import _pick from 'lodash/pick';
 import React from 'react';
 import Relay from 'react-relay';
 
@@ -138,17 +139,6 @@ class TaskTile extends React.Component {
 		event.stopPropagation();
 	};
 
-	style() {
-		let style = TaskTile.styles.tile;
-		if (this.props.style && this.props.style.flex) {
-			style = {
-				...style,
-				flex: this.props.style.flex,
-			};
-		}
-		return style;
-	}
-
 	renderText() {
 		const title = <span style={TaskTile.styles.title}>{this.props.task.title}</span>;
 		const description = (
@@ -165,7 +155,10 @@ class TaskTile extends React.Component {
 	render() {
 		return (
 			<div
-				style={this.style()}
+				style={{
+					...TaskTile.styles.tile,
+					..._pick(this.props.style, ['flex']),
+				}}
 				onMouseEnter={this.onMouseEnter}
 				onMouseLeave={this.onMouseLeave}
 				tabIndex={-1}

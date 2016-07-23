@@ -1,3 +1,4 @@
+import _pick from 'lodash/pick';
 import React from 'react';
 import Relay from 'react-relay';
 import TextareaAutosize from 'react-textarea-autosize';
@@ -159,16 +160,13 @@ class AddTaskMole extends React.Component {
 	};
 
 	render() {
-		let style = AddTaskMole.styles.container;
-		if (this.props.style && this.props.style.flex) {
-			style = {
-				...style,
-				flex: this.props.style.flex,
-			};
-		}
-
 		return (
-			<div style={style}>
+			<div
+				style={{
+					...AddTaskMole.styles.container,
+					..._pick(this.props.style, ['flex']),
+				}}
+			>
 				<header style={AddTaskMole.styles.header}>
 					<input
 						autoFocus={this.props.autoFocus}

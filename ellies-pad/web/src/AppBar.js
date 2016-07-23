@@ -1,4 +1,4 @@
-
+import _pick from 'lodash/pick';
 import React from 'react';
 import Relay from 'react-relay';
 
@@ -136,25 +136,21 @@ class AppBar extends React.Component {
 	}
 
 	render() {
-		let style = AppBar.styles.appBar;
-		if (this.props.style && this.props.style.backgroundColor) {
-			style = {
-				...style,
-				backgroundColor: this.props.style.backgroundColor,
-			};
-		}
-
-		let titleStyle = AppBar.styles.title;
-		if (this.props.style && this.props.style.color) {
-			titleStyle = {
-				...titleStyle,
-				color: this.props.style.color,
-			};
-		}
-
 		return (
-			<div style={style}>
-				<span style={titleStyle}>Ellie's Pad</span>
+			<div
+				style={{
+					...AppBar.styles.appBar,
+					..._pick(this.props.style, ['backgroundColor']),
+				}}
+			>
+				<span
+					style={{
+						...AppBar.styles.title,
+						..._pick(this.props.style, ['color']),
+					}}
+				>
+					Ellie's Pad
+				</span>
 
 				<div style={AppBar.styles.children}>
 					{this.props.children}

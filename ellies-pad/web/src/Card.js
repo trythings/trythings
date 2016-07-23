@@ -1,3 +1,4 @@
+import _pick from 'lodash/pick';
 import React from 'react';
 
 import resetStyles from './resetStyles.js';
@@ -38,32 +39,6 @@ export default class Card extends React.Component {
 		this.setState({ hasFocus: true });
 	};
 
-	cardStyle() {
-		let style = Card.styles.card;
-		if (this.state.hasFocus) {
-			style = {
-				...style,
-				...theme.elevation[8],
-				marginLeft: -8,
-				marginRight: -8,
-			};
-		} else {
-			style = {
-				...style,
-				...theme.elevation[2],
-			};
-		}
-
-		if (this.props.style && this.props.style.flex) {
-			style = {
-				...style,
-				flex: this.props.style.flex,
-			};
-		}
-
-		return style;
-	}
-
 	ref = (node) => {
 		if (node && this.props.autoFocus) {
 			node.focus();
@@ -71,12 +46,25 @@ export default class Card extends React.Component {
 	};
 
 	render() {
+		let elevation = theme.elevation[2];
+		if (this.state.hasFocus) {
+			elevation = {
+				...theme.elevation[8],
+				marginLeft: -8,
+				marginRight: -8,
+			};
+		}
+
 		return (
 			<div
 				onBlur={this.onBlur}
 				onFocus={this.onFocus}
 				tabIndex={-1}
-				style={this.cardStyle()}
+				style={{
+					...Card.styles.card,
+					..._pick(this.props.style, ['flex']),
+					...elevation,
+				}}
 				ref={this.ref}
 			>
 				{this.props.children}

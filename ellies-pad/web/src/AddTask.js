@@ -1,3 +1,4 @@
+import _pick from 'lodash/pick';
 import React from 'react';
 import Relay from 'react-relay';
 
@@ -60,23 +61,13 @@ class AddTask extends React.Component {
 	};
 
 	render() {
-		let style = AddTask.styles.container;
-		if (this.props.style && this.props.style.flex) {
-			style = {
-				...style,
-				flex: this.props.style.flex,
-			};
-		}
-
-		if (this.props.style && this.props.style.pointerEvents) {
-			style = {
-				...style,
-				pointerEvents: this.props.style.pointerEvents,
-			};
-		}
-
 		return (
-			<div style={style}>
+			<div
+				style={{
+					...AddTask.styles.container,
+					..._pick(this.props.style, ['flex', 'pointerEvents']),
+				}}
+			>
 				{this.state.isAddTaskFormVisible ?
 					(
 						<div style={AddTask.styles.addTaskMoleContainer}>

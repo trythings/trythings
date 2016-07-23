@@ -1,3 +1,4 @@
+import _pick from 'lodash/pick';
 import color from 'color';
 import React from 'react';
 
@@ -97,26 +98,12 @@ export default class SearchField extends React.Component {
 	};
 
 	render() {
-		let style = {
-			...SearchField.styles.container,
-			backgroundColor: this.props.style.backgroundColor,
-		};
-
-		if (this.props.style.flex) {
-			style = {
-				...style,
-				flex: this.props.style.flex,
-			};
-		}
-
+		let backgroundColor = this.props.style.backgroundColor;
 		if (this.state.isHovered || this.state.hasFocus) {
-			style = {
-				...style,
-				// Bring the background color closer to the text color.
-				backgroundColor: color(this.props.style.backgroundColor).
+			// Bring the background color closer to the text color.
+			backgroundColor = color(this.props.style.backgroundColor).
 					mix(color(this.props.style.color), 1 - 0.12).
-					hexString(),
-			};
+					hexString();
 		}
 
 		return (
@@ -124,7 +111,11 @@ export default class SearchField extends React.Component {
 				onClick={this.onClick}
 				onMouseEnter={this.onMouseEnter}
 				onMouseLeave={this.onMouseLeave}
-				style={style}
+				style={{
+					...SearchField.styles.container,
+					..._pick(this.props.style, ['flex']),
+					backgroundColor,
+				}}
 			>
 				<div style={SearchField.styles.spacer} />
 				<Icon
