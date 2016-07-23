@@ -156,7 +156,7 @@ class AddTaskMole extends React.Component {
 		this.timeout = setTimeout(() => {
 			this.props.refetch();
 			this.timeout = null;
-		}, 1 * 1000);
+		}, 1000);
 	};
 
 	render() {
