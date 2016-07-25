@@ -8,7 +8,6 @@ import NavigationDrawer from './NavigationDrawer.js';
 import QuerySearch from './QuerySearch.js';
 import resetStyles from './resetStyles.js';
 import SearchField from './SearchField.js';
-import SignInModal from './SignInModal.js';
 import theme from './theme.js';
 import View from './View.js';
 
@@ -216,8 +215,6 @@ class App extends React.Component {
 
 		return (
 			<div style={App.styles.app} tabIndex={-1}>
-				<SignInModal />
-
 				<NavigationDrawer spaces={this.props.viewer.spaces} />
 
 				<div style={App.styles.appBarContainer}>
