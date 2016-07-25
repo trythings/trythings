@@ -35,6 +35,7 @@ const element = (
 gapi.load('auth2', () => {
 	gapi.auth2.init({
 		client_id: '695504958192-8k3tf807271m7jcllcvlauddeqhbr0hg.apps.googleusercontent.com',
+	}).then(() => {
+		ReactDOM.render(element, document.getElementById('App'));
 	});
-	ReactDOM.render(element, document.getElementById('App'));
 });
