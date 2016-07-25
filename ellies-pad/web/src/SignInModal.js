@@ -11,12 +11,12 @@ export default class SignInModal extends React.Component {
 		};
 	}
 
-	divRef = (div) => {
+	ref = (div) => {
 		console.log(gapi.auth2.getAuthInstance().isSignedIn.get()); // xcxc
 		gapi.signin2.render(div.dataset.id);
 	};
 
 	render() {
-		return <div id={this.id} data-id={this.id} ref={this.divRef}></div>;
+		return <div id={this.id} data-id={this.id} ref={this.ref}></div>;
 	}
 }
