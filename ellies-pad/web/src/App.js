@@ -19,6 +19,9 @@ class App extends React.Component {
 		}).isRequired,
 	};
 
+	static onEnter = () => {
+	};
+
 	static propTypes = {
 		children: React.PropTypes.node,
 
@@ -171,7 +174,11 @@ class App extends React.Component {
 	}, 200);
 
 	viewRef = (view) => {
-		this.view = view.refs.component;
+		if (view) {
+			this.view = view.refs.component;
+		} else {
+			this.view = null;
+		}
 	};
 
 	renderContent() {

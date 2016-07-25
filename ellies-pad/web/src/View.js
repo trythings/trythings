@@ -8,6 +8,7 @@ export default class View extends React.Component {
 	static propTypes = {
 		view: React.PropTypes.shape({
 			searches: React.PropTypes.arrayOf(React.PropTypes.shape({
+				id: React.PropTypes.string.isRequired,
 				// ...SavedSearch.propTypes.search,
 			})).isRequired,
 		}).isRequired,
@@ -28,11 +29,15 @@ export default class View extends React.Component {
 
 	constructor(...args) {
 		super(...args);
-		this.savedSearches = [];
+		this.savedSearches = new Map();
 	}
 
-	savedSearchRef = (savedSearch) => {
-		this.savedSearches.push(savedSearch.refs.component);
+	savedSearchRef = (id) => (savedSearch) => {
+		if (savedSearch) {
+			this.savedSearches.set(id, savedSearch.refs.component);
+		} else {
+			this.savedSearches.delete(id);
+		}
 	};
 
 	refetch = () => {
@@ -44,10 +49,16 @@ export default class View extends React.Component {
 			<div style={View.styles.container}>
 				{this.props.view.searches.map((search, i, searches) => {
 					if (i === searches.length - 1) {
-						return <SavedSearch search={search} ref={this.savedSearchRef} />;
+						return (
+							<SavedSearch
+								key={search.id}
+								search={search}
+								ref={this.savedSearchRef(search.id)}
+							/>
+						);
 					}
 					return [
-						<SavedSearch search={search} ref={this.savedSearchRef} />,
+						<SavedSearch key={search.id} search={search} ref={this.savedSearchRef(search.id)} />,
 						<div style={View.styles.spacer} />,
 					];
 				})}
@@ -61,6 +72,7 @@ export default Relay.createContainer(View, {
 		view: () => Relay.QL`
 			fragment on View {
 				searches {
+					id,
 					${SavedSearch.getFragment('search')},
 				},
 			},
