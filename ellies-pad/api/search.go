@@ -15,16 +15,27 @@ type Search struct {
 	ID        string               `json:"id"`
 	CreatedAt time.Time            `json:"createdAt"`
 	Name      string               `json:"name"`
+	SpaceID   string               `json:"spaceId"`
 	ViewID    string               `json:"viewId"`
 	ViewRank  datastore.ByteString `json:"viewRank"`
 	Query     string               `json:"query"`
 }
 
 type SearchService struct {
-	ViewService *ViewService `inject:""`
+	SpaceService *SpaceService `inject:""`
+	ViewService  *ViewService  `inject:""`
 }
 
 func (s *SearchService) IsVisible(ctx context.Context, se *Search) (bool, error) {
+	if se.SpaceID != "" {
+		sp, err := s.SpaceService.ByID(ctx, se.SpaceID)
+		if err != nil {
+			return false, err
+		}
+		return s.SpaceService.IsVisible(ctx, sp)
+	}
+
+	// TODO#xcxc: Migrate old data away and make this unecessary.
 	v, err := s.ViewService.ByID(ctx, se.ViewID)
 	if err != nil {
 		return false, err
@@ -92,8 +103,11 @@ func (s *SearchService) Create(ctx context.Context, se *Search) error {
 		return errors.New("Name is required")
 	}
 
-	if se.ViewID == "" {
-		return errors.New("ViewID is required")
+	// TODO#Performance: Add a shared or per-request cache to support these small, repeated queries.
+	// TODO#xcxc: Validate that the space matches the view.
+	// TODO#xcxc: Update the old migration or generate the space from the view.
+	if se.SpaceID == "" {
+		return errors.New("SpaceID is required")
 	}
 
 	if se.Query == "" {
@@ -157,6 +171,11 @@ func (s *SearchService) Update(ctx context.Context, se *Search) error {
 }
 
 func (s *SearchService) Space(ctx context.Context, se *Search) (*Space, error) {
+	if se.SpaceID != "" {
+		return s.SpaceService.ByID(ctx, se.SpaceID)
+	}
+
+	// TODO#xcxc: Clean up production data and then remove this.
 	v, err := s.ViewService.ByID(ctx, se.ViewID)
 	if err != nil {
 		return nil, err

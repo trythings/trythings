@@ -7,15 +7,17 @@ class QuerySearchResults extends React.Component {
 	static propTypes = {
 		viewer: React.PropTypes.shape({
 			space: React.PropTypes.shape({
-				tasks: React.PropTypes.shape({
-					// ...TaskList.propTypes.tasks,
+				querySearch: React.PropTypes.shape({
+					tasks: React.PropTypes.shape({
+						// ...TaskList.propTypes.tasks,
+					}).isRequired,
 				}).isRequired,
 			}).isRequired,
 		}).isRequired,
 	};
 
 	render() {
-		return <TaskList tasks={this.props.viewer.space.tasks} />;
+		return <TaskList tasks={this.props.viewer.space.querySearch.tasks} />;
 	}
 }
 
@@ -29,8 +31,10 @@ export default Relay.createContainer(QuerySearchResults, {
 		viewer: () => Relay.QL`
 			fragment on User {
 				space {
-					tasks(query: $query, first: 10) {
-						${TaskList.getFragment('tasks')},
+					querySearch(query: $query) {
+						tasks(first: 10) {
+							${TaskList.getFragment('tasks')},
+						}
 					},
 				},
 			}

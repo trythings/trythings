@@ -150,8 +150,8 @@ export default Relay.createContainer(TaskList, {
 					},
 				},
 				pageInfo {
-						hasNextPage,
-					},
+					hasNextPage,
+				},
 			}
 		`,
 	},

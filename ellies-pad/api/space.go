@@ -147,13 +147,6 @@ type SpaceAPI struct {
 }
 
 func (api *SpaceAPI) Start() error {
-	searchArgs := relay.ConnectionArgs
-	searchArgs["query"] = &graphql.ArgumentConfig{
-		Type:         graphql.String,
-		DefaultValue: "",
-		Description:  "query filters the result to only tasks that contain particular terms in their title or description",
-	}
-
 	api.Type = graphql.NewObject(graphql.ObjectConfig{
 		Name:        "Space",
 		Description: "Space represents an access-controlled universe of tasks.",
@@ -167,9 +160,7 @@ func (api *SpaceAPI) Start() error {
 				Description: "The name to display for the space.",
 				Type:        graphql.String,
 			},
-			// TODO#xcxc: Make 'search' and 'tasks' symmetric.
-			// TODO#xcxc: savedSearch
-			"search": &graphql.Field{
+			"savedSearch": &graphql.Field{
 				Args: graphql.FieldConfigArgument{
 					"id": &graphql.ArgumentConfig{
 						Type: graphql.String,
@@ -193,11 +184,15 @@ func (api *SpaceAPI) Start() error {
 					return se, nil
 				},
 			},
-			// TODO#xcxc: newSearch
-			"tasks": &graphql.Field{
-				Args:        searchArgs,
-				Description: "tasks are all pieces of work that need to be completed for the user.",
-				Type:        api.TaskAPI.ConnectionType,
+			"querySearch": &graphql.Field{
+				Args: graphql.FieldConfigArgument{
+					"query": &graphql.ArgumentConfig{
+						Type:         graphql.String,
+						DefaultValue: "",
+						Description:  "query filters the result to only tasks that contain particular terms in their title or description",
+					},
+				},
+				Type: api.SearchAPI.Type,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					sp, ok := p.Source.(*Space)
 					if !ok {
@@ -209,18 +204,18 @@ func (api *SpaceAPI) Start() error {
 						q = "" // Return all tasks.
 					}
 
-					ts, err := api.TaskService.Search(p.Context, sp, q)
+					// TODO #xcxc: Stop saving all of these to the datastore.
+					s := &Search{
+						Name:    "Recent search",
+						Query:   q,
+						SpaceID: sp.ID,
+					}
+					err := api.SearchService.Create(p.Context, s)
 					if err != nil {
 						return nil, err
 					}
-					tmp := []interface{}{}
-					for _, t := range ts {
-						tmp = append(tmp, *t)
-					}
 
-					// TODO#Performance: Stop querying for all of the objects on the server.
-					args := relay.NewConnectionArguments(p.Args)
-					return relay.ConnectionFromArray(tmp, args), nil
+					return s, nil
 				},
 			},
 			"view": &graphql.Field{

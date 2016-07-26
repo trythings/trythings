@@ -7,7 +7,7 @@ class SavedSearchResults extends React.Component {
 	static propTypes = {
 		viewer: React.PropTypes.shape({
 			space: React.PropTypes.shape({
-				search: React.PropTypes.shape({
+				savedSearch: React.PropTypes.shape({
 					tasks: React.PropTypes.shape({
 						// ...TaskList.propTypes.tasks
 					}).isRequired,
@@ -17,7 +17,7 @@ class SavedSearchResults extends React.Component {
 	};
 
 	render() {
-		return <TaskList tasks={this.props.viewer.space.search.tasks} />;
+		return <TaskList tasks={this.props.viewer.space.savedSearch.tasks} />;
 	}
 }
 
@@ -26,11 +26,12 @@ export default Relay.createContainer(SavedSearchResults, {
 		searchId: null,
 	},
 
+	// TODO #xcxc: Pull tasks out into TaskList.
 	fragments: {
 		viewer: () => Relay.QL`
 			fragment on User {
 				space {
-					search(id: $searchId) {
+					savedSearch(id: $searchId) {
 						tasks(first: 10) {
 							${TaskList.getFragment('tasks')},
 						}
