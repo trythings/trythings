@@ -1,11 +1,13 @@
 import gapi from 'gapi';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Route, browserHistory } from 'react-router';
+import { IndexRoute, Route, browserHistory } from 'react-router';
 import { RelayRouter } from 'react-router-relay';
 import Relay from 'react-relay';
 
 import App from './App.js';
+import AppContainer from './AppContainer.js';
+import SignInModal from './SignInModal.js';
 
 Relay.injectNetworkLayer(new Relay.DefaultNetworkLayer('/graphql', {
 	credentials: 'same-origin',
@@ -19,16 +21,26 @@ const queries = {
 	`,
 };
 
-const prepareParams = () => ({});
-
 const element = (
 	<RelayRouter history={browserHistory}>
-		<Route
-			path="/(search/(:query))"
-			component={App}
-			prepareParams={prepareParams}
-			queries={queries}
-		/>
+		<Route path="/" component={AppContainer} xcxc="xcxc">
+			<IndexRoute
+				component={App}
+				onEnter={App.onEnter}
+				queries={queries}
+			/>
+			<Route
+				path="signin"
+				component={SignInModal}
+				onEnter={SignInModal.onEnter}
+			/>
+			<Route
+				path="search/(:query)"
+				component={App}
+				onEnter={App.onEnter}
+				queries={queries}
+			/>
+		</Route>
 	</RelayRouter>
 );
 
