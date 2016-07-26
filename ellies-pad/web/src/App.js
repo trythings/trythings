@@ -1,4 +1,5 @@
 import _debounce from 'lodash/debounce';
+import gapi from 'gapi';
 import React from 'react';
 import Relay from 'react-relay';
 
@@ -18,7 +19,11 @@ class App extends React.Component {
 		}).isRequired,
 	};
 
-	static onEnter = () => {
+	// Routing.
+	static onEnter = (nextState, replace) => {
+		if (!gapi.auth2.getAuthInstance().isSignedIn.get()) {
+			replace('/signin');
+		}
 	};
 
 	static propTypes = {
@@ -50,9 +55,7 @@ class App extends React.Component {
 		app: {
 			...resetStyles,
 			alignItems: 'stretch',
-			backgroundColor: theme.colors.canvas,
-			height: '100%',
-			width: '100%',
+			flex: '1 1 auto',
 		},
 		appBarContainer: {
 			...resetStyles,
@@ -214,7 +217,7 @@ class App extends React.Component {
 		}
 
 		return (
-			<div style={App.styles.app} tabIndex={-1}>
+			<div style={App.styles.app}>
 				<NavigationDrawer spaces={this.props.viewer.spaces} />
 
 				<div style={App.styles.appBarContainer}>
@@ -252,7 +255,7 @@ class App extends React.Component {
 	}
 }
 
-export default Relay.createContainer(App, {
+const AppContainer = Relay.createContainer(App, {
 	fragments: {
 		viewer: () => Relay.QL`
 			fragment on User {
@@ -271,3 +274,7 @@ export default Relay.createContainer(App, {
 		`,
 	},
 });
+
+AppContainer.onEnter = App.onEnter;
+
+export default AppContainer;

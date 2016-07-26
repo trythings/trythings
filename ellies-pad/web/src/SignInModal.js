@@ -3,16 +3,19 @@ import gapi from 'gapi';
 import React from 'react';
 
 export default class SignInModal extends React.Component {
+	// Routing.
+	static onEnter = (nextState, replace) => {
+		if (gapi.auth2.getAuthInstance().isSignedIn.get()) {
+			replace('/');
+		}
+	};
+
 	constructor(...args) {
 		super(...args);
 		this.id = _uniqueId('SignInModal');
-		this.state = {
-			auth2: gapi.auth2,
-		};
 	}
 
 	ref = (div) => {
-		console.log(gapi.auth2.getAuthInstance().isSignedIn.get()); // xcxc
 		gapi.signin2.render(div.dataset.id);
 	};
 
