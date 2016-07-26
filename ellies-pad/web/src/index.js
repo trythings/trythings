@@ -7,7 +7,7 @@ import Relay from 'react-relay';
 
 import App from './App.js';
 import SignedInApp from './SignedInApp.js';
-import SignInModal from './SignInModal.js';
+import SignIn from './SignIn.js';
 
 Relay.injectNetworkLayer(new Relay.DefaultNetworkLayer('/graphql', {
 	credentials: 'same-origin',
@@ -31,8 +31,8 @@ const element = (
 			/>
 			<Route
 				path="signin"
-				component={SignInModal}
-				onEnter={SignInModal.onEnter}
+				component={SignIn}
+				onEnter={SignIn.onEnter}
 			/>
 			<Route
 				path="search/(:query)"

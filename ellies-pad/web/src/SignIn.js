@@ -2,7 +2,7 @@ import _uniqueId from 'lodash/uniqueId';
 import gapi from 'gapi';
 import React from 'react';
 
-export default class SignInModal extends React.Component {
+export default class SignIn extends React.Component {
 	// Routing.
 	static onEnter = (nextState, replace) => {
 		if (gapi.auth2.getAuthInstance().isSignedIn.get()) {
@@ -12,7 +12,7 @@ export default class SignInModal extends React.Component {
 
 	constructor(...args) {
 		super(...args);
-		this.id = _uniqueId('SignInModal');
+		this.id = _uniqueId('SignIn');
 	}
 
 	ref = (div) => {
