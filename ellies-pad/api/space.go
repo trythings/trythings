@@ -147,6 +147,13 @@ type SpaceAPI struct {
 }
 
 func (api *SpaceAPI) Start() error {
+	searchArgs := relay.ConnectionArgs
+	searchArgs["query"] = &graphql.ArgumentConfig{
+		Type:         graphql.String,
+		DefaultValue: "",
+		Description:  "query filters the result to only tasks that contain particular terms in their title or description",
+	}
+
 	api.Type = graphql.NewObject(graphql.ObjectConfig{
 		Name:        "Space",
 		Description: "Space represents an access-controlled universe of tasks.",
@@ -160,6 +167,8 @@ func (api *SpaceAPI) Start() error {
 				Description: "The name to display for the space.",
 				Type:        graphql.String,
 			},
+			// TODO#xcxc: Make 'search' and 'tasks' symmetric.
+			// TODO#xcxc: savedSearch
 			"search": &graphql.Field{
 				Args: graphql.FieldConfigArgument{
 					"id": &graphql.ArgumentConfig{
@@ -184,16 +193,11 @@ func (api *SpaceAPI) Start() error {
 					return se, nil
 				},
 			},
+			// TODO#xcxc: newSearch
 			"tasks": &graphql.Field{
-				Args: graphql.FieldConfigArgument{
-					"query": &graphql.ArgumentConfig{
-						Type:         graphql.String,
-						DefaultValue: "",
-						Description:  "query filters the result to only tasks that contain particular terms in their title or description",
-					},
-				},
+				Args:        searchArgs,
 				Description: "tasks are all pieces of work that need to be completed for the user.",
-				Type:        graphql.NewList(api.TaskAPI.Type),
+				Type:        api.TaskAPI.ConnectionType,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					sp, ok := p.Source.(*Space)
 					if !ok {
@@ -205,7 +209,18 @@ func (api *SpaceAPI) Start() error {
 						q = "" // Return all tasks.
 					}
 
-					return api.TaskService.Search(p.Context, sp, q)
+					ts, err := api.TaskService.Search(p.Context, sp, q)
+					if err != nil {
+						return nil, err
+					}
+					tmp := []interface{}{}
+					for _, t := range ts {
+						tmp = append(tmp, *t)
+					}
+
+					// TODO#Performance: Stop querying for all of the objects on the server.
+					args := relay.NewConnectionArguments(p.Args)
+					return relay.ConnectionFromArray(tmp, args), nil
 				},
 			},
 			"view": &graphql.Field{

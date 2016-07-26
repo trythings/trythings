@@ -7,9 +7,9 @@ class QuerySearchResults extends React.Component {
 	static propTypes = {
 		viewer: React.PropTypes.shape({
 			space: React.PropTypes.shape({
-				tasks: React.PropTypes.arrayOf(React.PropTypes.shape({
+				tasks: React.PropTypes.shape({
 					// ...TaskList.propTypes.tasks,
-				})).isRequired,
+				}).isRequired,
 			}).isRequired,
 		}).isRequired,
 	};
@@ -24,11 +24,12 @@ export default Relay.createContainer(QuerySearchResults, {
 		query: null,
 	},
 
+	// TODO#xcxc: It's really unpleasant that this has to specify the pagination argument.
 	fragments: {
 		viewer: () => Relay.QL`
 			fragment on User {
 				space {
-					tasks(query: $query) {
+					tasks(query: $query, first: 10) {
 						${TaskList.getFragment('tasks')},
 					},
 				},

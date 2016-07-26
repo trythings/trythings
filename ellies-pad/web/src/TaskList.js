@@ -8,9 +8,22 @@ import theme from './theme.js';
 
 class TaskList extends React.Component {
 	static propTypes = {
+<<<<<<< ad1abde8d74f61dd00f47ed174047176dbb425bf
 		tasks: React.PropTypes.arrayOf(React.PropTypes.shape({
 			// ...TaskListItem.propTypes.task
 		})).isRequired,
+=======
+		tasks: React.PropTypes.shape({
+			edges: React.PropTypes.arrayOf(React.PropTypes.shape({
+				node: React.PropTypes.shape({
+					// ...TaskListItem.propTypes.task
+				}).isRequired,
+			})).isRequired,
+			pageInfo: React.PropTypes.shape({
+				hasNextPage: React.PropTypes.bool,
+			}),
+		}).isRequired,
+>>>>>>> [support-pagination] QuerySearches are paginated.
 	};
 
 	static styles = {
@@ -75,7 +88,9 @@ class TaskList extends React.Component {
 	}
 
 	render() {
-		if (!this.props.tasks.length) {
+		const tasks = this.props.tasks.edges.map((edge) => edge.node);
+
+		if (!tasks.length) {
 			return this.renderEmpty();
 		}
 
@@ -87,7 +102,7 @@ class TaskList extends React.Component {
 		}
 
 		const isShowAllVisible = !this.state.isShowingAll &&
-			this.props.tasks.length > defaultNumShowing;
+			this.props.tasks.pageInfo.hasNextPage;
 
 		return (
 			<Card>
@@ -127,9 +142,16 @@ class TaskList extends React.Component {
 export default Relay.createContainer(TaskList, {
 	fragments: {
 		tasks: () => Relay.QL`
-			fragment on Task @relay(plural: true) {
-				id,
-				${TaskListItem.getFragment('task')},
+			fragment on TaskConnection {
+				edges {
+					node {
+						id,
+						${TaskListItem.getFragment('task')},
+					},
+				},
+				pageInfo {
+						hasNextPage,
+					},
 			}
 		`,
 	},

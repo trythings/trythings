@@ -192,7 +192,8 @@ func (api *SearchAPI) Start() error {
 			},
 			"tasks": &graphql.Field{
 				Description: "The tasks that match the query.",
-				Type:        graphql.NewList(api.TaskAPI.Type),
+				Type:        api.TaskAPI.ConnectionType,
+				Args:        relay.ConnectionArgs,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					se, ok := p.Source.(*Search)
 					if !ok {
