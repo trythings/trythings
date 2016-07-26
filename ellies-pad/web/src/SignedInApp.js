@@ -12,7 +12,7 @@ import SearchField from './SearchField.js';
 import theme from './theme.js';
 import View from './View.js';
 
-class App extends React.Component {
+class SignedInApp extends React.Component {
 	static contextTypes = {
 		router: React.PropTypes.shape({
 			push: React.PropTypes.func.isRequired,
@@ -52,7 +52,7 @@ class App extends React.Component {
 	};
 
 	static styles = {
-		app: {
+		rootContainer: {
 			...resetStyles,
 			alignItems: 'stretch',
 			flex: '1 1 auto',
@@ -198,7 +198,7 @@ class App extends React.Component {
 	}
 
 	render() {
-		let appBarStyle = App.styles.appBar;
+		let appBarStyle = SignedInApp.styles.appBar;
 		if (this.state.searchQuery !== undefined) {
 			appBarStyle = {
 				...appBarStyle,
@@ -207,7 +207,7 @@ class App extends React.Component {
 			};
 		}
 
-		let searchFieldStyle = App.styles.searchField;
+		let searchFieldStyle = SignedInApp.styles.searchField;
 		if (this.state.searchQuery !== undefined) {
 			searchFieldStyle = {
 				...searchFieldStyle,
@@ -217,11 +217,10 @@ class App extends React.Component {
 		}
 
 		return (
-			<div style={App.styles.app}>
+			<div style={SignedInApp.styles.rootContainer}>
 				<NavigationDrawer spaces={this.props.viewer.spaces} />
 
-				<div style={App.styles.appBarContainer}>
-
+				<div style={SignedInApp.styles.appBarContainer}>
 					<AppBar style={appBarStyle}>
 						<SearchField
 							autoFocus={this.state.searchQuery === ''}
@@ -233,19 +232,19 @@ class App extends React.Component {
 						/>
 					</AppBar>
 
-					<div style={App.styles.overlayContainer}>
-						<div style={App.styles.contentContainer}>
-							<div style={App.styles.content}>
+					<div style={SignedInApp.styles.overlayContainer}>
+						<div style={SignedInApp.styles.contentContainer}>
+							<div style={SignedInApp.styles.content}>
 								{this.renderContent()}
 							</div>
 						</div>
 
-						<div style={App.styles.addTaskContainer}>
-							<div style={App.styles.addTaskSpacer} />
+						<div style={SignedInApp.styles.addTaskContainer}>
+							<div style={SignedInApp.styles.addTaskSpacer} />
 							<AddTask
 								refetch={this.refetch}
 								space={this.props.viewer.space}
-								style={App.styles.addTask}
+								style={SignedInApp.styles.addTask}
 							/>
 						</div>
 					</div>
@@ -255,7 +254,7 @@ class App extends React.Component {
 	}
 }
 
-const AppContainer = Relay.createContainer(App, {
+const SignedInAppContainer = Relay.createContainer(SignedInApp, {
 	fragments: {
 		viewer: () => Relay.QL`
 			fragment on User {
@@ -275,6 +274,6 @@ const AppContainer = Relay.createContainer(App, {
 	},
 });
 
-AppContainer.onEnter = App.onEnter;
+SignedInAppContainer.onEnter = SignedInApp.onEnter;
 
-export default AppContainer;
+export default SignedInAppContainer;

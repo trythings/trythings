@@ -5,7 +5,7 @@ import { IndexRoute, Route, browserHistory } from 'react-router';
 import { RelayRouter } from 'react-router-relay';
 import Relay from 'react-relay';
 
-import App from './App.js';
+import SignedInApp from './SignedInApp.js';
 import AppContainer from './AppContainer.js';
 import SignInModal from './SignInModal.js';
 
@@ -25,8 +25,8 @@ const element = (
 	<RelayRouter history={browserHistory}>
 		<Route path="/" component={AppContainer} xcxc="xcxc">
 			<IndexRoute
-				component={App}
-				onEnter={App.onEnter}
+				component={SignedInApp}
+				onEnter={SignedInApp.onEnter}
 				queries={queries}
 			/>
 			<Route
@@ -36,8 +36,8 @@ const element = (
 			/>
 			<Route
 				path="search/(:query)"
-				component={App}
-				onEnter={App.onEnter}
+				component={SignedInApp}
+				onEnter={SignedInApp.onEnter}
 				queries={queries}
 			/>
 		</Route>
