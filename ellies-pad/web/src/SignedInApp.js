@@ -156,6 +156,12 @@ class SignedInApp extends React.Component {
 		this.updateSearchPath(query);
 	};
 
+	onSignOutClick = () => {
+		gapi.auth2.getAuthInstance().signOut().then(() => {
+			this.context.router.push('/signin');
+		});
+	};
+
 	refetch = () => {
 		if (this.view) {
 			this.view.refetch();
@@ -218,7 +224,10 @@ class SignedInApp extends React.Component {
 
 		return (
 			<div style={SignedInApp.styles.rootContainer}>
-				<NavigationDrawer spaces={this.props.viewer.spaces} />
+				<NavigationDrawer
+					onSignOutClick={this.onSignOutClick}
+					spaces={this.props.viewer.spaces}
+				/>
 
 				<div style={SignedInApp.styles.appBarContainer}>
 					<AppBar style={appBarStyle}>
