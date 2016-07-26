@@ -31,6 +31,8 @@ export default class SignIn extends React.Component {
 	}
 
 	onSignIn = (isSignedIn) => {
+		// FIXME Figure out how to unlisten from Google auth,
+		// or maybe we could use redux so we don't ever have to unlisten.
 		if (this._isMounted && isSignedIn) {
 			this.context.router.push('/');
 		}
@@ -38,6 +40,8 @@ export default class SignIn extends React.Component {
 
 	ref = (div) => {
 		if (div) {
+			// FIXME Figure out how to unrender,
+			// or maybe hide/show the element instead of unmounting it.
 			gapi.signin2.render(div.dataset.id);
 		}
 	};
