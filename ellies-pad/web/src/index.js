@@ -5,8 +5,8 @@ import { IndexRoute, Route, browserHistory } from 'react-router';
 import { RelayRouter } from 'react-router-relay';
 import Relay from 'react-relay';
 
+import App from './App.js';
 import SignedInApp from './SignedInApp.js';
-import AppContainer from './AppContainer.js';
 import SignInModal from './SignInModal.js';
 
 Relay.injectNetworkLayer(new Relay.DefaultNetworkLayer('/graphql', {
@@ -23,7 +23,7 @@ const queries = {
 
 const element = (
 	<RelayRouter history={browserHistory}>
-		<Route path="/" component={AppContainer} xcxc="xcxc">
+		<Route path="/" component={App}>
 			<IndexRoute
 				component={SignedInApp}
 				onEnter={SignedInApp.onEnter}

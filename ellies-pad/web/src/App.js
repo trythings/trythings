@@ -3,13 +3,13 @@ import React from 'react';
 import resetStyles from './resetStyles.js';
 import theme from './theme.js';
 
-class AppContainer extends React.Component {
+class App extends React.Component {
 	static propTypes = {
 		children: React.PropTypes.node,
 	};
 
 	static styles = {
-		appContainer: {
+		app: {
 			...resetStyles,
 			alignItems: 'stretch',
 			backgroundColor: theme.colors.canvas,
@@ -20,11 +20,11 @@ class AppContainer extends React.Component {
 
 	render() {
 		return (
-			<div style={AppContainer.styles.appContainer} tabIndex={-1}>
+			<div style={App.styles.app} tabIndex={-1}>
 				{this.props.children}
 			</div>
 		);
 	}
 }
 
-export default AppContainer;
+export default App;
