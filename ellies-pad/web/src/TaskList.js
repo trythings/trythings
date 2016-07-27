@@ -8,6 +8,7 @@ import theme from './theme.js';
 
 class TaskList extends React.Component {
 	static propTypes = {
+<<<<<<< 14943a28d8af6828917d0bd0cbc147348e4c61d4
 <<<<<<< ad1abde8d74f61dd00f47ed174047176dbb425bf
 		tasks: React.PropTypes.arrayOf(React.PropTypes.shape({
 			// ...TaskListItem.propTypes.task
@@ -22,6 +23,19 @@ class TaskList extends React.Component {
 			pageInfo: React.PropTypes.shape({
 				hasNextPage: React.PropTypes.bool,
 			}),
+=======
+		search: React.PropTypes.shape({
+			tasks: React.PropTypes.shape({
+				edges: React.PropTypes.arrayOf(React.PropTypes.shape({
+					node: React.PropTypes.shape({
+						// ...TaskListItem.propTypes.task
+					}).isRequired,
+				})).isRequired,
+				pageInfo: React.PropTypes.shape({
+					hasNextPage: React.PropTypes.bool,
+				}),
+			}).isRequired,
+>>>>>>> [support-pagination] TaskList handles pagination.
 		}).isRequired,
 >>>>>>> [support-pagination] QuerySearches are paginated.
 	};
@@ -88,7 +102,7 @@ class TaskList extends React.Component {
 	}
 
 	render() {
-		const tasks = this.props.tasks.edges.map((edge) => edge.node);
+		const tasks = this.props.search.tasks.edges.map((edge) => edge.node);
 
 		if (!tasks.length) {
 			return this.renderEmpty();
@@ -102,7 +116,7 @@ class TaskList extends React.Component {
 		}
 
 		const isShowAllVisible = !this.state.isShowingAll &&
-			this.props.tasks.pageInfo.hasNextPage;
+			this.props.search.tasks.pageInfo.hasNextPage;
 
 		return (
 			<Card>
@@ -141,17 +155,19 @@ class TaskList extends React.Component {
 
 export default Relay.createContainer(TaskList, {
 	fragments: {
-		tasks: () => Relay.QL`
-			fragment on TaskConnection {
-				edges {
-					node {
-						id,
-						${TaskListItem.getFragment('task')},
+		search: () => Relay.QL`
+			fragment on Search {
+				tasks(first: 10) {
+					edges {
+						node {
+							id,
+							${TaskListItem.getFragment('task')},
+						},
 					},
-				},
-				pageInfo {
-					hasNextPage,
-				},
+					pageInfo {
+						hasNextPage,
+					},
+				}
 			}
 		`,
 	},
