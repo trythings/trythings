@@ -30,15 +30,15 @@ const element = (
 				queries={queries}
 			/>
 			<Route
-				path="signin"
-				component={SignIn}
-				onEnter={SignIn.onEnter}
-			/>
-			<Route
 				path="search/(:query)"
 				component={SignedInApp}
 				onEnter={SignedInApp.onEnter}
 				queries={queries}
+			/>
+			<Route
+				path="signin"
+				component={SignIn}
+				onEnter={SignIn.onEnter}
 			/>
 		</Route>
 	</RelayRouter>
