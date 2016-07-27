@@ -20,6 +20,7 @@ func init() {
 
 	http.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
 		ctx := appengine.NewContext(r)
+		ctx = NewAuthContext(ctx, r.Header.Get("Authorization"))
 		h.ContextHandler(ctx, w, r)
 	})
 }

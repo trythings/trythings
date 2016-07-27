@@ -70,6 +70,15 @@ func (s *UserService) byGoogleID(ctx context.Context, googleID string) (*User, e
 	return us[0], nil
 }
 
+func NewAuthContext(ctx context.Context, auth string) context.Context {
+	return context.WithValue(ctx, authKey, auth)
+}
+
+func AuthFromContext(ctx context.Context) (string, bool) {
+	auth, ok := ctx.Value(authKey).(string)
+	return auth, ok
+}
+
 // FromContext should not be subject to access control,
 // because it would create a circular dependency.
 func (s *UserService) FromContext(ctx context.Context) (*User, error) {
