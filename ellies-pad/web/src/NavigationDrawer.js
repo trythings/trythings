@@ -1,11 +1,14 @@
 import React from 'react';
 import Relay from 'react-relay';
 
+import FlatButton from './FlatButton.js';
 import resetStyles from './resetStyles.js';
 import theme from './theme.js';
 
 class NavigationDrawer extends React.Component {
 	static propTypes = {
+		onSignOutClick: React.PropTypes.func.isRequired,
+
 		spaces: React.PropTypes.arrayOf(React.PropTypes.shape({
 			id: React.PropTypes.string.isRequired,
 			name: React.PropTypes.string.isRequired,
@@ -29,11 +32,20 @@ class NavigationDrawer extends React.Component {
 			backgroundColor: theme.colors.card,
 			borderLeft: `1px solid ${theme.colors.dividers.dark}`,
 			borderRight: `1px solid ${theme.colors.dividers.dark}`,
+			flexDirection: 'column',
 			paddingBottom: 16,
 			paddingLeft: 16,
 			paddingRight: 16,
-			paddingTop: 16 + 56, // 56 to temporarily align with the app bar.
+			paddingTop: 16,
 			width: 240,
+		},
+		profile: {
+			...resetStyles,
+			height: 56, // 56 to align with the app bar.
+		},
+		signOutButton: {
+			...resetStyles,
+			color: theme.colors.primary.light,
 		},
 		spaces: {
 			...resetStyles,
@@ -92,6 +104,14 @@ class NavigationDrawer extends React.Component {
 	render() {
 		return (
 			<nav style={NavigationDrawer.styles.nav}>
+				<div style={NavigationDrawer.styles.profile}>
+					<FlatButton
+						label="Sign out"
+						onClick={this.props.onSignOutClick}
+						style={NavigationDrawer.styles.signOutButton}
+					/>
+				</div>
+
 				<ul style={NavigationDrawer.styles.spaces}>
 					{this.props.spaces.map(space => (
 						<li style={NavigationDrawer.styles.space} key={space.id}>
