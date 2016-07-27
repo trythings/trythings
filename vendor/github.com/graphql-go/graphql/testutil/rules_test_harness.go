@@ -11,7 +11,7 @@ import (
 	"reflect"
 )
 
-var defaultRulesTestSchema *graphql.Schema
+var TestSchema *graphql.Schema
 
 func init() {
 
@@ -41,6 +41,19 @@ func init() {
 			},
 		},
 	})
+	var canineInterface = graphql.NewInterface(graphql.InterfaceConfig{
+		Name: "Canine",
+		Fields: graphql.Fields{
+			"name": &graphql.Field{
+				Type: graphql.String,
+				Args: graphql.FieldConfigArgument{
+					"surname": &graphql.ArgumentConfig{
+						Type: graphql.Boolean,
+					},
+				},
+			},
+		},
+	})
 	var dogCommandEnum = graphql.NewEnum(graphql.EnumConfig{
 		Name: "DogCommand",
 		Values: graphql.EnumValueConfigMap{
@@ -57,7 +70,7 @@ func init() {
 	})
 	var dogType = graphql.NewObject(graphql.ObjectConfig{
 		Name: "Dog",
-		IsTypeOf: func(value interface{}, info graphql.ResolveInfo) bool {
+		IsTypeOf: func(p graphql.IsTypeOfParams) bool {
 			return true
 		},
 		Fields: graphql.Fields{
@@ -110,6 +123,7 @@ func init() {
 		Interfaces: []*graphql.Interface{
 			beingInterface,
 			petInterface,
+			canineInterface,
 		},
 	})
 	var furColorEnum = graphql.NewEnum(graphql.EnumConfig{
@@ -132,7 +146,7 @@ func init() {
 
 	var catType = graphql.NewObject(graphql.ObjectConfig{
 		Name: "Cat",
-		IsTypeOf: func(value interface{}, info graphql.ResolveInfo) bool {
+		IsTypeOf: func(p graphql.IsTypeOfParams) bool {
 			return true
 		},
 		Fields: graphql.Fields{
@@ -168,7 +182,7 @@ func init() {
 			dogType,
 			catType,
 		},
-		ResolveType: func(value interface{}, info graphql.ResolveInfo) *graphql.Object {
+		ResolveType: func(p graphql.ResolveTypeParams) *graphql.Object {
 			// not used for validation
 			return nil
 		},
@@ -184,7 +198,7 @@ func init() {
 
 	var humanType = graphql.NewObject(graphql.ObjectConfig{
 		Name: "Human",
-		IsTypeOf: func(value interface{}, info graphql.ResolveInfo) bool {
+		IsTypeOf: func(p graphql.IsTypeOfParams) bool {
 			return true
 		},
 		Interfaces: []*graphql.Interface{
@@ -215,7 +229,7 @@ func init() {
 
 	var alienType = graphql.NewObject(graphql.ObjectConfig{
 		Name: "Alien",
-		IsTypeOf: func(value interface{}, info graphql.ResolveInfo) bool {
+		IsTypeOf: func(p graphql.IsTypeOfParams) bool {
 			return true
 		},
 		Interfaces: []*graphql.Interface{
@@ -245,7 +259,7 @@ func init() {
 			dogType,
 			humanType,
 		},
-		ResolveType: func(value interface{}, info graphql.ResolveInfo) *graphql.Object {
+		ResolveType: func(p graphql.ResolveTypeParams) *graphql.Object {
 			// not used for validation
 			return nil
 		},
@@ -256,7 +270,7 @@ func init() {
 			alienType,
 			humanType,
 		},
-		ResolveType: func(value interface{}, info graphql.ResolveInfo) *graphql.Object {
+		ResolveType: func(p graphql.ResolveTypeParams) *graphql.Object {
 			// not used for validation
 			return nil
 		},
@@ -444,16 +458,30 @@ func init() {
 	})
 	schema, err := graphql.NewSchema(graphql.SchemaConfig{
 		Query: queryRoot,
+		Directives: []*graphql.Directive{
+			graphql.NewDirective(graphql.DirectiveConfig{
+				Name:      "operationOnly",
+				Locations: []string{graphql.DirectiveLocationQuery},
+			}),
+			graphql.IncludeDirective,
+			graphql.SkipDirective,
+		},
+		Types: []graphql.Type{
+			catType,
+			dogType,
+			humanType,
+			alienType,
+		},
 	})
 	if err != nil {
 		panic(err)
 	}
-	defaultRulesTestSchema = &schema
+	TestSchema = &schema
 
 }
 func expectValidRule(t *testing.T, schema *graphql.Schema, rules []graphql.ValidationRuleFn, queryString string) {
 	source := source.NewSource(&source.Source{
-		Body: queryString,
+		Body: []byte(queryString),
 	})
 	AST, err := parser.Parse(parser.ParseParams{Source: source})
 	if err != nil {
@@ -470,7 +498,7 @@ func expectValidRule(t *testing.T, schema *graphql.Schema, rules []graphql.Valid
 }
 func expectInvalidRule(t *testing.T, schema *graphql.Schema, rules []graphql.ValidationRuleFn, queryString string, expectedErrors []gqlerrors.FormattedError) {
 	source := source.NewSource(&source.Source{
-		Body: queryString,
+		Body: []byte(queryString),
 	})
 	AST, err := parser.Parse(parser.ParseParams{Source: source})
 	if err != nil {
@@ -498,10 +526,10 @@ func expectInvalidRule(t *testing.T, schema *graphql.Schema, rules []graphql.Val
 
 }
 func ExpectPassesRule(t *testing.T, rule graphql.ValidationRuleFn, queryString string) {
-	expectValidRule(t, defaultRulesTestSchema, []graphql.ValidationRuleFn{rule}, queryString)
+	expectValidRule(t, TestSchema, []graphql.ValidationRuleFn{rule}, queryString)
 }
 func ExpectFailsRule(t *testing.T, rule graphql.ValidationRuleFn, queryString string, expectedErrors []gqlerrors.FormattedError) {
-	expectInvalidRule(t, defaultRulesTestSchema, []graphql.ValidationRuleFn{rule}, queryString, expectedErrors)
+	expectInvalidRule(t, TestSchema, []graphql.ValidationRuleFn{rule}, queryString, expectedErrors)
 }
 func ExpectFailsRuleWithSchema(t *testing.T, schema *graphql.Schema, rule graphql.ValidationRuleFn, queryString string, expectedErrors []gqlerrors.FormattedError) {
 	expectInvalidRule(t, schema, []graphql.ValidationRuleFn{rule}, queryString, expectedErrors)

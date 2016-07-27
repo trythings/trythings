@@ -19,14 +19,15 @@ const (
 	TypeKindNonNull     = "NON_NULL"
 )
 
-var __Directive *Object
-var __Schema *Object
-var __Type *Object
-var __Field *Object
-var __InputValue *Object
-var __EnumValue *Object
+var directiveType *Object
+var schemaType *Object
+var typeType *Object
+var fieldType *Object
+var inputValueType *Object
+var enumValueType *Object
 
-var __TypeKind *Enum
+var typeKindEnum *Enum
+var directiveLocationEnum *Enum
 
 var SchemaMetaFieldDef *FieldDefinition
 var TypeMetaFieldDef *FieldDefinition
@@ -34,9 +35,9 @@ var TypeNameMetaFieldDef *FieldDefinition
 
 func init() {
 
-	__TypeKind = NewEnum(EnumConfig{
+	typeKindEnum = NewEnum(EnumConfig{
 		Name:        "__TypeKind",
-		Description: "An enum describing what kind of type a given __Type is",
+		Description: "An enum describing what kind of type a given `__Type` is",
 		Values: EnumValueConfigMap{
 			"SCALAR": &EnumValueConfig{
 				Value:       TypeKindScalar,
@@ -80,12 +81,57 @@ func init() {
 		},
 	})
 
+	directiveLocationEnum = NewEnum(EnumConfig{
+		Name: "__DirectiveLocation",
+		Description: "A Directive can be adjacent to many parts of the GraphQL language, a " +
+			"__DirectiveLocation describes one such possible adjacencies.",
+		Values: EnumValueConfigMap{
+			"QUERY": &EnumValueConfig{
+				Value:       DirectiveLocationQuery,
+				Description: "Location adjacent to a query operation.",
+			},
+			"MUTATION": &EnumValueConfig{
+				Value:       DirectiveLocationMutation,
+				Description: "Location adjacent to a mutation operation.",
+			},
+			"SUBSCRIPTION": &EnumValueConfig{
+				Value:       DirectiveLocationSubscription,
+				Description: "Location adjacent to a subscription operation.",
+			},
+			"FIELD": &EnumValueConfig{
+				Value:       DirectiveLocationField,
+				Description: "Location adjacent to a field.",
+			},
+			"FRAGMENT_DEFINITION": &EnumValueConfig{
+				Value:       DirectiveLocationFragmentDefinition,
+				Description: "Location adjacent to a fragment definition.",
+			},
+			"FRAGMENT_SPREAD": &EnumValueConfig{
+				Value:       DirectiveLocationFragmentSpread,
+				Description: "Location adjacent to a fragment spread.",
+			},
+			"INLINE_FRAGMENT": &EnumValueConfig{
+				Value:       DirectiveLocationInlineFragment,
+				Description: "Location adjacent to an inline fragment.",
+			},
+		},
+	})
+
 	// Note: some fields (for e.g "fields", "interfaces") are defined later due to cyclic reference
-	__Type = NewObject(ObjectConfig{
+	typeType = NewObject(ObjectConfig{
 		Name: "__Type",
+		Description: "The fundamental unit of any GraphQL Schema is the type. There are " +
+			"many kinds of types in GraphQL as represented by the `__TypeKind` enum." +
+			"\n\nDepending on the kind of a type, certain fields describe " +
+			"information about that type. Scalar types provide no information " +
+			"beyond a name and description, while Enum types provide their values. " +
+			"Object and Interface types provide the fields they describe. Abstract " +
+			"types, Union and Interface, provide the Object types possible " +
+			"at runtime. List and NonNull types compose other types.",
+
 		Fields: Fields{
 			"kind": &Field{
-				Type: NewNonNull(__TypeKind),
+				Type: NewNonNull(typeKindEnum),
 				Resolve: func(p ResolveParams) (interface{}, error) {
 					switch p.Source.(type) {
 					case *Scalar:
@@ -123,8 +169,11 @@ func init() {
 		},
 	})
 
-	__InputValue = NewObject(ObjectConfig{
+	inputValueType = NewObject(ObjectConfig{
 		Name: "__InputValue",
+		Description: "Arguments provided to Fields or Directives and the input fields of an " +
+			"InputObject are represented as Input Values which describe their type " +
+			"and optionally a default value.",
 		Fields: Fields{
 			"name": &Field{
 				Type: NewNonNull(String),
@@ -133,13 +182,18 @@ func init() {
 				Type: String,
 			},
 			"type": &Field{
-				Type: NewNonNull(__Type),
+				Type: NewNonNull(typeType),
 			},
 			"defaultValue": &Field{
 				Type: String,
+				Description: "A GraphQL-formatted string representing the default value for this " +
+					"input value.",
 				Resolve: func(p ResolveParams) (interface{}, error) {
 					if inputVal, ok := p.Source.(*Argument); ok {
 						if inputVal.DefaultValue == nil {
+							return nil, nil
+						}
+						if isNullish(inputVal.DefaultValue) {
 							return nil, nil
 						}
 						astVal := astFromValue(inputVal.DefaultValue, inputVal)
@@ -158,8 +212,10 @@ func init() {
 		},
 	})
 
-	__Field = NewObject(ObjectConfig{
+	fieldType = NewObject(ObjectConfig{
 		Name: "__Field",
+		Description: "Object and Interface types are described by a list of Fields, each of " +
+			"which has a name, potentially a list of arguments, and a return type.",
 		Fields: Fields{
 			"name": &Field{
 				Type: NewNonNull(String),
@@ -168,7 +224,7 @@ func init() {
 				Type: String,
 			},
 			"args": &Field{
-				Type: NewNonNull(NewList(NewNonNull(__InputValue))),
+				Type: NewNonNull(NewList(NewNonNull(inputValueType))),
 				Resolve: func(p ResolveParams) (interface{}, error) {
 					if field, ok := p.Source.(*FieldDefinition); ok {
 						return field.Args, nil
@@ -177,7 +233,7 @@ func init() {
 				},
 			},
 			"type": &Field{
-				Type: NewNonNull(__Type),
+				Type: NewNonNull(typeType),
 			},
 			"isDeprecated": &Field{
 				Type: NewNonNull(Boolean),
@@ -194,8 +250,14 @@ func init() {
 		},
 	})
 
-	__Directive = NewObject(ObjectConfig{
+	directiveType = NewObject(ObjectConfig{
 		Name: "__Directive",
+		Description: "A Directive provides a way to describe alternate runtime execution and " +
+			"type validation behavior in a GraphQL document. " +
+			"\n\nIn some cases, you need to provide options to alter GraphQL's " +
+			"execution behavior in ways field arguments will not suffice, such as " +
+			"conditionally including or skipping a field. Directives provide this by " +
+			"describing additional information to the executor.",
 		Fields: Fields{
 			"name": &Field{
 				Type: NewNonNull(String),
@@ -203,34 +265,86 @@ func init() {
 			"description": &Field{
 				Type: String,
 			},
-			"args": &Field{
+			"locations": &Field{
 				Type: NewNonNull(NewList(
-					NewNonNull(__InputValue),
+					NewNonNull(directiveLocationEnum),
 				)),
 			},
+			"args": &Field{
+				Type: NewNonNull(NewList(
+					NewNonNull(inputValueType),
+				)),
+			},
+			// NOTE: the following three fields are deprecated and are no longer part
+			// of the GraphQL specification.
 			"onOperation": &Field{
-				Type: NewNonNull(Boolean),
+				DeprecationReason: "Use `locations`.",
+				Type:              NewNonNull(Boolean),
+				Resolve: func(p ResolveParams) (interface{}, error) {
+					if dir, ok := p.Source.(*Directive); ok {
+						res := false
+						for _, loc := range dir.Locations {
+							if loc == DirectiveLocationQuery ||
+								loc == DirectiveLocationMutation ||
+								loc == DirectiveLocationSubscription {
+								res = true
+								break
+							}
+						}
+						return res, nil
+					}
+					return false, nil
+				},
 			},
 			"onFragment": &Field{
-				Type: NewNonNull(Boolean),
+				DeprecationReason: "Use `locations`.",
+				Type:              NewNonNull(Boolean),
+				Resolve: func(p ResolveParams) (interface{}, error) {
+					if dir, ok := p.Source.(*Directive); ok {
+						res := false
+						for _, loc := range dir.Locations {
+							if loc == DirectiveLocationFragmentSpread ||
+								loc == DirectiveLocationInlineFragment ||
+								loc == DirectiveLocationFragmentDefinition {
+								res = true
+								break
+							}
+						}
+						return res, nil
+					}
+					return false, nil
+				},
 			},
 			"onField": &Field{
-				Type: NewNonNull(Boolean),
+				DeprecationReason: "Use `locations`.",
+				Type:              NewNonNull(Boolean),
+				Resolve: func(p ResolveParams) (interface{}, error) {
+					if dir, ok := p.Source.(*Directive); ok {
+						res := false
+						for _, loc := range dir.Locations {
+							if loc == DirectiveLocationField {
+								res = true
+								break
+							}
+						}
+						return res, nil
+					}
+					return false, nil
+				},
 			},
 		},
 	})
 
-	__Schema = NewObject(ObjectConfig{
+	schemaType = NewObject(ObjectConfig{
 		Name: "__Schema",
-		Description: `A GraphQL Schema defines the capabilities of a GraphQL
-server. It exposes all available types and directives on
-the server, as well as the entry points for query and
-mutation operations.`,
+		Description: `A GraphQL Schema defines the capabilities of a GraphQL server. ` +
+			`It exposes all available types and directives on the server, as well as ` +
+			`the entry points for query, mutation, and subscription operations.`,
 		Fields: Fields{
 			"types": &Field{
 				Description: "A list of all types supported by this server.",
 				Type: NewNonNull(NewList(
-					NewNonNull(__Type),
+					NewNonNull(typeType),
 				)),
 				Resolve: func(p ResolveParams) (interface{}, error) {
 					if schema, ok := p.Source.(Schema); ok {
@@ -245,7 +359,7 @@ mutation operations.`,
 			},
 			"queryType": &Field{
 				Description: "The type that query operations will be rooted at.",
-				Type:        NewNonNull(__Type),
+				Type:        NewNonNull(typeType),
 				Resolve: func(p ResolveParams) (interface{}, error) {
 					if schema, ok := p.Source.(Schema); ok {
 						return schema.QueryType(), nil
@@ -256,7 +370,7 @@ mutation operations.`,
 			"mutationType": &Field{
 				Description: `If this server supports mutation, the type that ` +
 					`mutation operations will be rooted at.`,
-				Type: __Type,
+				Type: typeType,
 				Resolve: func(p ResolveParams) (interface{}, error) {
 					if schema, ok := p.Source.(Schema); ok {
 						if schema.MutationType() != nil {
@@ -267,17 +381,22 @@ mutation operations.`,
 				},
 			},
 			"subscriptionType": &Field{
-				Description: `If this server support subscription, the type that ' +
-                   'subscription operations will be rooted at.`,
-				Type: __Type,
+				Description: `If this server supports subscription, the type that ` +
+					`subscription operations will be rooted at.`,
+				Type: typeType,
 				Resolve: func(p ResolveParams) (interface{}, error) {
+					if schema, ok := p.Source.(Schema); ok {
+						if schema.SubscriptionType() != nil {
+							return schema.SubscriptionType(), nil
+						}
+					}
 					return nil, nil
 				},
 			},
 			"directives": &Field{
 				Description: `A list of all directives supported by this server.`,
 				Type: NewNonNull(NewList(
-					NewNonNull(__Directive),
+					NewNonNull(directiveType),
 				)),
 				Resolve: func(p ResolveParams) (interface{}, error) {
 					if schema, ok := p.Source.(Schema); ok {
@@ -289,8 +408,11 @@ mutation operations.`,
 		},
 	})
 
-	__EnumValue = NewObject(ObjectConfig{
+	enumValueType = NewObject(ObjectConfig{
 		Name: "__EnumValue",
+		Description: "One possible value for a given Enum. Enum values are unique values, not " +
+			"a placeholder for a string or numeric value. However an Enum value is " +
+			"returned in a JSON response as a string.",
 		Fields: Fields{
 			"name": &Field{
 				Type: NewNonNull(String),
@@ -315,8 +437,8 @@ mutation operations.`,
 
 	// Again, adding field configs to __Type that have cyclic reference here
 	// because golang don't like them too much during init/compile-time
-	__Type.AddFieldConfig("fields", &Field{
-		Type: NewList(NewNonNull(__Field)),
+	typeType.AddFieldConfig("fields", &Field{
+		Type: NewList(NewNonNull(fieldType)),
 		Args: FieldConfigArgument{
 			"includeDeprecated": &ArgumentConfig{
 				Type:         Boolean,
@@ -354,8 +476,8 @@ mutation operations.`,
 			return nil, nil
 		},
 	})
-	__Type.AddFieldConfig("interfaces", &Field{
-		Type: NewList(NewNonNull(__Type)),
+	typeType.AddFieldConfig("interfaces", &Field{
+		Type: NewList(NewNonNull(typeType)),
 		Resolve: func(p ResolveParams) (interface{}, error) {
 			switch ttype := p.Source.(type) {
 			case *Object:
@@ -364,20 +486,20 @@ mutation operations.`,
 			return nil, nil
 		},
 	})
-	__Type.AddFieldConfig("possibleTypes", &Field{
-		Type: NewList(NewNonNull(__Type)),
+	typeType.AddFieldConfig("possibleTypes", &Field{
+		Type: NewList(NewNonNull(typeType)),
 		Resolve: func(p ResolveParams) (interface{}, error) {
 			switch ttype := p.Source.(type) {
 			case *Interface:
-				return ttype.PossibleTypes(), nil
+				return p.Info.Schema.PossibleTypes(ttype), nil
 			case *Union:
-				return ttype.PossibleTypes(), nil
+				return p.Info.Schema.PossibleTypes(ttype), nil
 			}
 			return nil, nil
 		},
 	})
-	__Type.AddFieldConfig("enumValues", &Field{
-		Type: NewList(NewNonNull(__EnumValue)),
+	typeType.AddFieldConfig("enumValues", &Field{
+		Type: NewList(NewNonNull(enumValueType)),
 		Args: FieldConfigArgument{
 			"includeDeprecated": &ArgumentConfig{
 				Type:         Boolean,
@@ -403,8 +525,8 @@ mutation operations.`,
 			return nil, nil
 		},
 	})
-	__Type.AddFieldConfig("inputFields", &Field{
-		Type: NewList(NewNonNull(__InputValue)),
+	typeType.AddFieldConfig("inputFields", &Field{
+		Type: NewList(NewNonNull(inputValueType)),
 		Resolve: func(p ResolveParams) (interface{}, error) {
 			switch ttype := p.Source.(type) {
 			case *InputObject:
@@ -417,18 +539,15 @@ mutation operations.`,
 			return nil, nil
 		},
 	})
-	__Type.AddFieldConfig("ofType", &Field{
-		Type: __Type,
+	typeType.AddFieldConfig("ofType", &Field{
+		Type: typeType,
 	})
 
-	/**
-	 * Note that these are FieldDefinition and not FieldConfig,
-	 * so the format for args is different.
-	 */
-
+	// Note that these are FieldDefinition and not FieldConfig,
+	// so the format for args is different.   d
 	SchemaMetaFieldDef = &FieldDefinition{
 		Name:        "__schema",
-		Type:        NewNonNull(__Schema),
+		Type:        NewNonNull(schemaType),
 		Description: "Access the current type schema of this server.",
 		Args:        []*Argument{},
 		Resolve: func(p ResolveParams) (interface{}, error) {
@@ -437,10 +556,10 @@ mutation operations.`,
 	}
 	TypeMetaFieldDef = &FieldDefinition{
 		Name:        "__type",
-		Type:        __Type,
+		Type:        typeType,
 		Description: "Request the type information of a single type.",
 		Args: []*Argument{
-			&Argument{
+			{
 				PrivateName: "name",
 				Type:        NewNonNull(String),
 			},
@@ -466,21 +585,19 @@ mutation operations.`,
 
 }
 
-/**
- * Produces a GraphQL Value AST given a Golang value.
- *
- * Optionally, a GraphQL type may be provided, which will be used to
- * disambiguate between value primitives.
- *
- * | JSON Value    | GraphQL Value        |
- * | ------------- | -------------------- |
- * | Object        | Input Object         |
- * | Array         | List                 |
- * | Boolean       | Boolean              |
- * | String        | String / Enum Value  |
- * | Number        | Int / Float          |
- *
- */
+// Produces a GraphQL Value AST given a Golang value.
+//
+// Optionally, a GraphQL type may be provided, which will be used to
+// disambiguate between value primitives.
+//
+// | JSON Value    | GraphQL Value        |
+// | ------------- | -------------------- |
+// | Object        | Input Object         |
+// | Array         | List                 |
+// | Boolean       | Boolean              |
+// | String        | String / Enum Value  |
+// | Number        | Int / Float          |
+
 func astFromValue(value interface{}, ttype Type) ast.Value {
 
 	if ttype, ok := ttype.(*NonNull); ok {
@@ -519,13 +636,12 @@ func astFromValue(value interface{}, ttype Type) ast.Value {
 			return ast.NewListValue(&ast.ListValue{
 				Values: values,
 			})
-		} else {
-			// Because GraphQL will accept single values as a "list of one" when
-			// expecting a list, if there's a non-array value and an expected list type,
-			// create an AST using the list's item type.
-			val := astFromValue(value, ttype.OfType)
-			return val
 		}
+		// Because GraphQL will accept single values as a "list of one" when
+		// expecting a list, if there's a non-array value and an expected list type,
+		// create an AST using the list's item type.
+		val := astFromValue(value, ttype.OfType)
+		return val
 	}
 
 	if valueVal.Type().Kind() == reflect.Map {
