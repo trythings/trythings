@@ -205,12 +205,36 @@ func (api *SearchAPI) Start() error {
 				Description: "The name to display for the search.",
 				Type:        graphql.String,
 			},
+			// TODO#Perf: Figure out how to compute "results" and "numResults" with only 1 search query.
+			"numResults": &graphql.Field{
+				Description: "The total number of results that match the query",
+				Type:        graphql.Int,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					// TODO#xcxc: Can the intermediate search result be stored on the resolve params?
+					se, ok := p.Source.(*Search)
+					if !ok {
+						return nil, errors.New("expected view source")
+					}
+
+					sp, err := api.SearchService.Space(p.Context, se)
+					if err != nil {
+						return nil, err
+					}
+
+					ts, err := api.TaskService.Search(p.Context, sp, se.Query)
+					if err != nil {
+						return nil, err
+					}
+
+					return len(ts), nil
+				},
+			},
 			"query": &graphql.Field{
 				Description: "The query used to search for tasks.",
 				Type:        graphql.String,
 			},
-			"tasks": &graphql.Field{
-				Description: "The tasks that match the query.",
+			"results": &graphql.Field{
+				Description: "The tasks that match the query",
 				Type:        api.TaskAPI.ConnectionType,
 				Args:        relay.ConnectionArgs,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
