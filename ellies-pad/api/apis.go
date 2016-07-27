@@ -12,10 +12,13 @@ import (
 
 type apis struct {
 	MigrationAPI *MigrationAPI `inject:""`
-	SpaceAPI     *SpaceAPI     `inject:""`
-	TaskAPI      *TaskAPI      `inject:""`
-	UserAPI      *UserAPI      `inject:""`
-	UserService  *UserService  `inject:""`
+
+	SearchAPI *SearchAPI `inject:""`
+	SpaceAPI  *SpaceAPI  `inject:""`
+	TaskAPI   *TaskAPI   `inject:""`
+	UserAPI   *UserAPI   `inject:""`
+
+	UserService *UserService `inject:""`
 
 	Schema          *graphql.Schema
 	nodeDefinitions *relay.NodeDefinitions
@@ -25,10 +28,18 @@ func NewAPIs() (*apis, error) {
 	apis := &apis{}
 	apis.nodeDefinitions = relay.NewNodeDefinitions(relay.NodeDefinitionsConfig{
 		IDFetcher: func(ctx context.Context, id string, info graphql.ResolveInfo) (interface{}, error) {
-			return nil, errors.New("not implemented")
+			resolvedID := relay.FromGlobalID(id)
+			switch resolvedID.Type {
+			case "Search":
+				return apis.SearchAPI.SearchService.ByID(ctx, resolvedID.ID)
+			default:
+				return nil, errors.New("Unknown node type")
+			}
 		},
-		TypeResolve: func(value interface{}, info graphql.ResolveInfo) *graphql.Object {
-			switch value.(type) {
+		TypeResolve: func(p graphql.ResolveTypeParams) *graphql.Object {
+			switch p.Value.(type) {
+			case *Search:
+				return apis.SearchAPI.Type
 			case *Space:
 				return apis.SpaceAPI.Type
 			case *Task:

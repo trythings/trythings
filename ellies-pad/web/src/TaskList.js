@@ -8,22 +8,6 @@ import theme from './theme.js';
 
 class TaskList extends React.Component {
 	static propTypes = {
-<<<<<<< 14943a28d8af6828917d0bd0cbc147348e4c61d4
-<<<<<<< ad1abde8d74f61dd00f47ed174047176dbb425bf
-		tasks: React.PropTypes.arrayOf(React.PropTypes.shape({
-			// ...TaskListItem.propTypes.task
-		})).isRequired,
-=======
-		tasks: React.PropTypes.shape({
-			edges: React.PropTypes.arrayOf(React.PropTypes.shape({
-				node: React.PropTypes.shape({
-					// ...TaskListItem.propTypes.task
-				}).isRequired,
-			})).isRequired,
-			pageInfo: React.PropTypes.shape({
-				hasNextPage: React.PropTypes.bool,
-			}),
-=======
 		search: React.PropTypes.shape({
 			tasks: React.PropTypes.shape({
 				edges: React.PropTypes.arrayOf(React.PropTypes.shape({
@@ -35,9 +19,10 @@ class TaskList extends React.Component {
 					hasNextPage: React.PropTypes.bool,
 				}),
 			}).isRequired,
->>>>>>> [support-pagination] TaskList handles pagination.
 		}).isRequired,
->>>>>>> [support-pagination] QuerySearches are paginated.
+		relay: React.PropTypes.shape({
+			setVariables: React.PropTypes.func.isRequired,
+		}).isRequired,
 	};
 
 	static styles = {
@@ -92,7 +77,17 @@ class TaskList extends React.Component {
 	};
 
 	onShowAllClick = () => {
-		this.setState({ isShowingAll: true });
+		this.props.relay.setVariables({
+			numTasksToShow: 100, // TODO#xcxc: Use the last count that we had of all of the tasks.
+		}, (readyState) => {
+			if (readyState.ready) {
+				this.setState({ isShowingAll: true });
+			}
+
+			if (readyState.error) {
+				console.log('encountered a sad error: ', readyState.error);
+			}
+		});
 	};
 
 	renderEmpty() {
@@ -154,10 +149,13 @@ class TaskList extends React.Component {
 }
 
 export default Relay.createContainer(TaskList, {
+	initialVariables: {
+		numTasksToShow: 10,
+	},
 	fragments: {
 		search: () => Relay.QL`
 			fragment on Search {
-				tasks(first: 10) {
+				tasks(first: $numTasksToShow) {
 					edges {
 						node {
 							id,
