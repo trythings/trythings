@@ -132,8 +132,15 @@ class SignedInApp extends React.Component {
 
 		let searchQuery = this.props.params.query;
 		if (this.props.location.pathname === '/search/') {
+			// If the query is empty, we always get a single slash from React Router.
 			searchQuery = '';
 		}
+		// searchQuery is the string we use to make a search and get its results.
+		// When it is undefined, the user is not searching.
+		// We will only update it at most once every 200ms as the user is typing.
+		// When it changes, we update the URL at most once every 500ms.
+		// Another approach would be to keep the URL in lock step with the search input,
+		// which would require less URL and state management from us.
 		this.state = { searchQuery };
 	}
 
