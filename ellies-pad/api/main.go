@@ -108,8 +108,6 @@ func getUser(ctx context.Context, auth string) (*User, error) {
 		issuer = "https://accounts.google.com"
 	}
 
-	log.Debugf(ctx, "%#v", gu)
-
 	err = gu.Validate(jwt.Expected{
 		Issuer:   issuer,
 		Audience: []string{"695504958192-8k3tf807271m7jcllcvlauddeqhbr0hg.apps.googleusercontent.com"},
