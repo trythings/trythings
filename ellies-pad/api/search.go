@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -19,6 +20,31 @@ type Search struct {
 	ViewID    string               `json:"viewId"`
 	ViewRank  datastore.ByteString `json:"viewRank"`
 	Query     string               `json:"query"`
+}
+
+type SearchClientID struct {
+	ID      string
+	Query   string
+	SpaceID string
+}
+
+func (se *Search) ClientID() (string, error) {
+	cid := &SearchClientID{}
+
+	if se.ID != "" {
+		// Saved search
+		cid.ID = se.ID
+	} else {
+		// Temporary search
+		cid.Query = se.Query
+		cid.SpaceID = se.SpaceID
+	}
+
+	jsonID, err := json.Marshal(cid)
+	if err != nil {
+		return "", err
+	}
+	return string(jsonID), nil
 }
 
 type SearchService struct {
@@ -41,6 +67,25 @@ func (s *SearchService) IsVisible(ctx context.Context, se *Search) (bool, error)
 		return false, err
 	}
 	return s.ViewService.IsVisible(ctx, v)
+}
+
+func (s *SearchService) ByClientID(ctx context.Context, jsonID string) (*Search, error) {
+	cid := &SearchClientID{}
+	err := json.Unmarshal([]byte(jsonID), cid)
+	if err != nil {
+		return nil, err
+	}
+
+	// Saved search
+	if cid.ID != "" {
+		return s.ByID(ctx, cid.ID)
+	}
+
+	// Temporary search
+	return &Search{
+		SpaceID: cid.SpaceID,
+		Query:   cid.Query,
+	}, nil
 }
 
 func (s *SearchService) ByID(ctx context.Context, id string) (*Search, error) {
@@ -196,7 +241,21 @@ func (api *SearchAPI) Start() error {
 	api.Type = graphql.NewObject(graphql.ObjectConfig{
 		Name: "Search",
 		Fields: graphql.Fields{
-			"id": relay.GlobalIDField("Search", nil),
+			// TODO(annie):
+			"id": relay.GlobalIDField("Search", func(search interface{}, info graphql.ResolveInfo, ctx context.Context) (string, error) {
+				se, ok := search.(*Search)
+				if !ok {
+					// TODO#xcxc: Handle these errors somehow.
+					return "", fmt.Errorf("asdasd") // TODO
+				}
+
+				cid, err := se.ClientID()
+				if err != nil {
+					return "", fmt.Errorf("asdasd") // TODO
+				}
+				// log.Debugf(ctx, "Serialized to: %s\n", cid)
+				return cid, nil
+			}),
 			"createdAt": &graphql.Field{
 				Description: "When the search was first saved.",
 				Type:        graphql.String,
@@ -205,15 +264,14 @@ func (api *SearchAPI) Start() error {
 				Description: "The name to display for the search.",
 				Type:        graphql.String,
 			},
-			// TODO#Perf: Figure out how to compute "results" and "numResults" with only 1 search query.
+			// TODO#Perf: Consider storing the search results on the context or ResolveInfo to avoid computing them twice (numResults and results).
 			"numResults": &graphql.Field{
 				Description: "The total number of results that match the query",
 				Type:        graphql.Int,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					// TODO#xcxc: Can the intermediate search result be stored on the resolve params?
 					se, ok := p.Source.(*Search)
 					if !ok {
-						return nil, errors.New("expected view source")
+						return nil, errors.New("expected search source")
 					}
 
 					sp, err := api.SearchService.Space(p.Context, se)
@@ -240,7 +298,7 @@ func (api *SearchAPI) Start() error {
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					se, ok := p.Source.(*Search)
 					if !ok {
-						return nil, errors.New("expected view source")
+						return nil, errors.New("expected search source")
 					}
 
 					sp, err := api.SearchService.Space(p.Context, se)

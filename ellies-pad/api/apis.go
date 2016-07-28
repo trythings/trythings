@@ -27,11 +27,11 @@ type apis struct {
 func NewAPIs() (*apis, error) {
 	apis := &apis{}
 	apis.nodeDefinitions = relay.NewNodeDefinitions(relay.NodeDefinitionsConfig{
-		IDFetcher: func(ctx context.Context, id string, info graphql.ResolveInfo) (interface{}, error) {
+		IDFetcher: func(id string, info graphql.ResolveInfo, ctx context.Context) (interface{}, error) {
 			resolvedID := relay.FromGlobalID(id)
 			switch resolvedID.Type {
 			case "Search":
-				return apis.SearchAPI.SearchService.ByID(ctx, resolvedID.ID)
+				return apis.SearchAPI.SearchService.ByClientID(ctx, resolvedID.ID)
 			default:
 				return nil, errors.New("Unknown node type")
 			}

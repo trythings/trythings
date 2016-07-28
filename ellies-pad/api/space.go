@@ -177,7 +177,7 @@ func (api *SpaceAPI) Start() error {
 						return nil, fmt.Errorf("invalid id %q", id)
 					}
 
-					se, err := api.SearchService.ByID(p.Context, resolvedID.ID)
+					se, err := api.SearchService.ByClientID(p.Context, resolvedID.ID)
 					if err != nil {
 						return nil, err
 					}
@@ -204,18 +204,10 @@ func (api *SpaceAPI) Start() error {
 						q = "" // Return all tasks.
 					}
 
-					// TODO #xcxc: Stop saving all of these to the datastore.
-					s := &Search{
-						Name:    "Recent search",
+					return &Search{
 						Query:   q,
 						SpaceID: sp.ID,
-					}
-					err := api.SearchService.Create(p.Context, s)
-					if err != nil {
-						return nil, err
-					}
-
-					return s, nil
+					}, nil
 				},
 			},
 			"view": &graphql.Field{

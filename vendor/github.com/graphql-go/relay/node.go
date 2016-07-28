@@ -4,9 +4,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	"github.com/graphql-go/graphql"
 	"golang.org/x/net/context"
-	"strings"
 )
 
 type NodeDefinitions struct {
@@ -96,7 +97,7 @@ func FromGlobalID(globalID string) *ResolvedGlobalID {
 	if err == nil {
 		strID = string(b)
 	}
-	tokens := strings.Split(strID, ":")
+	tokens := strings.SplitN(strID, ":", 2)
 	if len(tokens) < 2 {
 		return nil
 	}
