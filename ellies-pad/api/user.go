@@ -16,6 +16,7 @@ var errUserNotFound = errors.New("user not found")
 type User struct {
 	ID              string    `json:"id"`
 	CreatedAt       time.Time `json:"createdAt"`
+	IsAdmin         bool      `json:"isAdmin"`
 	GoogleID        string    `json:"-"`
 	Email           string    `json:"email"`
 	IsEmailVerified bool      `json:"-"`
@@ -111,6 +112,10 @@ func (api *UserAPI) Start() error {
 		Description: "User represents a person who can interact with the app.",
 		Fields: graphql.Fields{
 			"id": relay.GlobalIDField("User", nil),
+			"isAdmin": &graphql.Field{
+				Description: "Whether or not the user is an Ellie's Pad admin.",
+				Type:        graphql.Boolean,
+			},
 			"email": &graphql.Field{
 				Description: "The user's email primary address.",
 				Type:        graphql.String,
