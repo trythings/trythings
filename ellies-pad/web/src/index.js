@@ -11,6 +11,16 @@ import SignIn from './SignIn.js';
 
 Relay.injectNetworkLayer(new Relay.DefaultNetworkLayer('/graphql', {
 	credentials: 'same-origin',
+	headers: {
+		get Authorization() {
+			if (gapi.auth2.getAuthInstance().isSignedIn.get()) {
+				return `Bearer ${
+					gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().id_token
+				}`;
+			}
+			return null;
+		},
+	},
 }));
 
 const queries = {
