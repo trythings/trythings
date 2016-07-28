@@ -112,7 +112,23 @@ func (api *UserAPI) Start() error {
 		Fields: graphql.Fields{
 			"id": relay.GlobalIDField("User", nil),
 			"email": &graphql.Field{
-				Description: "The user's email primary address",
+				Description: "The user's email primary address.",
+				Type:        graphql.String,
+			},
+			"name": &graphql.Field{
+				Description: "The user's full name.",
+				Type:        graphql.String,
+			},
+			"givenName": &graphql.Field{
+				Description: "The user's given name.",
+				Type:        graphql.String,
+			},
+			"familyName": &graphql.Field{
+				Description: "The user's family name.",
+				Type:        graphql.String,
+			},
+			"imageUrl": &graphql.Field{
+				Description: "The user's profile picture URL.",
 				Type:        graphql.String,
 			},
 			"space": &graphql.Field{
