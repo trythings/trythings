@@ -9,17 +9,20 @@ import (
 	"github.com/graphql-go/relay"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
-	"google.golang.org/appengine/user"
 )
 
 var errUserNotFound = errors.New("user not found")
 
 type User struct {
-	ID        string    `json:"id"`
-	CreatedAt time.Time `json:"createdAt"`
-	GoogleID  string    `json:"-"`
-	Email     string    `json:"email"`
-	Name      string    `json:"name"`
+	ID              string    `json:"id"`
+	CreatedAt       time.Time `json:"createdAt"`
+	GoogleID        string    `json:"-"`
+	Email           string    `json:"email"`
+	IsEmailVerified bool      `json:"-"`
+	Name            string    `json:"name"`
+	GivenName       string    `json:"givenName"`
+	FamilyName      string    `json:"familyName"`
+	ImageURL        string    `json:"imageUrl"`
 }
 
 type UserService struct {
@@ -70,20 +73,27 @@ func (s *UserService) byGoogleID(ctx context.Context, googleID string) (*User, e
 	return us[0], nil
 }
 
-func NewAuthContext(ctx context.Context, auth string) context.Context {
-	return context.WithValue(ctx, authKey, auth)
-}
-
-func AuthFromContext(ctx context.Context) (string, bool) {
-	auth, ok := ctx.Value(authKey).(string)
-	return auth, ok
+func NewUserContext(ctx context.Context, u *User) context.Context {
+	return context.WithValue(ctx, userKey, u)
 }
 
 // FromContext should not be subject to access control,
 // because it would create a circular dependency.
 func (s *UserService) FromContext(ctx context.Context) (*User, error) {
-	gu := user.Current(ctx)
-	return s.byGoogleID(ctx, gu.ID)
+	ctxUser, ok := ctx.Value(userKey).(*User)
+	if !ok {
+		return nil, errors.New("expected user info in context, probably missing authorization header")
+	}
+
+	u, err := s.byGoogleID(ctx, ctxUser.GoogleID)
+	if err == errUserNotFound {
+		err := s.Create(ctx, ctxUser)
+		if err != nil {
+			return nil, err
+		}
+		return s.byGoogleID(ctx, ctxUser.GoogleID)
+	}
+	return u, err
 }
 
 type UserAPI struct {

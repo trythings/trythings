@@ -8,8 +8,6 @@ import (
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/relay"
 	"golang.org/x/net/context"
-	"google.golang.org/appengine"
-	"google.golang.org/appengine/user"
 )
 
 type apis struct {
@@ -78,20 +76,7 @@ func (apis *apis) Start() error {
 				Description: "viewer is the person currently interacting with the app.",
 				Type:        apis.UserAPI.Type,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					u, err := apis.UserService.FromContext(p.Context)
-					if err == errUserNotFound && appengine.IsDevAppServer() {
-						gu := user.Current(p.Context)
-						err := apis.UserService.Create(p.Context, &User{
-							GoogleID: gu.ID,
-							Email:    gu.Email,
-							Name:     gu.String(),
-						})
-						if err != nil {
-							return nil, err
-						}
-						return apis.UserService.FromContext(p.Context)
-					}
-					return u, err
+					return apis.UserService.FromContext(p.Context)
 				},
 			},
 		},
