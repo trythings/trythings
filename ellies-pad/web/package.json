@@ -7,8 +7,8 @@
   "license": "private",
   "scripts": {
     "lint": "eslint src",
-    "localhost": "env NODE_ENV=localhost webpack-dev-server --content-base static --history-api-fallback --host 0.0.0.0 --inline --output-public-path http://localhost:3000/static/ --port 3000",
-    "production": "env NODE_ENV=production webpack --bail",
+    "start": "env NODE_ENV=development webpack-dev-server --content-base static --history-api-fallback --host 0.0.0.0 --inline --output-public-path http://localhost:3000/static/ --port 3000",
+    "build": "env NODE_ENV=production webpack --bail",
     "test": "npm run lint"
   },
   "repository": {
