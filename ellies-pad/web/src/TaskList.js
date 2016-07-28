@@ -147,7 +147,7 @@ class TaskList extends React.Component {
 
 export default Relay.createContainer(TaskList, {
 	initialVariables: {
-		numTasksToShow: 1,
+		numTasksToShow: 10,
 	},
 	fragments: {
 		search: () => Relay.QL`
