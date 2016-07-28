@@ -6,11 +6,11 @@ import { RelayRouter } from 'react-router-relay';
 import Relay from 'react-relay';
 
 import App from './App.js';
+import Migrate from './Migrate.js';
 import SignedInApp from './SignedInApp.js';
 import SignIn from './SignIn.js';
 
 Relay.injectNetworkLayer(new Relay.DefaultNetworkLayer('/graphql', {
-	credentials: 'same-origin',
 	headers: {
 		get Authorization() {
 			if (gapi.auth2.getAuthInstance().isSignedIn.get()) {
@@ -49,6 +49,11 @@ const element = (
 				path="signin"
 				component={SignIn}
 				onEnter={SignIn.onEnter}
+			/>
+			<Route
+				path="migrate"
+				component={Migrate}
+				queries={queries}
 			/>
 		</Route>
 	</RelayRouter>
