@@ -53,20 +53,11 @@ type SearchService struct {
 }
 
 func (s *SearchService) IsVisible(ctx context.Context, se *Search) (bool, error) {
-	if se.SpaceID != "" {
-		sp, err := s.SpaceService.ByID(ctx, se.SpaceID)
-		if err != nil {
-			return false, err
-		}
-		return s.SpaceService.IsVisible(ctx, sp)
-	}
-
-	// TODO#xcxc: Migrate old data away and make this unecessary.
-	v, err := s.ViewService.ByID(ctx, se.ViewID)
+	sp, err := s.SpaceService.ByID(ctx, se.SpaceID)
 	if err != nil {
 		return false, err
 	}
-	return s.ViewService.IsVisible(ctx, v)
+	return s.SpaceService.IsVisible(ctx, sp)
 }
 
 func (s *SearchService) ByClientID(ctx context.Context, jsonID string) (*Search, error) {
@@ -148,12 +139,22 @@ func (s *SearchService) Create(ctx context.Context, se *Search) error {
 		return errors.New("Name is required")
 	}
 
-	// TODO#Performance: Add a shared or per-request cache to support these small, repeated queries.
-	// TODO#xcxc: Validate that the space matches the view.
-	// TODO#xcxc: Update the old migration or generate the space from the view.
-	if se.SpaceID == "" {
-		return errors.New("SpaceID is required")
+	if se.ViewID != "" {
+		v, err := s.ViewService.ByID(ctx, se.ViewID)
+		if err != nil {
+			return err
+		}
+
+		if se.SpaceID == "" {
+			se.SpaceID = v.SpaceID
+		}
+
+		if se.SpaceID != v.SpaceID {
+			return errors.New("Search's SpaceID must match View's")
+		}
 	}
+
+	// TODO#Performance: Add a shared or per-request cache to support these small, repeated queries.
 
 	if se.Query == "" {
 		return errors.New("Query is required")
@@ -216,16 +217,7 @@ func (s *SearchService) Update(ctx context.Context, se *Search) error {
 }
 
 func (s *SearchService) Space(ctx context.Context, se *Search) (*Space, error) {
-	if se.SpaceID != "" {
-		return s.SpaceService.ByID(ctx, se.SpaceID)
-	}
-
-	// TODO#xcxc: Clean up production data and then remove this.
-	v, err := s.ViewService.ByID(ctx, se.ViewID)
-	if err != nil {
-		return nil, err
-	}
-	return s.ViewService.Space(ctx, v)
+	return s.SpaceService.ByID(ctx, se.SpaceID)
 }
 
 type SearchAPI struct {
@@ -241,19 +233,16 @@ func (api *SearchAPI) Start() error {
 	api.Type = graphql.NewObject(graphql.ObjectConfig{
 		Name: "Search",
 		Fields: graphql.Fields{
-			// TODO(annie):
 			"id": relay.GlobalIDField("Search", func(search interface{}, info graphql.ResolveInfo, ctx context.Context) (string, error) {
 				se, ok := search.(*Search)
 				if !ok {
-					// TODO#xcxc: Handle these errors somehow.
-					return "", fmt.Errorf("asdasd") // TODO
+					return "", fmt.Errorf("Search's GlobalIDField() was called with a non-Search")
 				}
 
 				cid, err := se.ClientID()
 				if err != nil {
-					return "", fmt.Errorf("asdasd") // TODO
+					return "", fmt.Errorf("Failed to create a ClientID for %v", se)
 				}
-				// log.Debugf(ctx, "Serialized to: %s\n", cid)
 				return cid, nil
 			}),
 			"createdAt": &graphql.Field{
