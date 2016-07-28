@@ -36,7 +36,6 @@ class AppBar extends React.Component {
 			...resetStyles,
 			flex: '1 0 auto',
 			paddingLeft: 24,
-			paddingRight: 24,
 		},
 	};
 
