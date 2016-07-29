@@ -86,6 +86,38 @@ func (s *TaskService) ByID(ctx context.Context, id string) (*Task, error) {
 	return &t, nil
 }
 
+// ByIDs filters out Tasks that are not visible to the current User.
+func (s *TaskService) ByIDs(ctx context.Context, ids []string) ([]*Task, error) {
+	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
+
+	ks := []*datastore.Key{}
+	for _, id := range ids {
+		ks = append(ks, datastore.NewKey(ctx, "Task", id, 0, rootKey))
+	}
+
+	var allTasks = make([]*Task, len(ks))
+	err := datastore.GetMulti(ctx, ks, allTasks)
+	if err != nil {
+		return nil, err
+	}
+
+	ts := []*Task{}
+	for _, t := range allTasks {
+		// TODO#Perf: Batch the isVisible check.
+		ok, err := s.IsVisible(ctx, t)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			continue
+		}
+
+		ts = append(ts, t)
+	}
+
+	return ts, nil
+}
+
 func (s *TaskService) Create(ctx context.Context, t *Task) error {
 	if t.ID != "" {
 		return fmt.Errorf("t already has id %q", t.ID)
@@ -187,31 +219,27 @@ func (s *TaskService) Search(ctx context.Context, sp *Space, query string) ([]*T
 		return nil, err
 	}
 
-	var ts []*Task
-	for it := index.Search(ctx, query, &search.SearchOptions{
+	it := index.Search(ctx, query, &search.SearchOptions{
 		IDsOnly: true,
-	}); ; {
+	})
+	ids := []string{}
+	for {
 		id, err := it.Next(nil)
 		if err == search.Done {
 			break
 		}
 		if err != nil {
+			// TODO: Use multierror
 			return nil, err
 		}
+		ids = append(ids, id)
+	}
 
-		// TODO Use GetMulti.
-		// FIXME Deleted tasks may still show up in the search index,
-		// so we should just not return them.
-		t, err := s.ByID(ctx, id)
-		if err != nil {
-			if _, ok := err.(ErrAccessDenied); ok {
-				continue
-			}
-			// TODO use multierror
-			return nil, err
-		}
-
-		ts = append(ts, t)
+	// FIXME Deleted tasks may still show up in the search index,
+	// so we should just not return them.
+	ts, err := s.ByIDs(ctx, ids)
+	if err != nil {
+		return nil, err
 	}
 
 	return ts, nil
