@@ -1,25 +1,28 @@
 package api
 
-import "golang.org/x/net/context"
+import (
+	"golang.org/x/net/context"
+	"google.golang.org/appengine/datastore"
+)
 
 type Cache struct {
 	objs map[string]interface{}
 }
 
-func (c *Cache) Get(id string) interface{} {
+func (c *Cache) Get(key *datastore.Key) interface{} {
 	if c == nil {
 		return nil
 	}
 
-	return c.objs[id]
+	return c.objs[key.String()]
 }
 
-func (c *Cache) Set(id string, value interface{}) {
+func (c *Cache) Set(key *datastore.Key, value interface{}) {
 	if c == nil {
 		return
 	}
 
-	c.objs[id] = value
+	c.objs[key.String()] = value
 }
 
 func NewPerRequestCacheContext(ctx context.Context) context.Context {

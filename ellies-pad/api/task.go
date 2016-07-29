@@ -59,13 +59,14 @@ func (e ErrAccessDenied) Error() string {
 }
 
 func (s *TaskService) ByID(ctx context.Context, id string) (*Task, error) {
-	ct, ok := CacheFromContext(ctx).Get(id).(*Task)
+	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
+	k := datastore.NewKey(ctx, "Task", id, 0, rootKey)
+
+	ct, ok := CacheFromContext(ctx).Get(k).(*Task)
 	if ok {
 		return ct, nil
 	}
 
-	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
-	k := datastore.NewKey(ctx, "Task", id, 0, rootKey)
 	var t Task
 	err := datastore.Get(ctx, k, &t)
 	if err != nil {
@@ -81,7 +82,7 @@ func (s *TaskService) ByID(ctx context.Context, id string) (*Task, error) {
 		return nil, ErrAccessDenied{}
 	}
 
-	CacheFromContext(ctx).Set(id, &t)
+	CacheFromContext(ctx).Set(k, &t)
 	return &t, nil
 }
 
@@ -161,7 +162,7 @@ func (s *TaskService) Update(ctx context.Context, t *Task) error {
 		return err
 	}
 
-	CacheFromContext(ctx).Set(t.ID, t)
+	CacheFromContext(ctx).Set(k, t)
 	return nil
 }
 

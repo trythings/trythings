@@ -82,13 +82,14 @@ func (s *SearchService) ByClientID(ctx context.Context, clientID string) (*Searc
 }
 
 func (s *SearchService) ByID(ctx context.Context, id string) (*Search, error) {
-	cse, ok := CacheFromContext(ctx).Get(id).(*Search)
+	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
+	k := datastore.NewKey(ctx, "Search", id, 0, rootKey)
+
+	cse, ok := CacheFromContext(ctx).Get(k).(*Search)
 	if ok {
 		return cse, nil
 	}
 
-	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
-	k := datastore.NewKey(ctx, "Search", id, 0, rootKey)
 	var se Search
 	err := datastore.Get(ctx, k, &se)
 	if err != nil {
@@ -103,7 +104,7 @@ func (s *SearchService) ByID(ctx context.Context, id string) (*Search, error) {
 		return nil, errors.New("cannot access search")
 	}
 
-	CacheFromContext(ctx).Set(id, &se)
+	CacheFromContext(ctx).Set(k, &se)
 	return &se, nil
 }
 
@@ -223,7 +224,7 @@ func (s *SearchService) Update(ctx context.Context, se *Search) error {
 		return err
 	}
 
-	CacheFromContext(ctx).Set(se.ID, se)
+	CacheFromContext(ctx).Set(k, se)
 	return nil
 }
 
