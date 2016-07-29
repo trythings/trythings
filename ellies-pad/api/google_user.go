@@ -31,6 +31,9 @@ func GetGoogleUser(ctx context.Context, idToken string) (*GoogleUser, error) {
 	}
 
 	if len(tok.Headers) != 1 {
+		// We must have a header to specify a kid.
+		// We don't know how to handle multiple headers,
+		// since it's unclear which kid to use.
 		return nil, errors.New("expected exactly one token header")
 	}
 
@@ -53,10 +56,9 @@ func GetGoogleUser(ctx context.Context, idToken string) (*GoogleUser, error) {
 		keys = googleKeys.Key(tok.Headers[0].KeyID)
 	}
 
-	if len(keys) == 0 {
-		return nil, errors.New("could not find key matching kid")
-	}
 	if len(keys) != 1 {
+		// We must have a key to check the signature.
+		// We don't know how to deal with multiple keys matching the same kid.
 		return nil, errors.New("expected exactly one key matching kid")
 	}
 	key := keys[0]
