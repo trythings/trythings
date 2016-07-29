@@ -75,10 +75,12 @@ func TestValidate_KnownDirectives_WithWellPlacedDirectives(t *testing.T) {
 func TestValidate_KnownDirectives_WithMisplacedDirectives(t *testing.T) {
 	testutil.ExpectFailsRule(t, graphql.KnownDirectivesRule, `
       query Foo @include(if: true) {
-        name
-        ...Frag
+        name @operationOnly
+        ...Frag @operationOnly
       }
     `, []gqlerrors.FormattedError{
-		testutil.RuleError(`Directive "include" may not be used on "operation".`, 2, 17),
+		testutil.RuleError(`Directive "include" may not be used on QUERY.`, 2, 17),
+		testutil.RuleError(`Directive "operationOnly" may not be used on FIELD.`, 3, 14),
+		testutil.RuleError(`Directive "operationOnly" may not be used on FRAGMENT_SPREAD.`, 4, 17),
 	})
 }

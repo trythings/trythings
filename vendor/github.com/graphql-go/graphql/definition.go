@@ -1,7 +1,6 @@
 package graphql
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -10,7 +9,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-// These are all of the possible kinds of
+// Type interface for all of the possible kinds of GraphQL types
 type Type interface {
 	Name() string
 	Description() string
@@ -28,7 +27,7 @@ var _ Type = (*List)(nil)
 var _ Type = (*NonNull)(nil)
 var _ Type = (*Argument)(nil)
 
-// These types may be used as input types for arguments and directives.
+// Input interface for types that may be used as input types for arguments and directives.
 type Input interface {
 	Name() string
 	Description() string
@@ -42,6 +41,7 @@ var _ Input = (*InputObject)(nil)
 var _ Input = (*List)(nil)
 var _ Input = (*NonNull)(nil)
 
+// IsInputType determines if given type is a GraphQLInputType
 func IsInputType(ttype Type) bool {
 	named := GetNamed(ttype)
 	if _, ok := named.(*Scalar); ok {
@@ -56,6 +56,7 @@ func IsInputType(ttype Type) bool {
 	return false
 }
 
+// IsOutputType determines if given type is a GraphQLOutputType
 func IsOutputType(ttype Type) bool {
 	name := GetNamed(ttype)
 	if _, ok := name.(*Scalar); ok {
@@ -76,6 +77,19 @@ func IsOutputType(ttype Type) bool {
 	return false
 }
 
+// Leaf interface for types that may be leaf values
+type Leaf interface {
+	Name() string
+	Description() string
+	String() string
+	Error() error
+	Serialize(value interface{}) interface{}
+}
+
+var _ Leaf = (*Scalar)(nil)
+var _ Leaf = (*Enum)(nil)
+
+// IsLeafType determines if given type is a leaf value
 func IsLeafType(ttype Type) bool {
 	named := GetNamed(ttype)
 	if _, ok := named.(*Scalar); ok {
@@ -87,7 +101,7 @@ func IsLeafType(ttype Type) bool {
 	return false
 }
 
-// These types may be used as output types as the result of fields.
+// Output interface for types that may be used as output types as the result of fields.
 type Output interface {
 	Name() string
 	Description() string
@@ -103,7 +117,7 @@ var _ Output = (*Enum)(nil)
 var _ Output = (*List)(nil)
 var _ Output = (*NonNull)(nil)
 
-// These types may describe the parent context of a selection set.
+// Composite interface for types that may describe the parent context of a selection set.
 type Composite interface {
 	Name() string
 }
@@ -112,6 +126,7 @@ var _ Composite = (*Object)(nil)
 var _ Composite = (*Interface)(nil)
 var _ Composite = (*Union)(nil)
 
+// IsCompositeType determines if given type is a GraphQLComposite type
 func IsCompositeType(ttype interface{}) bool {
 	if _, ok := ttype.(*Object); ok {
 		return true
@@ -125,16 +140,25 @@ func IsCompositeType(ttype interface{}) bool {
 	return false
 }
 
-// These types may describe the parent context of a selection set.
+// Abstract interface for types that may describe the parent context of a selection set.
 type Abstract interface {
-	ObjectType(value interface{}, info ResolveInfo) *Object
-	PossibleTypes() []*Object
-	IsPossibleType(ttype *Object) bool
+	Name() string
 }
 
 var _ Abstract = (*Interface)(nil)
 var _ Abstract = (*Union)(nil)
 
+func IsAbstractType(ttype interface{}) bool {
+	if _, ok := ttype.(*Interface); ok {
+		return true
+	}
+	if _, ok := ttype.(*Union); ok {
+		return true
+	}
+	return false
+}
+
+// Nullable interface for types that can accept null as a value.
 type Nullable interface {
 }
 
@@ -146,6 +170,7 @@ var _ Nullable = (*Enum)(nil)
 var _ Nullable = (*InputObject)(nil)
 var _ Nullable = (*List)(nil)
 
+// GetNullable returns the Nullable type of the given GraphQL type
 func GetNullable(ttype Type) Nullable {
 	if ttype, ok := ttype.(*NonNull); ok {
 		return ttype.OfType
@@ -153,7 +178,7 @@ func GetNullable(ttype Type) Nullable {
 	return ttype
 }
 
-// These named types do not include modifiers like List or NonNull.
+// Named interface for types that do not include modifiers like List or NonNull.
 type Named interface {
 	String() string
 }
@@ -165,6 +190,7 @@ var _ Named = (*Union)(nil)
 var _ Named = (*Enum)(nil)
 var _ Named = (*InputObject)(nil)
 
+// GetNamed returns the Named type of the given GraphQL type
 func GetNamed(ttype Type) Named {
 	unmodifiedType := ttype
 	for {
@@ -181,23 +207,21 @@ func GetNamed(ttype Type) Named {
 	return unmodifiedType
 }
 
-/**
- * Scalar Type Definition
- *
- * The leaf values of any request and input values to arguments are
- * Scalars (or Enums) and are defined with a name and a series of functions
- * used to parse input from ast or variables and to ensure validity.
- *
- * Example:
- *
- *     var OddType = new Scalar({
- *       name: 'Odd',
- *       serialize(value) {
- *         return value % 2 === 1 ? value : null;
- *       }
- *     });
- *
- */
+// Scalar Type Definition
+//
+// The leaf values of any request and input values to arguments are
+// Scalars (or Enums) and are defined with a name and a series of functions
+// used to parse input from ast or variables and to ensure validity.
+//
+// Example:
+//
+//    var OddType = new Scalar({
+//      name: 'Odd',
+//      serialize(value) {
+//        return value % 2 === 1 ? value : null;
+//      }
+//    });
+//
 type Scalar struct {
 	PrivateName        string `json:"name"`
 	PrivateDescription string `json:"description"`
@@ -205,9 +229,17 @@ type Scalar struct {
 	scalarConfig ScalarConfig
 	err          error
 }
+
+// SerializeFn is a function type for serializing a GraphQLScalar type value
 type SerializeFn func(value interface{}) interface{}
+
+// ParseValueFn is a function type for parsing the value of a GraphQLScalar type
 type ParseValueFn func(value interface{}) interface{}
+
+// ParseLiteralFn is a function type for parsing the literal value of a GraphQLScalar type
 type ParseLiteralFn func(valueAST ast.Value) interface{}
+
+// ScalarConfig options for creating a new GraphQLScalar
 type ScalarConfig struct {
 	Name         string `json:"name"`
 	Description  string `json:"description"`
@@ -216,6 +248,7 @@ type ScalarConfig struct {
 	ParseLiteral ParseLiteralFn
 }
 
+// NewScalar creates a new GraphQLScalar
 func NewScalar(config ScalarConfig) *Scalar {
 	st := &Scalar{}
 	err := invariant(config.Name != "", "Type must be named.")
@@ -289,43 +322,41 @@ func (st *Scalar) Error() error {
 	return st.err
 }
 
-/**
- * Object Type Definition
- *
- * Almost all of the GraphQL types you define will be object  Object types
- * have a name, but most importantly describe their fields.
- *
- * Example:
- *
- *     var AddressType = new Object({
- *       name: 'Address',
- *       fields: {
- *         street: { type: String },
- *         number: { type: Int },
- *         formatted: {
- *           type: String,
- *           resolve(obj) {
- *             return obj.number + ' ' + obj.street
- *           }
- *         }
- *       }
- *     });
- *
- * When two types need to refer to each other, or a type needs to refer to
- * itself in a field, you can use a function expression (aka a closure or a
- * thunk) to supply the fields lazily.
- *
- * Example:
- *
- *     var PersonType = new Object({
- *       name: 'Person',
- *       fields: () => ({
- *         name: { type: String },
- *         bestFriend: { type: PersonType },
- *       })
- *     });
- *
- */
+// Object Type Definition
+//
+// Almost all of the GraphQL types you define will be object  Object types
+// have a name, but most importantly describe their fields.
+// Example:
+//
+//    var AddressType = new Object({
+//      name: 'Address',
+//      fields: {
+//        street: { type: String },
+//        number: { type: Int },
+//        formatted: {
+//          type: String,
+//          resolve(obj) {
+//            return obj.number + ' ' + obj.street
+//          }
+//        }
+//      }
+//    });
+//
+// When two types need to refer to each other, or a type needs to refer to
+// itself in a field, you can use a function expression (aka a closure or a
+// thunk) to supply the fields lazily.
+//
+// Example:
+//
+//    var PersonType = new Object({
+//      name: 'Person',
+//      fields: () => ({
+//        name: { type: String },
+//        bestFriend: { type: PersonType },
+//      })
+//    });
+//
+// /
 type Object struct {
 	PrivateName        string `json:"name"`
 	PrivateDescription string `json:"description"`
@@ -338,7 +369,22 @@ type Object struct {
 	err error
 }
 
-type IsTypeOfFn func(value interface{}, info ResolveInfo) bool
+// IsTypeOfParams Params for IsTypeOfFn()
+type IsTypeOfParams struct {
+	// Value that needs to be resolve.
+	// Use this to decide which GraphQLObject this value maps to.
+	Value interface{}
+
+	// Info is a collection of information about the current execution state.
+	Info ResolveInfo
+
+	// Context argument is a context value that is provided to every resolve function within an execution.
+	// It is commonly
+	// used to represent an authenticated user, or request-specific caches.
+	Context context.Context
+}
+
+type IsTypeOfFn func(p IsTypeOfParams) bool
 
 type InterfacesThunk func() []*Interface
 
@@ -369,21 +415,6 @@ func NewObject(config ObjectConfig) *Object {
 	objectType.PrivateDescription = config.Description
 	objectType.IsTypeOf = config.IsTypeOf
 	objectType.typeConfig = config
-
-	/*
-			addImplementationToInterfaces()
-			Update the interfaces to know about this implementation.
-			This is an rare and unfortunate use of mutation in the type definition
-		 	implementations, but avoids an expensive "getPossibleTypes"
-		 	implementation for Interface
-	*/
-	interfaces := objectType.Interfaces()
-	if interfaces == nil {
-		return objectType
-	}
-	for _, iface := range interfaces {
-		iface.implementations = append(iface.implementations, objectType)
-	}
 
 	return objectType
 }
@@ -428,7 +459,7 @@ func (gt *Object) Interfaces() []*Interface {
 		configInterfaces = gt.typeConfig.Interfaces.([]*Interface)
 	case nil:
 	default:
-		gt.err = errors.New(fmt.Sprintf("Unknown Object.Interfaces type: %v", reflect.TypeOf(gt.typeConfig.Interfaces)))
+		gt.err = fmt.Errorf("Unknown Object.Interfaces type: %v", reflect.TypeOf(gt.typeConfig.Interfaces))
 		return nil
 	}
 	interfaces, err := defineInterfaces(gt, configInterfaces)
@@ -543,18 +574,23 @@ func defineFieldMap(ttype Named, fields Fields) (FieldDefinitionMap, error) {
 	return resultFieldMap, nil
 }
 
-// TODO: clean up GQLFRParams fields
+// ResolveParams Params for FieldResolveFn()
 type ResolveParams struct {
+	// Source is the source value
 	Source interface{}
-	Args   map[string]interface{}
-	Info   ResolveInfo
-	Schema Schema
-	//This can be used to provide per-request state
-	//from the application.
+
+	// Args is a map of arguments for current GraphQL request
+	Args map[string]interface{}
+
+	// Info is a collection of information about the current execution state.
+	Info ResolveInfo
+
+	// Context argument is a context value that is provided to every resolve function within an execution.
+	// It is commonly
+	// used to represent an authenticated user, or request-specific caches.
 	Context context.Context
 }
 
-// TODO: relook at FieldResolveFn params
 type FieldResolveFn func(p ResolveParams) (interface{}, error)
 
 type ResolveInfo struct {
@@ -626,43 +662,55 @@ func (st *Argument) Error() error {
 	return nil
 }
 
-/**
- * Interface Type Definition
- *
- * When a field can return one of a heterogeneous set of types, a Interface type
- * is used to describe what types are possible, what fields are in common across
- * all types, as well as a function to determine which type is actually used
- * when the field is resolved.
- *
- * Example:
- *
- *     var EntityType = new Interface({
- *       name: 'Entity',
- *       fields: {
- *         name: { type: String }
- *       }
- *     });
- *
- */
+// Interface Type Definition
+//
+// When a field can return one of a heterogeneous set of types, a Interface type
+// is used to describe what types are possible, what fields are in common across
+// all types, as well as a function to determine which type is actually used
+// when the field is resolved.
+//
+// Example:
+//
+//     var EntityType = new Interface({
+//       name: 'Entity',
+//       fields: {
+//         name: { type: String }
+//       }
+//     });
+//
+//
 type Interface struct {
 	PrivateName        string `json:"name"`
 	PrivateDescription string `json:"description"`
 	ResolveType        ResolveTypeFn
 
-	typeConfig      InterfaceConfig
-	fields          FieldDefinitionMap
-	implementations []*Object
-	possibleTypes   map[string]bool
-
-	err error
+	typeConfig InterfaceConfig
+	fields     FieldDefinitionMap
+	err        error
 }
 type InterfaceConfig struct {
-	Name        string `json:"name"`
-	Fields      Fields `json:"fields"`
+	Name        string      `json:"name"`
+	Fields      interface{} `json:"fields"`
 	ResolveType ResolveTypeFn
 	Description string `json:"description"`
 }
-type ResolveTypeFn func(value interface{}, info ResolveInfo) *Object
+
+// ResolveTypeParams Params for ResolveTypeFn()
+type ResolveTypeParams struct {
+	// Value that needs to be resolve.
+	// Use this to decide which GraphQLObject this value maps to.
+	Value interface{}
+
+	// Info is a collection of information about the current execution state.
+	Info ResolveInfo
+
+	// Context argument is a context value that is provided to every resolve function within an execution.
+	// It is commonly
+	// used to represent an authenticated user, or request-specific caches.
+	Context context.Context
+}
+
+type ResolveTypeFn func(p ResolveTypeParams) *Object
 
 func NewInterface(config InterfaceConfig) *Interface {
 	it := &Interface{}
@@ -681,7 +729,6 @@ func NewInterface(config InterfaceConfig) *Interface {
 	it.PrivateDescription = config.Description
 	it.ResolveType = config.ResolveType
 	it.typeConfig = config
-	it.implementations = []*Object{}
 
 	return it
 }
@@ -690,7 +737,10 @@ func (it *Interface) AddFieldConfig(fieldName string, fieldConfig *Field) {
 	if fieldName == "" || fieldConfig == nil {
 		return
 	}
-	it.typeConfig.Fields[fieldName] = fieldConfig
+	switch it.typeConfig.Fields.(type) {
+	case Fields:
+		it.typeConfig.Fields.(Fields)[fieldName] = fieldConfig
+	}
 }
 func (it *Interface) Name() string {
 	return it.PrivateName
@@ -699,36 +749,17 @@ func (it *Interface) Description() string {
 	return it.PrivateDescription
 }
 func (it *Interface) Fields() (fields FieldDefinitionMap) {
-	it.fields, it.err = defineFieldMap(it, it.typeConfig.Fields)
+	var configureFields Fields
+	switch it.typeConfig.Fields.(type) {
+	case Fields:
+		configureFields = it.typeConfig.Fields.(Fields)
+	case FieldsThunk:
+		configureFields = it.typeConfig.Fields.(FieldsThunk)()
+	}
+	fields, err := defineFieldMap(it, configureFields)
+	it.err = err
+	it.fields = fields
 	return it.fields
-}
-func (it *Interface) PossibleTypes() []*Object {
-	return it.implementations
-}
-func (it *Interface) IsPossibleType(ttype *Object) bool {
-	if ttype == nil {
-		return false
-	}
-	if len(it.possibleTypes) == 0 {
-		possibleTypes := map[string]bool{}
-		for _, possibleType := range it.PossibleTypes() {
-			if possibleType == nil {
-				continue
-			}
-			possibleTypes[possibleType.PrivateName] = true
-		}
-		it.possibleTypes = possibleTypes
-	}
-	if val, ok := it.possibleTypes[ttype.PrivateName]; ok {
-		return val
-	}
-	return false
-}
-func (it *Interface) ObjectType(value interface{}, info ResolveInfo) *Object {
-	if it.ResolveType != nil {
-		return it.ResolveType(value, info)
-	}
-	return getTypeOf(value, info, it)
 }
 func (it *Interface) String() string {
 	return it.PrivateName
@@ -737,42 +768,26 @@ func (it *Interface) Error() error {
 	return it.err
 }
 
-func getTypeOf(value interface{}, info ResolveInfo, abstractType Abstract) *Object {
-	possibleTypes := abstractType.PossibleTypes()
-	for _, possibleType := range possibleTypes {
-		if possibleType.IsTypeOf == nil {
-			continue
-		}
-		if res := possibleType.IsTypeOf(value, info); res {
-			return possibleType
-		}
-	}
-	return nil
-}
-
-/**
- * Union Type Definition
- *
- * When a field can return one of a heterogeneous set of types, a Union type
- * is used to describe what types are possible as well as providing a function
- * to determine which type is actually used when the field is resolved.
- *
- * Example:
- *
- *     var PetType = new Union({
- *       name: 'Pet',
- *       types: [ DogType, CatType ],
- *       resolveType(value) {
- *         if (value instanceof Dog) {
- *           return DogType;
- *         }
- *         if (value instanceof Cat) {
- *           return CatType;
- *         }
- *       }
- *     });
- *
- */
+// Union Type Definition
+//
+// When a field can return one of a heterogeneous set of types, a Union type
+// is used to describe what types are possible as well as providing a function
+// to determine which type is actually used when the field is resolved.
+//
+// Example:
+//
+//     var PetType = new Union({
+//       name: 'Pet',
+//       types: [ DogType, CatType ],
+//       resolveType(value) {
+//         if (value instanceof Dog) {
+//           return DogType;
+//         }
+//         if (value instanceof Cat) {
+//           return CatType;
+//         }
+//       }
+//     });
 type Union struct {
 	PrivateName        string `json:"name"`
 	PrivateDescription string `json:"description"`
@@ -844,35 +859,8 @@ func NewUnion(config UnionConfig) *Union {
 
 	return objectType
 }
-func (ut *Union) PossibleTypes() []*Object {
+func (ut *Union) Types() []*Object {
 	return ut.types
-}
-func (ut *Union) IsPossibleType(ttype *Object) bool {
-
-	if ttype == nil {
-		return false
-	}
-	if len(ut.possibleTypes) == 0 {
-		possibleTypes := map[string]bool{}
-		for _, possibleType := range ut.PossibleTypes() {
-			if possibleType == nil {
-				continue
-			}
-			possibleTypes[possibleType.PrivateName] = true
-		}
-		ut.possibleTypes = possibleTypes
-	}
-
-	if val, ok := ut.possibleTypes[ttype.PrivateName]; ok {
-		return val
-	}
-	return false
-}
-func (ut *Union) ObjectType(value interface{}, info ResolveInfo) *Object {
-	if ut.ResolveType != nil {
-		return ut.ResolveType(value, info)
-	}
-	return getTypeOf(value, info, ut)
 }
 func (ut *Union) String() string {
 	return ut.PrivateName
@@ -887,27 +875,26 @@ func (ut *Union) Error() error {
 	return ut.err
 }
 
-/**
- * Enum Type Definition
- *
- * Some leaf values of requests and input values are Enums. GraphQL serializes
- * Enum values as strings, however internally Enums can be represented by any
- * kind of type, often integers.
- *
- * Example:
- *
- *     var RGBType = new Enum({
- *       name: 'RGB',
- *       values: {
- *         RED: { value: 0 },
- *         GREEN: { value: 1 },
- *         BLUE: { value: 2 }
- *       }
- *     });
- *
- * Note: If a value is not provided in a definition, the name of the enum value
- * will be used as it's internal value.
- */
+// Enum Type Definition
+//
+// Some leaf values of requests and input values are Enums. GraphQL serializes
+// Enum values as strings, however internally Enums can be represented by any
+// kind of type, often integers.
+//
+// Example:
+//
+//     var RGBType = new Enum({
+//       name: 'RGB',
+//       values: {
+//         RED: { value: 0 },
+//         GREEN: { value: 1 },
+//         BLUE: { value: 2 }
+//       }
+//     });
+//
+// Note: If a value is not provided in a definition, the name of the enum value
+// will be used as its internal value.
+
 type Enum struct {
 	PrivateName        string `json:"name"`
 	PrivateDescription string `json:"description"`
@@ -1057,26 +1044,23 @@ func (gt *Enum) getNameLookup() map[string]*EnumValueDefinition {
 	return gt.nameLookup
 }
 
-/**
- * Input Object Type Definition
- *
- * An input object defines a structured collection of fields which may be
- * supplied to a field argument.
- *
- * Using `NonNull` will ensure that a value must be provided by the query
- *
- * Example:
- *
- *     var GeoPoint = new InputObject({
- *       name: 'GeoPoint',
- *       fields: {
- *         lat: { type: new NonNull(Float) },
- *         lon: { type: new NonNull(Float) },
- *         alt: { type: Float, defaultValue: 0 },
- *       }
- *     });
- *
- */
+// InputObject Type Definition
+//
+// An input object defines a structured collection of fields which may be
+// supplied to a field argument.
+//
+// Using `NonNull` will ensure that a value must be provided by the query
+//
+// Example:
+//
+//     var GeoPoint = new InputObject({
+//       name: 'GeoPoint',
+//       fields: {
+//         lat: { type: new NonNull(Float) },
+//         lon: { type: new NonNull(Float) },
+//         alt: { type: Float, defaultValue: 0 },
+//       }
+//     });
 type InputObject struct {
 	PrivateName        string `json:"name"`
 	PrivateDescription string `json:"description"`
@@ -1121,7 +1105,6 @@ type InputObjectConfig struct {
 	Description string      `json:"description"`
 }
 
-// TODO: rename InputObjectConfig to GraphQLInputObjecTypeConfig for consistency?
 func NewInputObject(config InputObjectConfig) *InputObject {
 	gt := &InputObject{}
 	err := invariant(config.Name != "", "Type must be named.")
@@ -1197,24 +1180,22 @@ func (gt *InputObject) Error() error {
 	return gt.err
 }
 
-/**
- * List Modifier
- *
- * A list is a kind of type marker, a wrapping type which points to another
- * type. Lists are often created within the context of defining the fields of
- * an object type.
- *
- * Example:
- *
- *     var PersonType = new Object({
- *       name: 'Person',
- *       fields: () => ({
- *         parents: { type: new List(Person) },
- *         children: { type: new List(Person) },
- *       })
- *     })
- *
- */
+// List Modifier
+//
+// A list is a kind of type marker, a wrapping type which points to another
+// type. Lists are often created within the context of defining the fields of
+// an object type.
+//
+// Example:
+//
+//     var PersonType = new Object({
+//       name: 'Person',
+//       fields: () => ({
+//         parents: { type: new List(Person) },
+//         children: { type: new List(Person) },
+//       })
+//     })
+//
 type List struct {
 	OfType Type `json:"ofType"`
 
@@ -1249,26 +1230,24 @@ func (gl *List) Error() error {
 	return gl.err
 }
 
-/**
- * Non-Null Modifier
- *
- * A non-null is a kind of type marker, a wrapping type which points to another
- * type. Non-null types enforce that their values are never null and can ensure
- * an error is raised if this ever occurs during a request. It is useful for
- * fields which you can make a strong guarantee on non-nullability, for example
- * usually the id field of a database row will never be null.
- *
- * Example:
- *
- *     var RowType = new Object({
- *       name: 'Row',
- *       fields: () => ({
- *         id: { type: new NonNull(String) },
- *       })
- *     })
- *
- * Note: the enforcement of non-nullability occurs within the executor.
- */
+// NonNull Modifier
+//
+// A non-null is a kind of type marker, a wrapping type which points to another
+// type. Non-null types enforce that their values are never null and can ensure
+// an error is raised if this ever occurs during a request. It is useful for
+// fields which you can make a strong guarantee on non-nullability, for example
+// usually the id field of a database row will never be null.
+//
+// Example:
+//
+//     var RowType = new Object({
+//       name: 'Row',
+//       fields: () => ({
+//         id: { type: new NonNull(String) },
+//       })
+//     })
+//
+// Note: the enforcement of non-nullability occurs within the executor.
 type NonNull struct {
 	PrivateName string `json:"name"` // added to conform with introspection for NonNull.Name = nil
 	OfType      Type   `json:"ofType"`
@@ -1304,11 +1283,11 @@ func (gl *NonNull) Error() error {
 	return gl.err
 }
 
-var NAME_REGEXP, _ = regexp.Compile("^[_a-zA-Z][_a-zA-Z0-9]*$")
+var NameRegExp, _ = regexp.Compile("^[_a-zA-Z][_a-zA-Z0-9]*$")
 
 func assertValidName(name string) error {
 	return invariant(
-		NAME_REGEXP.MatchString(name),
+		NameRegExp.MatchString(name),
 		fmt.Sprintf(`Names must match /^[_a-zA-Z][_a-zA-Z0-9]*$/ but "%v" does not.`, name),
 	)
 }

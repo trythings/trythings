@@ -4,29 +4,35 @@ import (
 	"fmt"
 )
 
-/**
-Schema Definition
-A Schema is created by supplying the root types of each type of operation,
-query and mutation (optional). A schema definition is then supplied to the
-validator and executor.
-Example:
-    myAppSchema, err := NewSchema(SchemaConfig({
-      Query: MyAppQueryRootType
-      Mutation: MyAppMutationRootType
-    });
-*/
 type SchemaConfig struct {
-	Query    *Object
-	Mutation *Object
+	Query        *Object
+	Mutation     *Object
+	Subscription *Object
+	Types        []Type
+	Directives   []*Directive
 }
 
-// chose to name as TypeMap instead of TypeMap
 type TypeMap map[string]Type
 
+//Schema Definition
+//A Schema is created by supplying the root types of each type of operation,
+//query, mutation (optional) and subscription (optional). A schema definition is then supplied to the
+//validator and executor.
+//Example:
+//    myAppSchema, err := NewSchema(SchemaConfig({
+//      Query: MyAppQueryRootType,
+//      Mutation: MyAppMutationRootType,
+//      Subscription: MyAppSubscriptionRootType,
+//    });
 type Schema struct {
-	schemaConfig SchemaConfig
-	typeMap      TypeMap
-	directives   []*Directive
+	typeMap    TypeMap
+	directives []*Directive
+
+	queryType        *Object
+	mutationType     *Object
+	subscriptionType *Object
+	implementations  map[string][]*Object
+	possibleTypeMap  map[string]map[string]bool
 }
 
 func NewSchema(config SchemaConfig) (Schema, error) {
@@ -47,35 +53,80 @@ func NewSchema(config SchemaConfig) (Schema, error) {
 		return schema, config.Mutation.err
 	}
 
-	schema.schemaConfig = config
+	schema.queryType = config.Query
+	schema.mutationType = config.Mutation
+	schema.subscriptionType = config.Subscription
+
+	// Provide `@include() and `@skip()` directives by default.
+	schema.directives = config.Directives
+	if len(schema.directives) == 0 {
+		schema.directives = []*Directive{
+			IncludeDirective,
+			SkipDirective,
+		}
+	}
+	// Ensure directive definitions are error-free
+	for _, dir := range schema.directives {
+		if dir.err != nil {
+			return schema, dir.err
+		}
+	}
 
 	// Build type map now to detect any errors within this schema.
 	typeMap := TypeMap{}
-	objectTypes := []*Object{
-		schema.QueryType(),
-		schema.MutationType(),
-		__Type,
-		__Schema,
+	initialTypes := []Type{}
+	if schema.QueryType() != nil {
+		initialTypes = append(initialTypes, schema.QueryType())
 	}
-	for _, objectType := range objectTypes {
-		if objectType == nil {
-			continue
+	if schema.MutationType() != nil {
+		initialTypes = append(initialTypes, schema.MutationType())
+	}
+	if schema.SubscriptionType() != nil {
+		initialTypes = append(initialTypes, schema.SubscriptionType())
+	}
+	if schemaType != nil {
+		initialTypes = append(initialTypes, schemaType)
+	}
+
+	for _, ttype := range config.Types {
+		// assume that user will never add a nil object to config
+		initialTypes = append(initialTypes, ttype)
+	}
+
+	for _, ttype := range initialTypes {
+		if ttype.Error() != nil {
+			return schema, ttype.Error()
 		}
-		if objectType.err != nil {
-			return schema, objectType.err
-		}
-		typeMap, err = typeMapReducer(typeMap, objectType)
+		typeMap, err = typeMapReducer(&schema, typeMap, ttype)
 		if err != nil {
 			return schema, err
 		}
 	}
+
 	schema.typeMap = typeMap
-	// Enforce correct interface implementations
-	for _, ttype := range typeMap {
-		switch ttype := ttype.(type) {
-		case *Object:
+
+	// Keep track of all implementations by interface name.
+	if schema.implementations == nil {
+		schema.implementations = map[string][]*Object{}
+	}
+	for _, ttype := range schema.typeMap {
+		if ttype, ok := ttype.(*Object); ok {
 			for _, iface := range ttype.Interfaces() {
-				err := assertObjectImplementsInterface(ttype, iface)
+				impls, ok := schema.implementations[iface.Name()]
+				if impls == nil || !ok {
+					impls = []*Object{}
+				}
+				impls = append(impls, ttype)
+				schema.implementations[iface.Name()] = impls
+			}
+		}
+	}
+
+	// Enforce correct interface implementations
+	for _, ttype := range schema.typeMap {
+		if ttype, ok := ttype.(*Object); ok {
+			for _, iface := range ttype.Interfaces() {
+				err := assertObjectImplementsInterface(&schema, ttype, iface)
 				if err != nil {
 					return schema, err
 				}
@@ -87,20 +138,18 @@ func NewSchema(config SchemaConfig) (Schema, error) {
 }
 
 func (gq *Schema) QueryType() *Object {
-	return gq.schemaConfig.Query
+	return gq.queryType
 }
 
 func (gq *Schema) MutationType() *Object {
-	return gq.schemaConfig.Mutation
+	return gq.mutationType
+}
+
+func (gq *Schema) SubscriptionType() *Object {
+	return gq.subscriptionType
 }
 
 func (gq *Schema) Directives() []*Directive {
-	if len(gq.directives) == 0 {
-		gq.directives = []*Directive{
-			IncludeDirective,
-			SkipDirective,
-		}
-	}
 	return gq.directives
 }
 
@@ -121,7 +170,39 @@ func (gq *Schema) Type(name string) Type {
 	return gq.TypeMap()[name]
 }
 
-func typeMapReducer(typeMap TypeMap, objectType Type) (TypeMap, error) {
+func (gq *Schema) PossibleTypes(abstractType Abstract) []*Object {
+	if abstractType, ok := abstractType.(*Union); ok {
+		return abstractType.Types()
+	}
+	if abstractType, ok := abstractType.(*Interface); ok {
+		if impls, ok := gq.implementations[abstractType.Name()]; ok {
+			return impls
+		}
+	}
+	return []*Object{}
+}
+func (gq *Schema) IsPossibleType(abstractType Abstract, possibleType *Object) bool {
+	possibleTypeMap := gq.possibleTypeMap
+	if possibleTypeMap == nil {
+		possibleTypeMap = map[string]map[string]bool{}
+	}
+
+	if typeMap, ok := possibleTypeMap[abstractType.Name()]; !ok {
+		typeMap = map[string]bool{}
+		for _, possibleType := range gq.PossibleTypes(abstractType) {
+			typeMap[possibleType.Name()] = true
+		}
+		possibleTypeMap[abstractType.Name()] = typeMap
+	}
+
+	gq.possibleTypeMap = possibleTypeMap
+	if typeMap, ok := possibleTypeMap[abstractType.Name()]; ok {
+		isPossible, _ := typeMap[possibleType.Name()]
+		return isPossible
+	}
+	return false
+}
+func typeMapReducer(schema *Schema, typeMap TypeMap, objectType Type) (TypeMap, error) {
 	var err error
 	if objectType == nil || objectType.Name() == "" {
 		return typeMap, nil
@@ -130,11 +211,11 @@ func typeMapReducer(typeMap TypeMap, objectType Type) (TypeMap, error) {
 	switch objectType := objectType.(type) {
 	case *List:
 		if objectType.OfType != nil {
-			return typeMapReducer(typeMap, objectType.OfType)
+			return typeMapReducer(schema, typeMap, objectType.OfType)
 		}
 	case *NonNull:
 		if objectType.OfType != nil {
-			return typeMapReducer(typeMap, objectType.OfType)
+			return typeMapReducer(schema, typeMap, objectType.OfType)
 		}
 	case *Object:
 		if objectType.err != nil {
@@ -160,7 +241,7 @@ func typeMapReducer(typeMap TypeMap, objectType Type) (TypeMap, error) {
 
 	switch objectType := objectType.(type) {
 	case *Union:
-		types := objectType.PossibleTypes()
+		types := schema.PossibleTypes(objectType)
 		if objectType.err != nil {
 			return typeMap, objectType.err
 		}
@@ -168,13 +249,13 @@ func typeMapReducer(typeMap TypeMap, objectType Type) (TypeMap, error) {
 			if innerObjectType.err != nil {
 				return typeMap, innerObjectType.err
 			}
-			typeMap, err = typeMapReducer(typeMap, innerObjectType)
+			typeMap, err = typeMapReducer(schema, typeMap, innerObjectType)
 			if err != nil {
 				return typeMap, err
 			}
 		}
 	case *Interface:
-		types := objectType.PossibleTypes()
+		types := schema.PossibleTypes(objectType)
 		if objectType.err != nil {
 			return typeMap, objectType.err
 		}
@@ -182,7 +263,7 @@ func typeMapReducer(typeMap TypeMap, objectType Type) (TypeMap, error) {
 			if innerObjectType.err != nil {
 				return typeMap, innerObjectType.err
 			}
-			typeMap, err = typeMapReducer(typeMap, innerObjectType)
+			typeMap, err = typeMapReducer(schema, typeMap, innerObjectType)
 			if err != nil {
 				return typeMap, err
 			}
@@ -196,7 +277,7 @@ func typeMapReducer(typeMap TypeMap, objectType Type) (TypeMap, error) {
 			if innerObjectType.err != nil {
 				return typeMap, innerObjectType.err
 			}
-			typeMap, err = typeMapReducer(typeMap, innerObjectType)
+			typeMap, err = typeMapReducer(schema, typeMap, innerObjectType)
 			if err != nil {
 				return typeMap, err
 			}
@@ -211,12 +292,12 @@ func typeMapReducer(typeMap TypeMap, objectType Type) (TypeMap, error) {
 		}
 		for _, field := range fieldMap {
 			for _, arg := range field.Args {
-				typeMap, err = typeMapReducer(typeMap, arg.Type)
+				typeMap, err = typeMapReducer(schema, typeMap, arg.Type)
 				if err != nil {
 					return typeMap, err
 				}
 			}
-			typeMap, err = typeMapReducer(typeMap, field.Type)
+			typeMap, err = typeMapReducer(schema, typeMap, field.Type)
 			if err != nil {
 				return typeMap, err
 			}
@@ -228,12 +309,12 @@ func typeMapReducer(typeMap TypeMap, objectType Type) (TypeMap, error) {
 		}
 		for _, field := range fieldMap {
 			for _, arg := range field.Args {
-				typeMap, err = typeMapReducer(typeMap, arg.Type)
+				typeMap, err = typeMapReducer(schema, typeMap, arg.Type)
 				if err != nil {
 					return typeMap, err
 				}
 			}
-			typeMap, err = typeMapReducer(typeMap, field.Type)
+			typeMap, err = typeMapReducer(schema, typeMap, field.Type)
 			if err != nil {
 				return typeMap, err
 			}
@@ -244,7 +325,7 @@ func typeMapReducer(typeMap TypeMap, objectType Type) (TypeMap, error) {
 			return typeMap, objectType.err
 		}
 		for _, field := range fieldMap {
-			typeMap, err = typeMapReducer(typeMap, field.Type)
+			typeMap, err = typeMapReducer(schema, typeMap, field.Type)
 			if err != nil {
 				return typeMap, err
 			}
@@ -253,12 +334,12 @@ func typeMapReducer(typeMap TypeMap, objectType Type) (TypeMap, error) {
 	return typeMap, nil
 }
 
-func assertObjectImplementsInterface(object *Object, iface *Interface) error {
+func assertObjectImplementsInterface(schema *Schema, object *Object, iface *Interface) error {
 	objectFieldMap := object.Fields()
 	ifaceFieldMap := iface.Fields()
 
 	// Assert each interface field is implemented.
-	for fieldName, _ := range ifaceFieldMap {
+	for fieldName := range ifaceFieldMap {
 		objectField := objectFieldMap[fieldName]
 		ifaceField := ifaceFieldMap[fieldName]
 
@@ -272,9 +353,10 @@ func assertObjectImplementsInterface(object *Object, iface *Interface) error {
 			return err
 		}
 
-		// Assert interface field type matches object field type. (invariant)
+		// Assert interface field type is satisfied by object field type, by being
+		// a valid subtype. (covariant)
 		err = invariant(
-			isEqualType(ifaceField.Type, objectField.Type),
+			isTypeSubTypeOf(schema, objectField.Type, ifaceField.Type),
 			fmt.Sprintf(`%v.%v expects type "%v" but `+
 				`%v.%v provides type "%v".`,
 				iface, fieldName, ifaceField.Type,
@@ -321,7 +403,7 @@ func assertObjectImplementsInterface(object *Object, iface *Interface) error {
 				return err
 			}
 		}
-		// Assert argument set invariance.
+		// Assert additional arguments must not be required.
 		for _, objectArg := range objectField.Args {
 			argName := objectArg.PrivateName
 			var ifaceArg *Argument
@@ -331,15 +413,19 @@ func assertObjectImplementsInterface(object *Object, iface *Interface) error {
 					break
 				}
 			}
-			err = invariant(
-				ifaceArg != nil,
-				fmt.Sprintf(`%v.%v does not define argument "%v" but `+
-					`%v.%v provides it.`,
-					iface, fieldName, argName,
-					object, fieldName),
-			)
-			if err != nil {
-				return err
+
+			if ifaceArg == nil {
+				_, ok := objectArg.Type.(*NonNull)
+				err = invariant(
+					!ok,
+					fmt.Sprintf(`%v.%v(%v:) is of required type `+
+						`"%v" but is not also provided by the interface %v.%v.`,
+						object, fieldName, argName,
+						objectArg.Type, iface, fieldName),
+				)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -347,15 +433,72 @@ func assertObjectImplementsInterface(object *Object, iface *Interface) error {
 }
 
 func isEqualType(typeA Type, typeB Type) bool {
+	// Equivalent type is a valid subtype
+	if typeA == typeB {
+		return true
+	}
+	// If either type is non-null, the other must also be non-null.
 	if typeA, ok := typeA.(*NonNull); ok {
 		if typeB, ok := typeB.(*NonNull); ok {
 			return isEqualType(typeA.OfType, typeB.OfType)
 		}
 	}
+	// If either type is a list, the other must also be a list.
 	if typeA, ok := typeA.(*List); ok {
 		if typeB, ok := typeB.(*List); ok {
 			return isEqualType(typeA.OfType, typeB.OfType)
 		}
 	}
-	return typeA == typeB
+	// Otherwise the types are not equal.
+	return false
+}
+
+/**
+ * Provided a type and a super type, return true if the first type is either
+ * equal or a subset of the second super type (covariant).
+ */
+func isTypeSubTypeOf(schema *Schema, maybeSubType Type, superType Type) bool {
+	// Equivalent type is a valid subtype
+	if maybeSubType == superType {
+		return true
+	}
+
+	// If superType is non-null, maybeSubType must also be nullable.
+	if superType, ok := superType.(*NonNull); ok {
+		if maybeSubType, ok := maybeSubType.(*NonNull); ok {
+			return isTypeSubTypeOf(schema, maybeSubType.OfType, superType.OfType)
+		}
+		return false
+	}
+	if maybeSubType, ok := maybeSubType.(*NonNull); ok {
+		// If superType is nullable, maybeSubType may be non-null.
+		return isTypeSubTypeOf(schema, maybeSubType.OfType, superType)
+	}
+
+	// If superType type is a list, maybeSubType type must also be a list.
+	if superType, ok := superType.(*List); ok {
+		if maybeSubType, ok := maybeSubType.(*List); ok {
+			return isTypeSubTypeOf(schema, maybeSubType.OfType, superType.OfType)
+		}
+		return false
+	} else if _, ok := maybeSubType.(*List); ok {
+		// If superType is not a list, maybeSubType must also be not a list.
+		return false
+	}
+
+	// If superType type is an abstract type, maybeSubType type may be a currently
+	// possible object type.
+	if superType, ok := superType.(*Interface); ok {
+		if maybeSubType, ok := maybeSubType.(*Object); ok && schema.IsPossibleType(superType, maybeSubType) {
+			return true
+		}
+	}
+	if superType, ok := superType.(*Union); ok {
+		if maybeSubType, ok := maybeSubType.(*Object); ok && schema.IsPossibleType(superType, maybeSubType) {
+			return true
+		}
+	}
+
+	// Otherwise, the child type is not a valid subtype of the parent type.
+	return false
 }

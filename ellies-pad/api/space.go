@@ -160,7 +160,7 @@ func (api *SpaceAPI) Start() error {
 				Description: "The name to display for the space.",
 				Type:        graphql.String,
 			},
-			"search": &graphql.Field{
+			"savedSearch": &graphql.Field{
 				Args: graphql.FieldConfigArgument{
 					"id": &graphql.ArgumentConfig{
 						Type: graphql.String,
@@ -177,14 +177,14 @@ func (api *SpaceAPI) Start() error {
 						return nil, fmt.Errorf("invalid id %q", id)
 					}
 
-					se, err := api.SearchService.ByID(p.Context, resolvedID.ID)
+					se, err := api.SearchService.ByClientID(p.Context, resolvedID.ID)
 					if err != nil {
 						return nil, err
 					}
 					return se, nil
 				},
 			},
-			"tasks": &graphql.Field{
+			"querySearch": &graphql.Field{
 				Args: graphql.FieldConfigArgument{
 					"query": &graphql.ArgumentConfig{
 						Type:         graphql.String,
@@ -192,8 +192,7 @@ func (api *SpaceAPI) Start() error {
 						Description:  "query filters the result to only tasks that contain particular terms in their title or description",
 					},
 				},
-				Description: "tasks are all pieces of work that need to be completed for the user.",
-				Type:        graphql.NewList(api.TaskAPI.Type),
+				Type: api.SearchAPI.Type,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					sp, ok := p.Source.(*Space)
 					if !ok {
@@ -205,7 +204,10 @@ func (api *SpaceAPI) Start() error {
 						q = "" // Return all tasks.
 					}
 
-					return api.TaskService.Search(p.Context, sp, q)
+					return &Search{
+						Query:   q,
+						SpaceID: sp.ID,
+					}, nil
 				},
 			},
 			"view": &graphql.Field{

@@ -130,6 +130,8 @@ var printDocASTReducer = map[string]visitor.VisitFunc{
 		}
 		return visitor.ActionNoChange, nil
 	},
+
+	// Document
 	"Document": func(p visitor.VisitFuncParams) (string, interface{}) {
 		switch node := p.Node.(type) {
 		case *ast.Document:
@@ -144,38 +146,41 @@ var printDocASTReducer = map[string]visitor.VisitFunc{
 	"OperationDefinition": func(p visitor.VisitFuncParams) (string, interface{}) {
 		switch node := p.Node.(type) {
 		case *ast.OperationDefinition:
-			op := node.Operation
+			op := string(node.Operation)
 			name := fmt.Sprintf("%v", node.Name)
 
-			defs := wrap("(", join(toSliceString(node.VariableDefinitions), ", "), ")")
+			varDefs := wrap("(", join(toSliceString(node.VariableDefinitions), ", "), ")")
 			directives := join(toSliceString(node.Directives), " ")
 			selectionSet := fmt.Sprintf("%v", node.SelectionSet)
+			// Anonymous queries with no directives or variable definitions can use
+			// the query short form.
 			str := ""
-			if name == "" {
+			if name == "" && directives == "" && varDefs == "" && op == ast.OperationTypeQuery {
 				str = selectionSet
 			} else {
 				str = join([]string{
 					op,
-					join([]string{name, defs}, ""),
+					join([]string{name, varDefs}, ""),
 					directives,
 					selectionSet,
 				}, " ")
 			}
 			return visitor.ActionUpdate, str
 		case map[string]interface{}:
+
 			op := getMapValueString(node, "Operation")
 			name := getMapValueString(node, "Name")
 
-			defs := wrap("(", join(toSliceString(getMapValue(node, "VariableDefinitions")), ", "), ")")
+			varDefs := wrap("(", join(toSliceString(getMapValue(node, "VariableDefinitions")), ", "), ")")
 			directives := join(toSliceString(getMapValue(node, "Directives")), " ")
 			selectionSet := getMapValueString(node, "SelectionSet")
 			str := ""
-			if name == "" {
+			if name == "" && directives == "" && varDefs == "" && op == ast.OperationTypeQuery {
 				str = selectionSet
 			} else {
 				str = join([]string{
 					op,
-					join([]string{name, defs}, ""),
+					join([]string{name, varDefs}, ""),
 					directives,
 					selectionSet,
 				}, " ")
@@ -255,6 +260,8 @@ var printDocASTReducer = map[string]visitor.VisitFunc{
 		}
 		return visitor.ActionNoChange, nil
 	},
+
+	// Fragments
 	"FragmentSpread": func(p visitor.VisitFuncParams) (string, interface{}) {
 		switch node := p.Node.(type) {
 		case *ast.InlineFragment:
@@ -275,7 +282,13 @@ var printDocASTReducer = map[string]visitor.VisitFunc{
 			typeCondition := getMapValueString(node, "TypeCondition")
 			directives := toSliceString(getMapValue(node, "Directives"))
 			selectionSet := getMapValueString(node, "SelectionSet")
-			return visitor.ActionUpdate, "... on " + typeCondition + " " + wrap("", join(directives, " "), " ") + selectionSet
+			return visitor.ActionUpdate,
+				join([]string{
+					"...",
+					wrap("on ", typeCondition, ""),
+					join(directives, " "),
+					selectionSet,
+				}, " ")
 		}
 		return visitor.ActionNoChange, nil
 	},
@@ -297,6 +310,7 @@ var printDocASTReducer = map[string]visitor.VisitFunc{
 		return visitor.ActionNoChange, nil
 	},
 
+	// Value
 	"IntValue": func(p visitor.VisitFuncParams) (string, interface{}) {
 		switch node := p.Node.(type) {
 		case *ast.IntValue:
@@ -374,6 +388,7 @@ var printDocASTReducer = map[string]visitor.VisitFunc{
 		return visitor.ActionNoChange, nil
 	},
 
+	// Directive
 	"Directive": func(p visitor.VisitFuncParams) (string, interface{}) {
 		switch node := p.Node.(type) {
 		case *ast.Directive:
@@ -388,6 +403,7 @@ var printDocASTReducer = map[string]visitor.VisitFunc{
 		return visitor.ActionNoChange, nil
 	},
 
+	// Type
 	"Named": func(p visitor.VisitFuncParams) (string, interface{}) {
 		switch node := p.Node.(type) {
 		case *ast.Named:
@@ -416,6 +432,47 @@ var printDocASTReducer = map[string]visitor.VisitFunc{
 		return visitor.ActionNoChange, nil
 	},
 
+	// Type System Definitions
+	"SchemaDefinition": func(p visitor.VisitFuncParams) (string, interface{}) {
+		switch node := p.Node.(type) {
+		case *ast.SchemaDefinition:
+			operationTypesBlock := block(node.OperationTypes)
+			str := fmt.Sprintf("schema %v", operationTypesBlock)
+			return visitor.ActionUpdate, str
+		case map[string]interface{}:
+			operationTypes := toSliceString(getMapValue(node, "OperationTypes"))
+			operationTypesBlock := block(operationTypes)
+			str := fmt.Sprintf("schema %v", operationTypesBlock)
+			return visitor.ActionUpdate, str
+		}
+		return visitor.ActionNoChange, nil
+	},
+	"OperationTypeDefinition": func(p visitor.VisitFuncParams) (string, interface{}) {
+		switch node := p.Node.(type) {
+		case *ast.OperationTypeDefinition:
+			str := fmt.Sprintf("%v: %v", node.Operation, node.Type)
+			return visitor.ActionUpdate, str
+		case map[string]interface{}:
+			operation := getMapValueString(node, "Operation")
+			ttype := getMapValueString(node, "Type")
+			str := fmt.Sprintf("%v: %v", operation, ttype)
+			return visitor.ActionUpdate, str
+		}
+		return visitor.ActionNoChange, nil
+	},
+	"ScalarDefinition": func(p visitor.VisitFuncParams) (string, interface{}) {
+		switch node := p.Node.(type) {
+		case *ast.ScalarDefinition:
+			name := fmt.Sprintf("%v", node.Name)
+			str := "scalar " + name
+			return visitor.ActionUpdate, str
+		case map[string]interface{}:
+			name := getMapValueString(node, "Name")
+			str := "scalar " + name
+			return visitor.ActionUpdate, str
+		}
+		return visitor.ActionNoChange, nil
+	},
 	"ObjectDefinition": func(p visitor.VisitFuncParams) (string, interface{}) {
 		switch node := p.Node.(type) {
 		case *ast.ObjectDefinition:
@@ -497,19 +554,6 @@ var printDocASTReducer = map[string]visitor.VisitFunc{
 		}
 		return visitor.ActionNoChange, nil
 	},
-	"ScalarDefinition": func(p visitor.VisitFuncParams) (string, interface{}) {
-		switch node := p.Node.(type) {
-		case *ast.ScalarDefinition:
-			name := fmt.Sprintf("%v", node.Name)
-			str := "scalar " + name
-			return visitor.ActionUpdate, str
-		case map[string]interface{}:
-			name := getMapValueString(node, "Name")
-			str := "scalar " + name
-			return visitor.ActionUpdate, str
-		}
-		return visitor.ActionNoChange, nil
-	},
 	"EnumDefinition": func(p visitor.VisitFuncParams) (string, interface{}) {
 		switch node := p.Node.(type) {
 		case *ast.EnumDefinition:
@@ -558,6 +602,22 @@ var printDocASTReducer = map[string]visitor.VisitFunc{
 		case map[string]interface{}:
 			definition := getMapValueString(node, "Definition")
 			str := "extend " + definition
+			return visitor.ActionUpdate, str
+		}
+		return visitor.ActionNoChange, nil
+	},
+	"DirectiveDefinition": func(p visitor.VisitFuncParams) (string, interface{}) {
+		switch node := p.Node.(type) {
+		case *ast.DirectiveDefinition:
+			args := wrap("(", join(toSliceString(node.Arguments), ", "), ")")
+			str := fmt.Sprintf("directive @%v%v on %v", node.Name, args, join(toSliceString(node.Locations), " | "))
+			return visitor.ActionUpdate, str
+		case map[string]interface{}:
+			name := getMapValueString(node, "Name")
+			locations := toSliceString(getMapValue(node, "Locations"))
+			args := toSliceString(getMapValue(node, "Arguments"))
+			argsStr := wrap("(", join(args, ", "), ")")
+			str := fmt.Sprintf("directive @%v%v on %v", name, argsStr, join(locations, " | "))
 			return visitor.ActionUpdate, str
 		}
 		return visitor.ActionNoChange, nil

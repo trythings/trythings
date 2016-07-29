@@ -339,6 +339,44 @@ var migrations = []*Migration{
 			return nil
 		},
 	},
+	{
+		Version:     version("2016-07-28T15:20:00"),
+		Author:      "annie, daniel",
+		Description: "Add spaceID to searches",
+		Run: func(ctx context.Context, s *MigrationService) error {
+			root := datastore.NewKey(ctx, "Root", "root", 0, nil)
+
+			var vs []*View
+			_, err := datastore.NewQuery("View").
+				Ancestor(root).
+				GetAll(ctx, &vs)
+			if err != nil {
+				return err
+			}
+
+			for _, v := range vs {
+				sp, err := s.ViewService.Space(ctx, v)
+				if err != nil {
+					return err
+				}
+
+				ss, err := s.SearchService.ByView(ctx, v)
+				if err != nil {
+					return err
+				}
+
+				for _, se := range ss {
+					se.SpaceID = sp.ID
+					err := s.SearchService.Update(ctx, se)
+					if err != nil {
+						return err
+					}
+				}
+			}
+
+			return nil
+		},
+	},
 }
 
 type MigrationService struct {

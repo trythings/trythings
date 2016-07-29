@@ -225,8 +225,9 @@ type TaskAPI struct {
 	NodeInterface *graphql.Interface `inject:"node"`
 	TaskService   *TaskService       `inject:""`
 
-	Type      *graphql.Object
-	Mutations map[string]*graphql.Field
+	Type           *graphql.Object
+	ConnectionType *graphql.Object
+	Mutations      map[string]*graphql.Field
 }
 
 func (api *TaskAPI) Start() error {
@@ -256,6 +257,10 @@ func (api *TaskAPI) Start() error {
 			api.NodeInterface,
 		},
 	})
+	api.ConnectionType = relay.ConnectionDefinitions(relay.ConnectionConfig{
+		Name:     api.Type.Name(),
+		NodeType: api.Type,
+	}).ConnectionType
 
 	api.Mutations = map[string]*graphql.Field{
 		"addTask": relay.MutationWithClientMutationID(relay.MutationConfig{

@@ -30,7 +30,8 @@ func TestIntrospection_ExecutesAnIntrospectionQuery(t *testing.T) {
 	}
 	expectedDataSubSet := map[string]interface{}{
 		"__schema": map[string]interface{}{
-			"mutationType": nil,
+			"mutationType":     nil,
+			"subscriptionType": nil,
 			"queryType": map[string]interface{}{
 				"name": "QueryRoot",
 			},
@@ -85,6 +86,16 @@ func TestIntrospection_ExecutesAnIntrospectionQuery(t *testing.T) {
 						},
 						map[string]interface{}{
 							"name": "mutationType",
+							"args": []interface{}{},
+							"type": map[string]interface{}{
+								"kind": "OBJECT",
+								"name": "__Type",
+							},
+							"isDeprecated":      false,
+							"deprecationReason": nil,
+						},
+						map[string]interface{}{
+							"name": "subscriptionType",
 							"args": []interface{}{},
 							"type": map[string]interface{}{
 								"kind": "OBJECT",
@@ -616,6 +627,28 @@ func TestIntrospection_ExecutesAnIntrospectionQuery(t *testing.T) {
 							"deprecationReason": nil,
 						},
 						map[string]interface{}{
+							"name": "locations",
+							"args": []interface{}{},
+							"type": map[string]interface{}{
+								"kind": "NON_NULL",
+								"name": nil,
+								"ofType": map[string]interface{}{
+									"kind": "LIST",
+									"name": nil,
+									"ofType": map[string]interface{}{
+										"kind": "NON_NULL",
+										"name": nil,
+										"ofType": map[string]interface{}{
+											"kind": "ENUM",
+											"name": "__DirectiveLocation",
+										},
+									},
+								},
+							},
+							"isDeprecated":      false,
+							"deprecationReason": nil,
+						},
+						map[string]interface{}{
 							"name": "args",
 							"args": []interface{}{},
 							"type": map[string]interface{}{
@@ -649,8 +682,8 @@ func TestIntrospection_ExecutesAnIntrospectionQuery(t *testing.T) {
 									"ofType": nil,
 								},
 							},
-							"isDeprecated":      false,
-							"deprecationReason": nil,
+							"isDeprecated":      true,
+							"deprecationReason": "Use `locations`.",
 						},
 						map[string]interface{}{
 							"name": "onFragment",
@@ -664,8 +697,8 @@ func TestIntrospection_ExecutesAnIntrospectionQuery(t *testing.T) {
 									"ofType": nil,
 								},
 							},
-							"isDeprecated":      false,
-							"deprecationReason": nil,
+							"isDeprecated":      true,
+							"deprecationReason": "Use `locations`.",
 						},
 						map[string]interface{}{
 							"name": "onField",
@@ -679,8 +712,8 @@ func TestIntrospection_ExecutesAnIntrospectionQuery(t *testing.T) {
 									"ofType": nil,
 								},
 							},
-							"isDeprecated":      false,
-							"deprecationReason": nil,
+							"isDeprecated":      true,
+							"deprecationReason": "Use `locations`.",
 						},
 					},
 					"inputFields":   nil,
@@ -688,10 +721,60 @@ func TestIntrospection_ExecutesAnIntrospectionQuery(t *testing.T) {
 					"enumValues":    nil,
 					"possibleTypes": nil,
 				},
+				map[string]interface{}{
+					"kind":        "ENUM",
+					"name":        "__DirectiveLocation",
+					"fields":      nil,
+					"inputFields": nil,
+					"interfaces":  nil,
+					"enumValues": []interface{}{
+						map[string]interface{}{
+							"name":              "QUERY",
+							"isDeprecated":      false,
+							"deprecationReason": nil,
+						},
+						map[string]interface{}{
+							"name":              "MUTATION",
+							"isDeprecated":      false,
+							"deprecationReason": nil,
+						},
+						map[string]interface{}{
+							"name":              "SUBSCRIPTION",
+							"isDeprecated":      false,
+							"deprecationReason": nil,
+						},
+						map[string]interface{}{
+							"name":              "FIELD",
+							"isDeprecated":      false,
+							"deprecationReason": nil,
+						},
+						map[string]interface{}{
+							"name":              "FRAGMENT_DEFINITION",
+							"isDeprecated":      false,
+							"deprecationReason": nil,
+						},
+						map[string]interface{}{
+							"name":              "FRAGMENT_SPREAD",
+							"isDeprecated":      false,
+							"deprecationReason": nil,
+						},
+						map[string]interface{}{
+							"name":              "INLINE_FRAGMENT",
+							"isDeprecated":      false,
+							"deprecationReason": nil,
+						},
+					},
+					"possibleTypes": nil,
+				},
 			},
 			"directives": []interface{}{
 				map[string]interface{}{
 					"name": "include",
+					"locations": []interface{}{
+						"FIELD",
+						"FRAGMENT_SPREAD",
+						"INLINE_FRAGMENT",
+					},
 					"args": []interface{}{
 						map[string]interface{}{
 							"defaultValue": nil,
@@ -707,12 +790,18 @@ func TestIntrospection_ExecutesAnIntrospectionQuery(t *testing.T) {
 							},
 						},
 					},
+					// deprecated, but included for coverage till removed
 					"onOperation": false,
 					"onFragment":  true,
 					"onField":     true,
 				},
 				map[string]interface{}{
 					"name": "skip",
+					"locations": []interface{}{
+						"FIELD",
+						"FRAGMENT_SPREAD",
+						"INLINE_FRAGMENT",
+					},
 					"args": []interface{}{
 						map[string]interface{}{
 							"defaultValue": nil,
@@ -728,6 +817,7 @@ func TestIntrospection_ExecutesAnIntrospectionQuery(t *testing.T) {
 							},
 						},
 					},
+					// deprecated, but included for coverage till removed
 					"onOperation": false,
 					"onFragment":  true,
 					"onField":     true,
@@ -1211,11 +1301,11 @@ func TestIntrospection_FailsAsExpectedOnThe__TypeRootFieldWithoutAnArg(t *testin
     `
 	expected := &graphql.Result{
 		Errors: []gqlerrors.FormattedError{
-			gqlerrors.FormattedError{
+			{
 				Message: `Field "__type" argument "name" of type "String!" ` +
 					`is required but not provided.`,
 				Locations: []location.SourceLocation{
-					location.SourceLocation{Line: 3, Column: 9},
+					{Line: 3, Column: 9},
 				},
 			},
 		},
@@ -1257,14 +1347,15 @@ func TestIntrospection_ExposesDescriptionsOnTypesAndFields(t *testing.T) {
         }
       }
     `
+
 	expected := &graphql.Result{
 		Data: map[string]interface{}{
 			"schemaType": map[string]interface{}{
 				"name": "__Schema",
-				"description": `A GraphQL Schema defines the capabilities of a GraphQL
-server. It exposes all available types and directives on
-the server, as well as the entry points for query and
-mutation operations.`,
+				"description": `A GraphQL Schema defines the capabilities of a GraphQL ` +
+					`server. It exposes all available types and directives on ` +
+					`the server, as well as the entry points for query, mutation, ` +
+					`and subscription operations.`,
 				"fields": []interface{}{
 					map[string]interface{}{
 						"name":        "types",
@@ -1278,6 +1369,11 @@ mutation operations.`,
 						"name": "mutationType",
 						"description": "If this server supports mutation, the type that " +
 							"mutation operations will be rooted at.",
+					},
+					map[string]interface{}{
+						"name": "subscriptionType",
+						"description": "If this server supports subscription, the type that " +
+							"subscription operations will be rooted at.",
 					},
 					map[string]interface{}{
 						"name":        "directives",
@@ -1327,7 +1423,7 @@ func TestIntrospection_ExposesDescriptionsOnEnums(t *testing.T) {
 		Data: map[string]interface{}{
 			"typeKindType": map[string]interface{}{
 				"name":        "__TypeKind",
-				"description": `An enum describing what kind of type a given __Type is`,
+				"description": "An enum describing what kind of type a given `__Type` is",
 				"enumValues": []interface{}{
 					map[string]interface{}{
 						"name":        "SCALAR",
