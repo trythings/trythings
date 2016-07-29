@@ -82,6 +82,8 @@ func (apis *apis) Start() error {
 						if !ok {
 							return nil, errors.New("expected google user, probably missing Authorization header")
 						}
+						// TODO Some of the google user's fields could change after user creation.
+						// Consider updating the user to reflect those changes (e.g. IsEmailVerified).
 						err := apis.UserService.Create(p.Context, &User{
 							GoogleID:        gu.ID,
 							Email:           gu.Email,
