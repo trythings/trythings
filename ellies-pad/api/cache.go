@@ -25,14 +25,14 @@ func (c *Cache) Set(key *datastore.Key, value interface{}) {
 	c.objs[key.String()] = value
 }
 
-func NewPerRequestCacheContext(ctx context.Context) context.Context {
-	return context.WithValue(ctx, perRequestCacheKey, &Cache{
+func NewCacheContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, cacheKey, &Cache{
 		objs: map[string]interface{}{},
 	})
 }
 
 func CacheFromContext(ctx context.Context) *Cache {
-	c, ok := ctx.Value(perRequestCacheKey).(*Cache)
+	c, ok := ctx.Value(cacheKey).(*Cache)
 	if !ok {
 		return nil
 	}
