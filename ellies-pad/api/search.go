@@ -10,7 +10,6 @@ import (
 	"github.com/graphql-go/relay"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
-	"google.golang.org/appengine/log"
 )
 
 type Search struct {
@@ -83,13 +82,9 @@ func (s *SearchService) ByClientID(ctx context.Context, clientID string) (*Searc
 }
 
 func (s *SearchService) ByID(ctx context.Context, id string) (*Search, error) {
-	obj, inCache := CacheFromContext(ctx).Get(id)
-	if inCache {
-		sp, ok := obj.(*Search)
-		if ok {
-			return sp, nil
-		}
-		log.Errorf(ctx, "Expected to find a Search with id %s in cache.", id)
+	cse, ok := CacheFromContext(ctx).Get(id).(*Search)
+	if ok {
+		return cse, nil
 	}
 
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
@@ -100,7 +95,7 @@ func (s *SearchService) ByID(ctx context.Context, id string) (*Search, error) {
 		return nil, err
 	}
 
-	ok, err := s.IsVisible(ctx, &se)
+	ok, err = s.IsVisible(ctx, &se)
 	if err != nil {
 		return nil, err
 	}

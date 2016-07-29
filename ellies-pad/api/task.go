@@ -9,7 +9,6 @@ import (
 	"github.com/graphql-go/relay"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
-	"google.golang.org/appengine/log"
 	"google.golang.org/appengine/search"
 )
 
@@ -60,13 +59,9 @@ func (e ErrAccessDenied) Error() string {
 }
 
 func (s *TaskService) ByID(ctx context.Context, id string) (*Task, error) {
-	obj, inCache := CacheFromContext(ctx).Get(id)
-	if inCache {
-		sp, ok := obj.(*Task)
-		if ok {
-			return sp, nil
-		}
-		log.Errorf(ctx, "Expected to find a Task with id %s in cache.", id)
+	ct, ok := CacheFromContext(ctx).Get(id).(*Task)
+	if ok {
+		return ct, nil
 	}
 
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
@@ -77,7 +72,7 @@ func (s *TaskService) ByID(ctx context.Context, id string) (*Task, error) {
 		return nil, err
 	}
 
-	ok, err := s.IsVisible(ctx, &t)
+	ok, err = s.IsVisible(ctx, &t)
 	if err != nil {
 		return nil, err
 	}

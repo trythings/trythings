@@ -9,7 +9,6 @@ import (
 	"github.com/graphql-go/relay"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
-	"google.golang.org/appengine/log"
 )
 
 type Space struct {
@@ -24,13 +23,9 @@ type SpaceService struct {
 }
 
 func (s *SpaceService) ByID(ctx context.Context, id string) (*Space, error) {
-	obj, inCache := CacheFromContext(ctx).Get(id)
-	if inCache {
-		sp, ok := obj.(*Space)
-		if ok {
-			return sp, nil
-		}
-		log.Errorf(ctx, "Expected to find a Space with id %s in cache.", id)
+	csp, ok := CacheFromContext(ctx).Get(id).(*Space)
+	if ok {
+		return csp, nil
 	}
 
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
@@ -41,7 +36,7 @@ func (s *SpaceService) ByID(ctx context.Context, id string) (*Space, error) {
 		return nil, err
 	}
 
-	ok, err := s.IsVisible(ctx, &sp)
+	ok, err = s.IsVisible(ctx, &sp)
 	if err != nil {
 		return nil, err
 	}

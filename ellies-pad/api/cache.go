@@ -6,13 +6,12 @@ type Cache struct {
 	objs map[string]interface{}
 }
 
-func (c *Cache) Get(id string) (interface{}, bool) {
+func (c *Cache) Get(id string) interface{} {
 	if c == nil {
-		return nil, false
+		return nil
 	}
 
-	obj, ok := c.objs[id]
-	return obj, ok
+	return c.objs[id]
 }
 
 func (c *Cache) Set(id string, value interface{}) {
