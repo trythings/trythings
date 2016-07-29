@@ -22,15 +22,17 @@ type Search struct {
 	Query     string               `json:"query"`
 }
 
-type SearchClientID struct {
-	ID      string
-	Query   string
-	SpaceID string
+type clientSearchID struct {
+	ID      string `json:"id"`
+	Query   string `json:"query"`
+	SpaceID string `json:"spaceId"`
 }
 
 func (se *Search) ClientID() (string, error) {
-	cid := &SearchClientID{}
+	var cid clientSearchID
 
+	// For now, these IDs are unstable.
+	// That is, converting a temporary search into a saved search will return a search with a different client id.
 	if se.ID != "" {
 		// Saved search
 		cid.ID = se.ID
@@ -60,9 +62,9 @@ func (s *SearchService) IsVisible(ctx context.Context, se *Search) (bool, error)
 	return s.SpaceService.IsVisible(ctx, sp)
 }
 
-func (s *SearchService) ByClientID(ctx context.Context, jsonID string) (*Search, error) {
-	cid := &SearchClientID{}
-	err := json.Unmarshal([]byte(jsonID), cid)
+func (s *SearchService) ByClientID(ctx context.Context, clientID string) (*Search, error) {
+	var cid clientSearchID
+	err := json.Unmarshal([]byte(clientID), &cid)
 	if err != nil {
 		return nil, err
 	}
@@ -139,19 +141,21 @@ func (s *SearchService) Create(ctx context.Context, se *Search) error {
 		return errors.New("Name is required")
 	}
 
-	if se.ViewID != "" {
-		v, err := s.ViewService.ByID(ctx, se.ViewID)
-		if err != nil {
-			return err
-		}
+	if se.ViewID == "" {
+		return errors.New("ViewID is required")
+	}
 
-		if se.SpaceID == "" {
-			se.SpaceID = v.SpaceID
-		}
+	v, err := s.ViewService.ByID(ctx, se.ViewID)
+	if err != nil {
+		return err
+	}
 
-		if se.SpaceID != v.SpaceID {
-			return errors.New("Search's SpaceID must match View's")
-		}
+	if se.SpaceID == "" {
+		se.SpaceID = v.SpaceID
+	}
+
+	if se.SpaceID != v.SpaceID {
+		return errors.New("Search's SpaceID must match View's")
 	}
 
 	// TODO#Performance: Add a shared or per-request cache to support these small, repeated queries.
@@ -233,8 +237,8 @@ func (api *SearchAPI) Start() error {
 	api.Type = graphql.NewObject(graphql.ObjectConfig{
 		Name: "Search",
 		Fields: graphql.Fields{
-			"id": relay.GlobalIDField("Search", func(search interface{}, info graphql.ResolveInfo, ctx context.Context) (string, error) {
-				se, ok := search.(*Search)
+			"id": relay.GlobalIDField("Search", func(obj interface{}, info graphql.ResolveInfo, ctx context.Context) (string, error) {
+				se, ok := obj.(*Search)
 				if !ok {
 					return "", fmt.Errorf("Search's GlobalIDField() was called with a non-Search")
 				}
@@ -268,6 +272,7 @@ func (api *SearchAPI) Start() error {
 						return nil, err
 					}
 
+					// TODO#Perf: Run a count query instead of fetching all of the matches.
 					ts, err := api.TaskService.Search(p.Context, sp, se.Query)
 					if err != nil {
 						return nil, err
@@ -300,7 +305,14 @@ func (api *SearchAPI) Start() error {
 						return nil, err
 					}
 
-					return ts, nil
+					objs := []interface{}{}
+					for _, t := range ts {
+						objs = append(objs, *t)
+					}
+
+					// TODO#Performance: Run a limited query instead of filtering after the query.
+					args := relay.NewConnectionArguments(p.Args)
+					return relay.ConnectionFromArray(objs, args), nil
 				},
 			},
 		},

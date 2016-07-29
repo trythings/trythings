@@ -9,7 +9,7 @@ import theme from './theme.js';
 class TaskList extends React.Component {
 	static propTypes = {
 		search: React.PropTypes.shape({
-			numResults: React.PropTypes.int,
+			numResults: React.PropTypes.int.isRequired,
 			results: React.PropTypes.shape({
 				edges: React.PropTypes.arrayOf(React.PropTypes.shape({
 					node: React.PropTypes.shape({
@@ -17,14 +17,14 @@ class TaskList extends React.Component {
 					}).isRequired,
 				})).isRequired,
 				pageInfo: React.PropTypes.shape({
-					hasNextPage: React.PropTypes.bool,
+					hasNextPage: React.PropTypes.bool.isRequired,
 				}),
 			}).isRequired,
 		}).isRequired,
 		relay: React.PropTypes.shape({
 			setVariables: React.PropTypes.func.isRequired,
 			variables: React.PropTypes.shape({
-				numTasksToShow: React.PropTypes.int,
+				numTasksToShow: React.PropTypes.int.isRequired,
 			}).isRequired,
 		}).isRequired,
 	};
@@ -108,7 +108,10 @@ class TaskList extends React.Component {
 
 		const isShowAllVisible = !this.state.isShowingAll &&
 			this.props.search.results.pageInfo.hasNextPage;
-		const remainingTasks = this.props.search.numResults - this.props.relay.variables.numTasksToShow;
+
+		let numRemainingTasks =
+			this.props.search.numResults - this.props.relay.variables.numTasksToShow;
+		numRemainingTasks = numRemainingTasks < 0 ? 0 : numRemainingTasks;
 
 		return (
 			<Card>
@@ -133,7 +136,7 @@ class TaskList extends React.Component {
 							(
 								<li style={TaskList.styles.showAll} onClick={this.onShowAllClick}>
 									<span style={TaskList.styles.showAllText}>
-										{`Show ${remainingTasks} remaining tasks`}
+										{`Show ${numRemainingTasks} remaining tasks`}
 									</span>
 								</li>
 							) :
