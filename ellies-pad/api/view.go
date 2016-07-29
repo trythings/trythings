@@ -9,6 +9,7 @@ import (
 	"github.com/graphql-go/relay"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
+	"google.golang.org/appengine/log"
 )
 
 type View struct {
@@ -31,6 +32,15 @@ func (s *ViewService) IsVisible(ctx context.Context, v *View) (bool, error) {
 }
 
 func (s *ViewService) ByID(ctx context.Context, id string) (*View, error) {
+	obj, inCache := CacheFromContext(ctx).Get(id)
+	if inCache {
+		sp, ok := obj.(*View)
+		if ok {
+			return sp, nil
+		}
+		log.Errorf(ctx, "Expected to find a View with id %s in cache.", id)
+	}
+
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
 	k := datastore.NewKey(ctx, "View", id, 0, rootKey)
 	var v View
@@ -47,6 +57,7 @@ func (s *ViewService) ByID(ctx context.Context, id string) (*View, error) {
 		return nil, errors.New("cannot access view")
 	}
 
+	CacheFromContext(ctx).Set(id, &v)
 	return &v, nil
 }
 

@@ -9,6 +9,7 @@ import (
 	"github.com/graphql-go/relay"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
+	"google.golang.org/appengine/log"
 	"google.golang.org/appengine/search"
 )
 
@@ -58,7 +59,16 @@ func (e ErrAccessDenied) Error() string {
 	return "cannot access task"
 }
 
-func (s *TaskService) Get(ctx context.Context, id string) (*Task, error) {
+func (s *TaskService) ByID(ctx context.Context, id string) (*Task, error) {
+	obj, inCache := CacheFromContext(ctx).Get(id)
+	if inCache {
+		sp, ok := obj.(*Task)
+		if ok {
+			return sp, nil
+		}
+		log.Errorf(ctx, "Expected to find a Task with id %s in cache.", id)
+	}
+
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
 	k := datastore.NewKey(ctx, "Task", id, 0, rootKey)
 	var t Task
@@ -76,6 +86,7 @@ func (s *TaskService) Get(ctx context.Context, id string) (*Task, error) {
 		return nil, ErrAccessDenied{}
 	}
 
+	CacheFromContext(ctx).Set(id, &t)
 	return &t, nil
 }
 
@@ -128,7 +139,7 @@ func (s *TaskService) Update(ctx context.Context, t *Task) error {
 	}
 
 	// Make sure we have access to the task to start.
-	_, err := s.Get(ctx, t.ID)
+	_, err := s.ByID(ctx, t.ID)
 	if err != nil {
 		return err
 	}
@@ -194,7 +205,7 @@ func (s *TaskService) Search(ctx context.Context, sp *Space, query string) ([]*T
 		// TODO Use GetMulti.
 		// FIXME Deleted tasks may still show up in the search index,
 		// so we should just not return them.
-		t, err := s.Get(ctx, id)
+		t, err := s.ByID(ctx, id)
 		if err != nil {
 			if _, ok := err.(ErrAccessDenied); ok {
 				continue
@@ -288,7 +299,7 @@ func (api *TaskAPI) Start() error {
 						if !ok {
 							return nil, errors.New("could not cast taskId to string")
 						}
-						t, err := api.TaskService.Get(p.Context, id)
+						t, err := api.TaskService.ByID(p.Context, id)
 						if err != nil {
 							return nil, err
 						}
@@ -363,7 +374,7 @@ func (api *TaskAPI) Start() error {
 						if !ok {
 							return nil, errors.New("could not cast id to string")
 						}
-						t, err := api.TaskService.Get(p.Context, id)
+						t, err := api.TaskService.ByID(p.Context, id)
 						if err != nil {
 							return nil, err
 						}
@@ -382,7 +393,7 @@ func (api *TaskAPI) Start() error {
 					return nil, fmt.Errorf("invalid id %q", id)
 				}
 
-				t, err := api.TaskService.Get(ctx, resolvedID.ID)
+				t, err := api.TaskService.ByID(ctx, resolvedID.ID)
 				if err != nil {
 					return nil, err
 				}
