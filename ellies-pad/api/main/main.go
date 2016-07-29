@@ -1,4 +1,4 @@
-package api
+package main
 
 import (
 	"errors"
@@ -6,12 +6,13 @@ import (
 	"strings"
 
 	"github.com/graphql-go/handler"
+	"github.com/trythings/trythings/ellies-pad/api"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
 )
 
-func init() {
-	apis, err := NewAPIs()
+func main() {
+	apis, err := api.NewAPIs()
 	if err != nil {
 		panic(err)
 	}
@@ -33,7 +34,7 @@ func init() {
 				return
 			}
 
-			gu, err := GetGoogleUser(ctx, idToken)
+			gu, err := api.GetGoogleUser(ctx, idToken)
 			if err != nil {
 				// TODO#Errors
 				log.Errorf(ctx, "%s", err)
@@ -41,10 +42,18 @@ func init() {
 				return
 			}
 
-			ctx = NewGoogleUserContext(ctx, gu)
+			ctx = api.NewGoogleUserContext(ctx, gu)
 		}
 		h.ContextHandler(ctx, w, r)
 	})
+
+	http.Handle("/static/", http.FileServer(http.Dir(".")))
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/index.html")
+	})
+
+	appengine.Main()
 }
 
 func getIDToken(auth string) (string, error) {
