@@ -25,13 +25,19 @@ type SpaceService struct {
 func (s *SpaceService) ByID(ctx context.Context, id string) (*Space, error) {
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
 	k := datastore.NewKey(ctx, "Space", id, 0, rootKey)
+
+	csp, ok := CacheFromContext(ctx).Get(k).(*Space)
+	if ok {
+		return csp, nil
+	}
+
 	var sp Space
 	err := datastore.Get(ctx, k, &sp)
 	if err != nil {
 		return nil, err
 	}
 
-	ok, err := s.IsVisible(ctx, &sp)
+	ok, err = s.IsVisible(ctx, &sp)
 	if err != nil {
 		return nil, err
 	}
@@ -39,6 +45,7 @@ func (s *SpaceService) ByID(ctx context.Context, id string) (*Space, error) {
 		return nil, errors.New("cannot access space")
 	}
 
+	CacheFromContext(ctx).Set(k, &sp)
 	return &sp, nil
 }
 

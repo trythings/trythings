@@ -43,6 +43,9 @@ func init() {
 
 			ctx = NewGoogleUserContext(ctx, gu)
 		}
+
+		ctx = NewCacheContext(ctx)
+
 		h.ContextHandler(ctx, w, r)
 	})
 }
