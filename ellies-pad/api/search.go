@@ -223,6 +223,7 @@ func (s *SearchService) Update(ctx context.Context, se *Search) error {
 		return err
 	}
 
+	CacheFromContext(ctx).Set(se.ID, se)
 	return nil
 }
 

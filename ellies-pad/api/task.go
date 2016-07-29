@@ -161,6 +161,7 @@ func (s *TaskService) Update(ctx context.Context, t *Task) error {
 		return err
 	}
 
+	CacheFromContext(ctx).Set(t.ID, t)
 	return nil
 }
 
