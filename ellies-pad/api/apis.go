@@ -76,7 +76,27 @@ func (apis *apis) Start() error {
 				Description: "viewer is the person currently interacting with the app.",
 				Type:        apis.UserAPI.Type,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					return apis.UserService.FromContext(p.Context)
+					u, err := apis.UserService.FromContext(p.Context)
+					if err == ErrUserNotFound {
+						gu, ok := GoogleUserFromContext(p.Context)
+						if !ok {
+							return nil, errors.New("expected google user, probably missing Authorization header")
+						}
+						err := apis.UserService.Create(p.Context, &User{
+							GoogleID:        gu.ID,
+							Email:           gu.Email,
+							IsEmailVerified: gu.EmailVerified,
+							Name:            gu.Name,
+							GivenName:       gu.GivenName,
+							FamilyName:      gu.FamilyName,
+							ImageURL:        gu.Picture,
+						})
+						if err != nil {
+							return nil, err
+						}
+						// TODO create default space and view
+					}
+					return u, err
 				},
 			},
 		},

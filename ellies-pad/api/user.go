@@ -11,7 +11,7 @@ import (
 	"google.golang.org/appengine/datastore"
 )
 
-var errUserNotFound = errors.New("user not found")
+var ErrUserNotFound = errors.New("user not found")
 
 type User struct {
 	ID              string    `json:"id"`
@@ -68,33 +68,20 @@ func (s *UserService) byGoogleID(ctx context.Context, googleID string) (*User, e
 	}
 
 	if len(us) == 0 {
-		return nil, errUserNotFound
+		return nil, ErrUserNotFound
 	}
 
 	return us[0], nil
 }
 
-func NewUserContext(ctx context.Context, u *User) context.Context {
-	return context.WithValue(ctx, userKey, u)
-}
-
 // FromContext should not be subject to access control,
 // because it would create a circular dependency.
 func (s *UserService) FromContext(ctx context.Context) (*User, error) {
-	ctxUser, ok := ctx.Value(userKey).(*User)
+	gu, ok := GoogleUserFromContext(ctx)
 	if !ok {
-		return nil, errors.New("expected user info in context, probably missing authorization header")
+		return nil, errors.New("expected google user, probably missing Authorization header")
 	}
-
-	u, err := s.byGoogleID(ctx, ctxUser.GoogleID)
-	if err == errUserNotFound {
-		err := s.Create(ctx, ctxUser)
-		if err != nil {
-			return nil, err
-		}
-		return s.byGoogleID(ctx, ctxUser.GoogleID)
-	}
-	return u, err
+	return s.byGoogleID(ctx, gu.ID)
 }
 
 type UserAPI struct {
