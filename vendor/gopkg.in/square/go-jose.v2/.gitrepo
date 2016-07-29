@@ -1,0 +1,11 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = git@github.com:square/go-jose.git
+	branch = v2
+	commit = 43700c5c6e17912cfa4bae6e971cc2c1acc817ae
+	parent = d25589e7bc53eb1e671a548071f07aad4b0fcb47
+	cmdver = 0.3.0

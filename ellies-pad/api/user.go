@@ -9,17 +9,21 @@ import (
 	"github.com/graphql-go/relay"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
-	"google.golang.org/appengine/user"
 )
 
-var errUserNotFound = errors.New("user not found")
+var ErrUserNotFound = errors.New("user not found")
 
 type User struct {
-	ID        string    `json:"id"`
-	CreatedAt time.Time `json:"createdAt"`
-	GoogleID  string    `json:"-"`
-	Email     string    `json:"email"`
-	Name      string    `json:"name"`
+	ID              string    `json:"id"`
+	CreatedAt       time.Time `json:"createdAt"`
+	IsAdmin         bool      `json:"isAdmin"`
+	GoogleID        string    `json:"-"`
+	Email           string    `json:"email"`
+	IsEmailVerified bool      `json:"-"`
+	Name            string    `json:"name"`
+	GivenName       string    `json:"givenName"`
+	FamilyName      string    `json:"familyName"`
+	ImageURL        string    `json:"imageUrl"`
 }
 
 type UserService struct {
@@ -64,7 +68,7 @@ func (s *UserService) byGoogleID(ctx context.Context, googleID string) (*User, e
 	}
 
 	if len(us) == 0 {
-		return nil, errUserNotFound
+		return nil, ErrUserNotFound
 	}
 
 	return us[0], nil
@@ -73,7 +77,10 @@ func (s *UserService) byGoogleID(ctx context.Context, googleID string) (*User, e
 // FromContext should not be subject to access control,
 // because it would create a circular dependency.
 func (s *UserService) FromContext(ctx context.Context) (*User, error) {
-	gu := user.Current(ctx)
+	gu, ok := GoogleUserFromContext(ctx)
+	if !ok {
+		return nil, errors.New("expected google user, probably missing Authorization header")
+	}
 	return s.byGoogleID(ctx, gu.ID)
 }
 
@@ -92,8 +99,28 @@ func (api *UserAPI) Start() error {
 		Description: "User represents a person who can interact with the app.",
 		Fields: graphql.Fields{
 			"id": relay.GlobalIDField("User", nil),
+			"isAdmin": &graphql.Field{
+				Description: "Whether or not the user is an Ellie's Pad admin.",
+				Type:        graphql.Boolean,
+			},
 			"email": &graphql.Field{
-				Description: "The user's email primary address",
+				Description: "The user's email primary address.",
+				Type:        graphql.String,
+			},
+			"name": &graphql.Field{
+				Description: "The user's full name.",
+				Type:        graphql.String,
+			},
+			"givenName": &graphql.Field{
+				Description: "The user's given name.",
+				Type:        graphql.String,
+			},
+			"familyName": &graphql.Field{
+				Description: "The user's family name.",
+				Type:        graphql.String,
+			},
+			"imageUrl": &graphql.Field{
+				Description: "The user's profile picture URL.",
 				Type:        graphql.String,
 			},
 			"space": &graphql.Field{

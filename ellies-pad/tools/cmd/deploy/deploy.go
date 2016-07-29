@@ -32,7 +32,7 @@ func main() {
 
 func buildWebApp(elliesPath string) error {
 	log.Println("deploy: building web app")
-	npm := exec.Command("npm", "run", "production")
+	npm := exec.Command("npm", "run", "build")
 	npm.Dir = path.Join(elliesPath, "web")
 	npm.Stdout = os.Stdout
 	npm.Stderr = os.Stderr

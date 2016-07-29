@@ -6,11 +6,21 @@ import { RelayRouter } from 'react-router-relay';
 import Relay from 'react-relay';
 
 import App from './App.js';
+import Migrate from './Migrate.js';
 import SignedInApp from './SignedInApp.js';
 import SignIn from './SignIn.js';
 
 Relay.injectNetworkLayer(new Relay.DefaultNetworkLayer('/graphql', {
-	credentials: 'same-origin',
+	headers: {
+		get Authorization() {
+			if (gapi.auth2.getAuthInstance().isSignedIn.get()) {
+				return `Bearer ${
+					gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().id_token
+				}`;
+			}
+			return null;
+		},
+	},
 }));
 
 const queries = {
@@ -30,14 +40,19 @@ const element = (
 				queries={queries}
 			/>
 			<Route
+				path="search/(:query)"
+				component={SignedInApp}
+				onEnter={SignedInApp.onEnter}
+				queries={queries}
+			/>
+			<Route
 				path="signin"
 				component={SignIn}
 				onEnter={SignIn.onEnter}
 			/>
 			<Route
-				path="search/(:query)"
-				component={SignedInApp}
-				onEnter={SignedInApp.onEnter}
+				path="migrate"
+				component={Migrate}
 				queries={queries}
 			/>
 		</Route>

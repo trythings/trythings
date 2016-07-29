@@ -6,10 +6,6 @@ import (
 	"golang.org/x/net/context"
 )
 
-type key int
-
-const superuserKey key = 0
-
 func AsSuperuser(ctx context.Context) context.Context {
 	return context.WithValue(ctx, superuserKey, true)
 }

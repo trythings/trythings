@@ -1,10 +1,13 @@
 package api
 
 import (
+	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/graphql-go/handler"
 	"google.golang.org/appengine"
+	"google.golang.org/appengine/log"
 )
 
 func init() {
@@ -20,6 +23,38 @@ func init() {
 
 	http.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
 		ctx := appengine.NewContext(r)
+		auth := r.Header.Get("Authorization")
+		if auth != "" {
+			idToken, err := getIDToken(auth)
+			if err != nil {
+				// TODO#Errors
+				log.Errorf(ctx, "%s", err)
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+
+			gu, err := GetGoogleUser(ctx, idToken)
+			if err != nil {
+				// TODO#Errors
+				log.Errorf(ctx, "%s", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			ctx = NewGoogleUserContext(ctx, gu)
+		}
 		h.ContextHandler(ctx, w, r)
 	})
+}
+
+func getIDToken(auth string) (string, error) {
+	if auth == "" {
+		return "", errors.New("expected Authorization header")
+	}
+
+	if !strings.HasPrefix(auth, "Bearer ") {
+		return "", errors.New("expected bearer auth")
+	}
+
+	return strings.TrimPrefix(auth, "Bearer "), nil
 }

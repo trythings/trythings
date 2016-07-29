@@ -8,8 +8,6 @@ import (
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/relay"
 	"golang.org/x/net/context"
-	"google.golang.org/appengine"
-	"google.golang.org/appengine/user"
 )
 
 type apis struct {
@@ -79,17 +77,26 @@ func (apis *apis) Start() error {
 				Type:        apis.UserAPI.Type,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					u, err := apis.UserService.FromContext(p.Context)
-					if err == errUserNotFound && appengine.IsDevAppServer() {
-						gu := user.Current(p.Context)
+					if err == ErrUserNotFound {
+						gu, ok := GoogleUserFromContext(p.Context)
+						if !ok {
+							return nil, errors.New("expected google user, probably missing Authorization header")
+						}
+						// TODO Some of the google user's fields could change after user creation.
+						// Consider updating the user to reflect those changes (e.g. IsEmailVerified).
 						err := apis.UserService.Create(p.Context, &User{
-							GoogleID: gu.ID,
-							Email:    gu.Email,
-							Name:     gu.String(),
+							GoogleID:        gu.ID,
+							Email:           gu.Email,
+							IsEmailVerified: gu.EmailVerified,
+							Name:            gu.Name,
+							GivenName:       gu.GivenName,
+							FamilyName:      gu.FamilyName,
+							ImageURL:        gu.Picture,
 						})
 						if err != nil {
 							return nil, err
 						}
-						return apis.UserService.FromContext(p.Context)
+						// TODO create default space and view
 					}
 					return u, err
 				},

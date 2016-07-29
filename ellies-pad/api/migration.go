@@ -426,6 +426,7 @@ func (s *MigrationService) RunAll(ctx context.Context) error {
 }
 
 type MigrationAPI struct {
+	UserService      *UserService      `inject:""`
 	MigrationService *MigrationService `inject:""`
 	Mutations        map[string]*graphql.Field
 }
@@ -441,7 +442,16 @@ func (api *MigrationAPI) Start() error {
 			InputFields:  graphql.InputObjectConfigFieldMap{},
 			OutputFields: graphql.Fields{},
 			MutateAndGetPayload: func(inputMap map[string]interface{}, info graphql.ResolveInfo, ctx context.Context) (map[string]interface{}, error) {
-				err := runAll.Call(ctx)
+				u, err := api.UserService.FromContext(ctx)
+				if err != nil {
+					return nil, err
+				}
+
+				if !u.IsAdmin {
+					return nil, errors.New("user must be an admin")
+				}
+
+				err = runAll.Call(ctx)
 				if err != nil {
 					return nil, err
 				}
