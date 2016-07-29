@@ -9,7 +9,7 @@ import theme from './theme.js';
 class TaskList extends React.Component {
 	static propTypes = {
 		search: React.PropTypes.shape({
-			numResults: React.PropTypes.int.isRequired,
+			numResults: React.PropTypes.number.isRequired,
 			results: React.PropTypes.shape({
 				edges: React.PropTypes.arrayOf(React.PropTypes.shape({
 					node: React.PropTypes.shape({
@@ -24,7 +24,7 @@ class TaskList extends React.Component {
 		relay: React.PropTypes.shape({
 			setVariables: React.PropTypes.func.isRequired,
 			variables: React.PropTypes.shape({
-				numTasksToShow: React.PropTypes.int.isRequired,
+				numTasksToShow: React.PropTypes.number.isRequired,
 			}).isRequired,
 		}).isRequired,
 	};
