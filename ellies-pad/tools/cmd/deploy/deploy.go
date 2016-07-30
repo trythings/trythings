@@ -8,8 +8,8 @@ import (
 	"path"
 )
 
-var elliesPath = flag.String("ellies-path", "ellies-pad", "Path to the root of the ellies-pad directory")
-var token = flag.String("token", "", "OAuth2 refresh token to use when deploying to App Engine")
+var elliesPath = flag.String("elliesPath", "ellies-pad", "Path to the root of the ellies-pad directory")
+var keyFile = flag.String("keyFile", "", "Service account key to use when deploying to App Engine")
 
 func main() {
 	flag.Parse()
@@ -24,7 +24,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := deployToAppEngine(*elliesPath, *token); err != nil {
+	if err := authWithAppEngine(*elliesPath, *keyFile); err != nil {
+		log.Println("deploy: could not authenticate with App Engine", err)
+		os.Exit(1)
+	}
+
+	if err := deployToAppEngine(*elliesPath); err != nil {
 		log.Println("deploy: could not deploy to App Engine", err)
 		os.Exit(1)
 	}
@@ -39,17 +44,32 @@ func buildWebApp(elliesPath string) error {
 	return npm.Run()
 }
 
-func deployToAppEngine(elliesPath, token string) error {
-	log.Println("deploy: deploying to App Engine")
-	ae := exec.Command("appcfg.py", "update", ".")
-
-	if token != "" {
-		ae.Args = append(ae.Args, "--oauth2_refresh_token", token)
+func authWithAppEngine(elliesPath, keyFile string) error {
+	if keyFile == "" {
+		log.Println("deploy: no keyFile provided, assuming login authentication")
+		return nil
 	}
 
-	ae.Dir = path.Join(elliesPath, "api")
-	ae.Stdout = os.Stdout
-	ae.Stderr = os.Stderr
+	log.Println("deploy: authenticating with App Engine")
+	gc := exec.Command("gcloud", "auth", "activate-service-account")
+	gc.Args = append(gc.Args, "--key-file", keyFile)
+	gc.Dir = path.Join(elliesPath, "api", "main")
+	gc.Stdout = os.Stdout
+	gc.Stderr = os.Stderr
+	return gc.Run()
+}
 
-	return ae.Run()
+func deployToAppEngine(elliesPath string) error {
+	log.Println("deploy: deploying to App Engine")
+	gc := exec.Command(
+		"go", "run", "../../../vendor/google.golang.org/appengine/cmd/aedeploy/aedeploy.go",
+		"gcloud", "app", "deploy",
+		"--project", "ellies-pad",
+		"--version", "1",
+		"--quiet",
+	)
+	gc.Dir = path.Join(elliesPath, "api", "main")
+	gc.Stdout = os.Stdout
+	gc.Stderr = os.Stderr
+	return gc.Run()
 }
