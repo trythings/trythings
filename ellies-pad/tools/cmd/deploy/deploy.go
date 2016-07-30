@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 )
 
 var elliesPath = flag.String("elliesPath", "ellies-pad", "Path to the root of the ellies-pad directory")
@@ -52,6 +53,10 @@ func authWithAppEngine(elliesPath, keyFile string) error {
 
 	log.Println("deploy: authenticating with App Engine")
 	gc := exec.Command("gcloud", "auth", "activate-service-account")
+	keyFile, err := filepath.Abs(keyFile)
+	if err != nil {
+		return err
+	}
 	gc.Args = append(gc.Args, "--key-file", keyFile)
 	gc.Dir = path.Join(elliesPath, "api", "main")
 	gc.Stdout = os.Stdout
