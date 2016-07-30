@@ -70,6 +70,7 @@ func deployToAppEngine(elliesPath string) error {
 		"go", "run", "../../../vendor/google.golang.org/appengine/cmd/aedeploy/aedeploy.go",
 		"gcloud", "app", "deploy",
 		"--project", "ellies-pad",
+		"--verbosity", "info",
 		"--version", "1",
 		"--quiet",
 	)
