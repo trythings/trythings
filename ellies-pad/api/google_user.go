@@ -24,6 +24,24 @@ type GoogleUser struct {
 
 var googleKeys jose.JSONWebKeySet
 
+func updateGoogleKeys(ctx context.Context) error {
+	// Try to fetch new public keys from Google.
+	client := urlfetch.Client(ctx)
+	client.Timeout = 1 * time.Second
+	resp, err := client.Get("https://www.googleapis.com/oauth2/v3/certs")
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	err = json.NewDecoder(resp.Body).Decode(&googleKeys)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func GetGoogleUser(ctx context.Context, idToken string) (*GoogleUser, error) {
 	tok, err := jwt.ParseSigned(idToken)
 	if err != nil {
@@ -39,20 +57,10 @@ func GetGoogleUser(ctx context.Context, idToken string) (*GoogleUser, error) {
 
 	keys := googleKeys.Key(tok.Headers[0].KeyID)
 	if len(keys) == 0 {
-		// Try to fetch new public keys from Google.
-		client := urlfetch.Client(ctx)
-		client.Timeout = 1 * time.Second
-		resp, err := client.Get("https://www.googleapis.com/oauth2/v3/certs")
+		err := updateGoogleKeys(ctx)
 		if err != nil {
 			return nil, err
 		}
-		defer resp.Body.Close()
-
-		err = json.NewDecoder(resp.Body).Decode(&googleKeys)
-		if err != nil {
-			return nil, err
-		}
-
 		keys = googleKeys.Key(tok.Headers[0].KeyID)
 	}
 

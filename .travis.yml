@@ -7,8 +7,10 @@ env: GO15VENDOREXPERIMENT=1
 cache:
   directories:
     - ellies-pad/web/node_modules
-    - go_appengine
+    - google-cloud-sdk
 before_install:
+  # Decrypt service account key file.
+  - openssl aes-256-cbc -K $encrypted_5d88bc4a54f7_key -iv $encrypted_5d88bc4a54f7_iv -in ellies-pad/tools/cmd/deploy/key.json.enc -out ellies-pad/tools/cmd/deploy/key.json -d
   # Only deploy on master.
   - if test "$TRAVIS_PULL_REQUEST" = false && test "$TRAVIS_BRANCH" = master; then export DEPLOY=true; fi
   # Only build and test the API if it has changed, or we should deploy.
@@ -21,13 +23,13 @@ install:
   - |
     if test "$API"
     then
-      if test ! -e go_appengine/goapp
+      if test ! -e google-cloud-sdk/bin/gcloud
       then
-        # Download the App Engine SDK if we didn't have it in the cache.
-        wget https://storage.googleapis.com/appengine-sdks/featured/go_appengine_sdk_linux_amd64-1.9.35.zip &&
-        unzip -q go_appengine_sdk_linux_amd64-1.9.35.zip
+        # Download the Google Cloud SDK if we didn't have it in the cache.
+        wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-119.0.0-linux-x86_64.tar.gz &&
+        tar xzf google-cloud-sdk-119.0.0-linux-x86_64.tar.gz
       fi
-      export PATH="$PWD/go_appengine:$PATH"
+      export PATH="$PWD/google-cloud-sdk/bin:$PATH"
     fi
   - |
     if test "$WEB"
@@ -39,7 +41,7 @@ install:
       npm install
     ) fi
 script:
-  - if test "$API"; then goapp test ./ellies-pad/api; fi
+  - if test "$API"; then go test ./ellies-pad/api; fi
   - |
     if test "$WEB"
     then (
@@ -49,6 +51,6 @@ script:
 after_success: |
   if test "$DEPLOY"
   then
-    # Deploy the API and web app using an oauth token stored in a Travis environment variable.
-    go run ellies-pad/tools/cmd/deploy/deploy.go -token "$APP_ENGINE_OAUTH2_REFRESH_TOKEN"
+    # Deploy the API and web app.
+    go run ellies-pad/tools/cmd/deploy/deploy.go -keyFile ellies-pad/tools/cmd/deploy/key.json
   fi
