@@ -6,6 +6,6 @@
 [subrepo]
 	remote = git@github.com:graphql-go/graphql.git
 	branch = master
-	commit = 26c58bd73a3cf9177fb534f57c9698a7bc6277a2
-	parent = 7567dd2623a96544b03a3e338ce91c100ae69027
+	commit = 491504a5ac801fc9d72ecae4e57e5231c6a57595
+	parent = 4f3fe5f1b1d8f9ee3cf4b72d132aebd8b7f29154
 	cmdver = 0.3.0

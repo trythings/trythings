@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -15,33 +16,87 @@ type Search struct {
 	ID        string               `json:"id"`
 	CreatedAt time.Time            `json:"createdAt"`
 	Name      string               `json:"name"`
+	SpaceID   string               `json:"spaceId"`
 	ViewID    string               `json:"viewId"`
 	ViewRank  datastore.ByteString `json:"viewRank"`
 	Query     string               `json:"query"`
 }
 
+type clientSearchID struct {
+	ID      string `json:"id"`
+	Query   string `json:"query"`
+	SpaceID string `json:"spaceId"`
+}
+
+func (se *Search) ClientID() (string, error) {
+	var cid clientSearchID
+
+	// For now, these IDs are unstable.
+	// That is, converting a temporary search into a saved search will return a search with a different client id.
+	if se.ID != "" {
+		// Saved search
+		cid.ID = se.ID
+	} else {
+		// Temporary search
+		cid.Query = se.Query
+		cid.SpaceID = se.SpaceID
+	}
+
+	jsonID, err := json.Marshal(cid)
+	if err != nil {
+		return "", err
+	}
+	return string(jsonID), nil
+}
+
 type SearchService struct {
-	ViewService *ViewService `inject:""`
+	SpaceService *SpaceService `inject:""`
+	ViewService  *ViewService  `inject:""`
 }
 
 func (s *SearchService) IsVisible(ctx context.Context, se *Search) (bool, error) {
-	v, err := s.ViewService.ByID(ctx, se.ViewID)
+	sp, err := s.SpaceService.ByID(ctx, se.SpaceID)
 	if err != nil {
 		return false, err
 	}
-	return s.ViewService.IsVisible(ctx, v)
+	return s.SpaceService.IsVisible(ctx, sp)
+}
+
+func (s *SearchService) ByClientID(ctx context.Context, clientID string) (*Search, error) {
+	var cid clientSearchID
+	err := json.Unmarshal([]byte(clientID), &cid)
+	if err != nil {
+		return nil, err
+	}
+
+	// Saved search
+	if cid.ID != "" {
+		return s.ByID(ctx, cid.ID)
+	}
+
+	// Temporary search
+	return &Search{
+		SpaceID: cid.SpaceID,
+		Query:   cid.Query,
+	}, nil
 }
 
 func (s *SearchService) ByID(ctx context.Context, id string) (*Search, error) {
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
 	k := datastore.NewKey(ctx, "Search", id, 0, rootKey)
+
+	cse, ok := CacheFromContext(ctx).Get(k).(*Search)
+	if ok {
+		return cse, nil
+	}
+
 	var se Search
 	err := datastore.Get(ctx, k, &se)
 	if err != nil {
 		return nil, err
 	}
 
-	ok, err := s.IsVisible(ctx, &se)
+	ok, err = s.IsVisible(ctx, &se)
 	if err != nil {
 		return nil, err
 	}
@@ -49,6 +104,7 @@ func (s *SearchService) ByID(ctx context.Context, id string) (*Search, error) {
 		return nil, errors.New("cannot access search")
 	}
 
+	CacheFromContext(ctx).Set(k, &se)
 	return &se, nil
 }
 
@@ -95,6 +151,21 @@ func (s *SearchService) Create(ctx context.Context, se *Search) error {
 	if se.ViewID == "" {
 		return errors.New("ViewID is required")
 	}
+
+	v, err := s.ViewService.ByID(ctx, se.ViewID)
+	if err != nil {
+		return err
+	}
+
+	if se.SpaceID == "" {
+		se.SpaceID = v.SpaceID
+	}
+
+	if se.SpaceID != v.SpaceID {
+		return errors.New("Search's SpaceID must match View's")
+	}
+
+	// TODO#Performance: Add a shared or per-request cache to support these small, repeated queries.
 
 	if se.Query == "" {
 		return errors.New("Query is required")
@@ -153,15 +224,12 @@ func (s *SearchService) Update(ctx context.Context, se *Search) error {
 		return err
 	}
 
+	CacheFromContext(ctx).Set(k, se)
 	return nil
 }
 
 func (s *SearchService) Space(ctx context.Context, se *Search) (*Space, error) {
-	v, err := s.ViewService.ByID(ctx, se.ViewID)
-	if err != nil {
-		return nil, err
-	}
-	return s.ViewService.Space(ctx, v)
+	return s.SpaceService.ByID(ctx, se.SpaceID)
 }
 
 type SearchAPI struct {
@@ -177,7 +245,18 @@ func (api *SearchAPI) Start() error {
 	api.Type = graphql.NewObject(graphql.ObjectConfig{
 		Name: "Search",
 		Fields: graphql.Fields{
-			"id": relay.GlobalIDField("Search", nil),
+			"id": relay.GlobalIDField("Search", func(obj interface{}, info graphql.ResolveInfo, ctx context.Context) (string, error) {
+				se, ok := obj.(*Search)
+				if !ok {
+					return "", fmt.Errorf("Search's GlobalIDField() was called with a non-Search")
+				}
+
+				cid, err := se.ClientID()
+				if err != nil {
+					return "", fmt.Errorf("Failed to create a ClientID for %v", se)
+				}
+				return cid, nil
+			}),
 			"createdAt": &graphql.Field{
 				Description: "When the search was first saved.",
 				Type:        graphql.String,
@@ -186,17 +265,42 @@ func (api *SearchAPI) Start() error {
 				Description: "The name to display for the search.",
 				Type:        graphql.String,
 			},
+			// TODO#Perf: Consider storing the search results on the context or ResolveInfo to avoid computing them twice (numResults and results).
+			"numResults": &graphql.Field{
+				Description: "The total number of results that match the query",
+				Type:        graphql.Int,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					se, ok := p.Source.(*Search)
+					if !ok {
+						return nil, errors.New("expected search source")
+					}
+
+					sp, err := api.SearchService.Space(p.Context, se)
+					if err != nil {
+						return nil, err
+					}
+
+					// TODO#Perf: Run a count query instead of fetching all of the matches.
+					ts, err := api.TaskService.Search(p.Context, sp, se.Query)
+					if err != nil {
+						return nil, err
+					}
+
+					return len(ts), nil
+				},
+			},
 			"query": &graphql.Field{
 				Description: "The query used to search for tasks.",
 				Type:        graphql.String,
 			},
-			"tasks": &graphql.Field{
-				Description: "The tasks that match the query.",
-				Type:        graphql.NewList(api.TaskAPI.Type),
+			"results": &graphql.Field{
+				Description: "The tasks that match the query",
+				Type:        api.TaskAPI.ConnectionType,
+				Args:        relay.ConnectionArgs,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					se, ok := p.Source.(*Search)
 					if !ok {
-						return nil, errors.New("expected view source")
+						return nil, errors.New("expected search source")
 					}
 
 					sp, err := api.SearchService.Space(p.Context, se)
@@ -209,7 +313,14 @@ func (api *SearchAPI) Start() error {
 						return nil, err
 					}
 
-					return ts, nil
+					objs := []interface{}{}
+					for _, t := range ts {
+						objs = append(objs, *t)
+					}
+
+					// TODO#Performance: Run a limited query instead of filtering after the query.
+					args := relay.NewConnectionArguments(p.Args)
+					return relay.ConnectionFromArray(objs, args), nil
 				},
 			},
 		},

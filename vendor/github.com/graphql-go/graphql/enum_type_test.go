@@ -6,6 +6,7 @@ import (
 
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/gqlerrors"
+	"github.com/graphql-go/graphql/language/location"
 	"github.com/graphql-go/graphql/testutil"
 )
 
@@ -93,9 +94,31 @@ var enumTypeTestMutationType = graphql.NewObject(graphql.ObjectConfig{
 		},
 	},
 })
+
+var enumTypeTestSubscriptionType = graphql.NewObject(graphql.ObjectConfig{
+	Name: "Subscription",
+	Fields: graphql.Fields{
+		"subscribeToEnum": &graphql.Field{
+			Type: enumTypeTestColorType,
+			Args: graphql.FieldConfigArgument{
+				"color": &graphql.ArgumentConfig{
+					Type: enumTypeTestColorType,
+				},
+			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				if color, ok := p.Args["color"]; ok {
+					return color, nil
+				}
+				return nil, nil
+			},
+		},
+	},
+})
+
 var enumTypeTestSchema, _ = graphql.NewSchema(graphql.SchemaConfig{
-	Query:    enumTypeTestQueryType,
-	Mutation: enumTypeTestMutationType,
+	Query:        enumTypeTestQueryType,
+	Mutation:     enumTypeTestMutationType,
+	Subscription: enumTypeTestSubscriptionType,
 })
 
 func executeEnumTypeTest(t *testing.T, query string) *graphql.Result {
@@ -155,8 +178,11 @@ func TestTypeSystem_EnumValues_DoesNotAcceptStringLiterals(t *testing.T) {
 	expected := &graphql.Result{
 		Data: nil,
 		Errors: []gqlerrors.FormattedError{
-			gqlerrors.FormattedError{
-				Message: `Argument "fromEnum" expected type "Color" but got: "GREEN".`,
+			{
+				Message: "Argument \"fromEnum\" has invalid value \"GREEN\".\nExpected type \"Color\", found \"GREEN\".",
+				Locations: []location.SourceLocation{
+					{Line: 1, Column: 23},
+				},
 			},
 		},
 	}
@@ -182,8 +208,11 @@ func TestTypeSystem_EnumValues_DoesNotAcceptInternalValueInPlaceOfEnumLiteral(t 
 	expected := &graphql.Result{
 		Data: nil,
 		Errors: []gqlerrors.FormattedError{
-			gqlerrors.FormattedError{
-				Message: `Argument "fromEnum" expected type "Color" but got: 1.`,
+			{
+				Message: "Argument \"fromEnum\" has invalid value 1.\nExpected type \"Color\", found 1.",
+				Locations: []location.SourceLocation{
+					{Line: 1, Column: 23},
+				},
 			},
 		},
 	}
@@ -198,8 +227,11 @@ func TestTypeSystem_EnumValues_DoesNotAcceptEnumLiteralInPlaceOfInt(t *testing.T
 	expected := &graphql.Result{
 		Data: nil,
 		Errors: []gqlerrors.FormattedError{
-			gqlerrors.FormattedError{
-				Message: `Argument "fromInt" expected type "Int" but got: GREEN.`,
+			{
+				Message: "Argument \"fromInt\" has invalid value GREEN.\nExpected type \"Int\", found GREEN.",
+				Locations: []location.SourceLocation{
+					{Line: 1, Column: 23},
+				},
 			},
 		},
 	}
@@ -240,6 +272,22 @@ func TestTypeSystem_EnumValues_AcceptsEnumLiteralsAsInputArgumentsToMutations(t 
 		t.Fatalf("Unexpected result, Diff: %v", testutil.Diff(expected, result))
 	}
 }
+
+func TestTypeSystem_EnumValues_AcceptsEnumLiteralsAsInputArgumentsToSubscriptions(t *testing.T) {
+	query := `subscription x($color: Color!) { subscribeToEnum(color: $color) }`
+	params := map[string]interface{}{
+		"color": "GREEN",
+	}
+	expected := &graphql.Result{
+		Data: map[string]interface{}{
+			"subscribeToEnum": "GREEN",
+		},
+	}
+	result := executeEnumTypeTestWithParams(t, query, params)
+	if !reflect.DeepEqual(expected, result) {
+		t.Fatalf("Unexpected result, Diff: %v", testutil.Diff(expected, result))
+	}
+}
 func TestTypeSystem_EnumValues_DoesNotAcceptInternalValueAsEnumVariable(t *testing.T) {
 	query := `query test($color: Color!) { colorEnum(fromEnum: $color) }`
 	params := map[string]interface{}{
@@ -248,8 +296,11 @@ func TestTypeSystem_EnumValues_DoesNotAcceptInternalValueAsEnumVariable(t *testi
 	expected := &graphql.Result{
 		Data: nil,
 		Errors: []gqlerrors.FormattedError{
-			gqlerrors.FormattedError{
-				Message: `Variable "$color" expected value of type "Color!" but got: 2.`,
+			{
+				Message: "Variable \"$color\" got invalid value 2.\nExpected type \"Color\", found \"2\".",
+				Locations: []location.SourceLocation{
+					{Line: 1, Column: 12},
+				},
 			},
 		},
 	}
@@ -266,7 +317,7 @@ func TestTypeSystem_EnumValues_DoesNotAcceptStringVariablesAsEnumInput(t *testin
 	expected := &graphql.Result{
 		Data: nil,
 		Errors: []gqlerrors.FormattedError{
-			gqlerrors.FormattedError{
+			{
 				Message: `Variable "$color" of type "String!" used in position expecting type "Color".`,
 			},
 		},
@@ -284,7 +335,7 @@ func TestTypeSystem_EnumValues_DoesNotAcceptInternalValueVariableAsEnumInput(t *
 	expected := &graphql.Result{
 		Data: nil,
 		Errors: []gqlerrors.FormattedError{
-			gqlerrors.FormattedError{
+			{
 				Message: `Variable "$color" of type "Int!" used in position expecting type "Color".`,
 			},
 		},

@@ -8,9 +8,25 @@ import theme from './theme.js';
 
 class TaskList extends React.Component {
 	static propTypes = {
-		tasks: React.PropTypes.arrayOf(React.PropTypes.shape({
-			// ...TaskListItem.propTypes.task
-		})).isRequired,
+		search: React.PropTypes.shape({
+			numResults: React.PropTypes.number.isRequired,
+			results: React.PropTypes.shape({
+				edges: React.PropTypes.arrayOf(React.PropTypes.shape({
+					node: React.PropTypes.shape({
+						// ...TaskListItem.propTypes.task
+					}).isRequired,
+				})).isRequired,
+				pageInfo: React.PropTypes.shape({
+					hasNextPage: React.PropTypes.bool.isRequired,
+				}),
+			}).isRequired,
+		}).isRequired,
+		relay: React.PropTypes.shape({
+			setVariables: React.PropTypes.func.isRequired,
+			variables: React.PropTypes.shape({
+				numTasksToShow: React.PropTypes.number.isRequired,
+			}).isRequired,
+		}).isRequired,
 	};
 
 	static styles = {
@@ -65,7 +81,16 @@ class TaskList extends React.Component {
 	};
 
 	onShowAllClick = () => {
-		this.setState({ isShowingAll: true });
+		this.props.relay.setVariables({
+			// Since we can't specify that we want all of the results,
+			// we fetch 100 more than we know about.
+			numTasksToShow: this.props.search.numResults + 100,
+		}, (readyState) => {
+			if (readyState.ready) {
+				this.setState({ isShowingAll: true });
+			}
+			// TODO#Errors: Figure out how we want to handle client errors (readyState.errors != null).
+		});
 	};
 
 	renderEmpty() {
@@ -75,19 +100,18 @@ class TaskList extends React.Component {
 	}
 
 	render() {
-		if (!this.props.tasks.length) {
+		const tasks = this.props.search.results.edges.map((edge) => edge.node);
+
+		if (!tasks.length) {
 			return this.renderEmpty();
 		}
 
-		const defaultNumShowing = 10;
-
-		let tasks = this.props.tasks;
-		if (!this.state.isShowingAll) {
-			tasks = tasks.slice(0, defaultNumShowing);
-		}
-
 		const isShowAllVisible = !this.state.isShowingAll &&
-			this.props.tasks.length > defaultNumShowing;
+			this.props.search.results.pageInfo.hasNextPage;
+
+		let numRemainingTasks =
+			this.props.search.numResults - this.props.relay.variables.numTasksToShow;
+		numRemainingTasks = numRemainingTasks < 0 ? 0 : numRemainingTasks;
 
 		return (
 			<Card>
@@ -112,7 +136,7 @@ class TaskList extends React.Component {
 							(
 								<li style={TaskList.styles.showAll} onClick={this.onShowAllClick}>
 									<span style={TaskList.styles.showAllText}>
-										{`Show ${this.props.tasks.length - defaultNumShowing} remaining tasks`}
+										{`Show ${numRemainingTasks} remaining tasks`}
 									</span>
 								</li>
 							) :
@@ -125,11 +149,24 @@ class TaskList extends React.Component {
 }
 
 export default Relay.createContainer(TaskList, {
+	initialVariables: {
+		numTasksToShow: 10,
+	},
 	fragments: {
-		tasks: () => Relay.QL`
-			fragment on Task @relay(plural: true) {
-				id,
-				${TaskListItem.getFragment('task')},
+		search: () => Relay.QL`
+			fragment on Search {
+				numResults,
+				results(first: $numTasksToShow) {
+					edges {
+						node {
+							id,
+							${TaskListItem.getFragment('task')},
+						},
+					},
+					pageInfo {
+						hasNextPage,
+					},
+				}
 			}
 		`,
 	},

@@ -25,13 +25,19 @@ type SpaceService struct {
 func (s *SpaceService) ByID(ctx context.Context, id string) (*Space, error) {
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
 	k := datastore.NewKey(ctx, "Space", id, 0, rootKey)
+
+	csp, ok := CacheFromContext(ctx).Get(k).(*Space)
+	if ok {
+		return csp, nil
+	}
+
 	var sp Space
 	err := datastore.Get(ctx, k, &sp)
 	if err != nil {
 		return nil, err
 	}
 
-	ok, err := s.IsVisible(ctx, &sp)
+	ok, err = s.IsVisible(ctx, &sp)
 	if err != nil {
 		return nil, err
 	}
@@ -39,6 +45,7 @@ func (s *SpaceService) ByID(ctx context.Context, id string) (*Space, error) {
 		return nil, errors.New("cannot access space")
 	}
 
+	CacheFromContext(ctx).Set(k, &sp)
 	return &sp, nil
 }
 
@@ -160,7 +167,7 @@ func (api *SpaceAPI) Start() error {
 				Description: "The name to display for the space.",
 				Type:        graphql.String,
 			},
-			"search": &graphql.Field{
+			"savedSearch": &graphql.Field{
 				Args: graphql.FieldConfigArgument{
 					"id": &graphql.ArgumentConfig{
 						Type: graphql.String,
@@ -177,14 +184,14 @@ func (api *SpaceAPI) Start() error {
 						return nil, fmt.Errorf("invalid id %q", id)
 					}
 
-					se, err := api.SearchService.ByID(p.Context, resolvedID.ID)
+					se, err := api.SearchService.ByClientID(p.Context, resolvedID.ID)
 					if err != nil {
 						return nil, err
 					}
 					return se, nil
 				},
 			},
-			"tasks": &graphql.Field{
+			"querySearch": &graphql.Field{
 				Args: graphql.FieldConfigArgument{
 					"query": &graphql.ArgumentConfig{
 						Type:         graphql.String,
@@ -192,8 +199,7 @@ func (api *SpaceAPI) Start() error {
 						Description:  "query filters the result to only tasks that contain particular terms in their title or description",
 					},
 				},
-				Description: "tasks are all pieces of work that need to be completed for the user.",
-				Type:        graphql.NewList(api.TaskAPI.Type),
+				Type: api.SearchAPI.Type,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					sp, ok := p.Source.(*Space)
 					if !ok {
@@ -205,7 +211,10 @@ func (api *SpaceAPI) Start() error {
 						q = "" // Return all tasks.
 					}
 
-					return api.TaskService.Search(p.Context, sp, q)
+					return &Search{
+						Query:   q,
+						SpaceID: sp.ID,
+					}, nil
 				},
 			},
 			"view": &graphql.Field{

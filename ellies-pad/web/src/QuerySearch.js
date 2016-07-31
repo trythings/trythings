@@ -75,6 +75,7 @@ class QuerySearch extends React.Component {
 							Component={QuerySearchResults}
 							route={new QuerySearchRoute({ query: this.props.query })}
 							renderLoading={this.renderLoading}
+							forceFetch
 						/>
 					) :
 					(

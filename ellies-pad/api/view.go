@@ -33,13 +33,19 @@ func (s *ViewService) IsVisible(ctx context.Context, v *View) (bool, error) {
 func (s *ViewService) ByID(ctx context.Context, id string) (*View, error) {
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
 	k := datastore.NewKey(ctx, "View", id, 0, rootKey)
+
+	cv, ok := CacheFromContext(ctx).Get(k).(*View)
+	if ok {
+		return cv, nil
+	}
+
 	var v View
 	err := datastore.Get(ctx, k, &v)
 	if err != nil {
 		return nil, err
 	}
 
-	ok, err := s.IsVisible(ctx, &v)
+	ok, err = s.IsVisible(ctx, &v)
 	if err != nil {
 		return nil, err
 	}
@@ -47,6 +53,7 @@ func (s *ViewService) ByID(ctx context.Context, id string) (*View, error) {
 		return nil, errors.New("cannot access view")
 	}
 
+	CacheFromContext(ctx).Set(k, &v)
 	return &v, nil
 }
 

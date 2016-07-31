@@ -58,16 +58,22 @@ func (e ErrAccessDenied) Error() string {
 	return "cannot access task"
 }
 
-func (s *TaskService) Get(ctx context.Context, id string) (*Task, error) {
+func (s *TaskService) ByID(ctx context.Context, id string) (*Task, error) {
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
 	k := datastore.NewKey(ctx, "Task", id, 0, rootKey)
+
+	ct, ok := CacheFromContext(ctx).Get(k).(*Task)
+	if ok {
+		return ct, nil
+	}
+
 	var t Task
 	err := datastore.Get(ctx, k, &t)
 	if err != nil {
 		return nil, err
 	}
 
-	ok, err := s.IsVisible(ctx, &t)
+	ok, err = s.IsVisible(ctx, &t)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +82,40 @@ func (s *TaskService) Get(ctx context.Context, id string) (*Task, error) {
 		return nil, ErrAccessDenied{}
 	}
 
+	CacheFromContext(ctx).Set(k, &t)
 	return &t, nil
+}
+
+// ByIDs filters out Tasks that are not visible to the current User.
+func (s *TaskService) ByIDs(ctx context.Context, ids []string) ([]*Task, error) {
+	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
+
+	ks := []*datastore.Key{}
+	for _, id := range ids {
+		ks = append(ks, datastore.NewKey(ctx, "Task", id, 0, rootKey))
+	}
+
+	var allTasks = make([]*Task, len(ks))
+	err := datastore.GetMulti(ctx, ks, allTasks)
+	if err != nil {
+		return nil, err
+	}
+
+	ts := []*Task{}
+	for _, t := range allTasks {
+		// TODO#Perf: Batch the isVisible check.
+		ok, err := s.IsVisible(ctx, t)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			continue
+		}
+
+		ts = append(ts, t)
+	}
+
+	return ts, nil
 }
 
 func (s *TaskService) Create(ctx context.Context, t *Task) error {
@@ -128,7 +167,7 @@ func (s *TaskService) Update(ctx context.Context, t *Task) error {
 	}
 
 	// Make sure we have access to the task to start.
-	_, err := s.Get(ctx, t.ID)
+	_, err := s.ByID(ctx, t.ID)
 	if err != nil {
 		return err
 	}
@@ -155,6 +194,7 @@ func (s *TaskService) Update(ctx context.Context, t *Task) error {
 		return err
 	}
 
+	CacheFromContext(ctx).Set(k, t)
 	return nil
 }
 
@@ -179,31 +219,27 @@ func (s *TaskService) Search(ctx context.Context, sp *Space, query string) ([]*T
 		return nil, err
 	}
 
-	var ts []*Task
-	for it := index.Search(ctx, query, &search.SearchOptions{
+	it := index.Search(ctx, query, &search.SearchOptions{
 		IDsOnly: true,
-	}); ; {
+	})
+	ids := []string{}
+	for {
 		id, err := it.Next(nil)
 		if err == search.Done {
 			break
 		}
 		if err != nil {
+			// TODO: Use multierror
 			return nil, err
 		}
+		ids = append(ids, id)
+	}
 
-		// TODO Use GetMulti.
-		// FIXME Deleted tasks may still show up in the search index,
-		// so we should just not return them.
-		t, err := s.Get(ctx, id)
-		if err != nil {
-			if _, ok := err.(ErrAccessDenied); ok {
-				continue
-			}
-			// TODO use multierror
-			return nil, err
-		}
-
-		ts = append(ts, t)
+	// FIXME Deleted tasks may still show up in the search index,
+	// so we should just not return them.
+	ts, err := s.ByIDs(ctx, ids)
+	if err != nil {
+		return nil, err
 	}
 
 	return ts, nil
@@ -225,8 +261,9 @@ type TaskAPI struct {
 	NodeInterface *graphql.Interface `inject:"node"`
 	TaskService   *TaskService       `inject:""`
 
-	Type      *graphql.Object
-	Mutations map[string]*graphql.Field
+	Type           *graphql.Object
+	ConnectionType *graphql.Object
+	Mutations      map[string]*graphql.Field
 }
 
 func (api *TaskAPI) Start() error {
@@ -256,6 +293,10 @@ func (api *TaskAPI) Start() error {
 			api.NodeInterface,
 		},
 	})
+	api.ConnectionType = relay.ConnectionDefinitions(relay.ConnectionConfig{
+		Name:     api.Type.Name(),
+		NodeType: api.Type,
+	}).ConnectionType
 
 	api.Mutations = map[string]*graphql.Field{
 		"addTask": relay.MutationWithClientMutationID(relay.MutationConfig{
@@ -283,7 +324,7 @@ func (api *TaskAPI) Start() error {
 						if !ok {
 							return nil, errors.New("could not cast taskId to string")
 						}
-						t, err := api.TaskService.Get(p.Context, id)
+						t, err := api.TaskService.ByID(p.Context, id)
 						if err != nil {
 							return nil, err
 						}
@@ -358,7 +399,7 @@ func (api *TaskAPI) Start() error {
 						if !ok {
 							return nil, errors.New("could not cast id to string")
 						}
-						t, err := api.TaskService.Get(p.Context, id)
+						t, err := api.TaskService.ByID(p.Context, id)
 						if err != nil {
 							return nil, err
 						}
@@ -377,7 +418,7 @@ func (api *TaskAPI) Start() error {
 					return nil, fmt.Errorf("invalid id %q", id)
 				}
 
-				t, err := api.TaskService.Get(ctx, resolvedID.ID)
+				t, err := api.TaskService.ByID(ctx, resolvedID.ID)
 				if err != nil {
 					return nil, err
 				}
