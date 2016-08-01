@@ -1,0 +1,11 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = git@github.com:grpc/grpc-go.git
+	branch = 8ab0d24ed31225b07f507131f110b62552fd9dfb
+	commit = 8ab0d24ed31225b07f507131f110b62552fd9dfb
+	parent = e76a669f0e08838e4ca89c6fe7a5694c626badcb
+	cmdver = 0.3.0

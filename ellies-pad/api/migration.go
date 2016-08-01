@@ -10,6 +10,7 @@ import (
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/delay"
 	"google.golang.org/appengine/log"
+	"google.golang.org/cloud/trace"
 )
 
 // Migration represents a batch update to existing entities in the datastore.
@@ -37,6 +38,9 @@ func version(timeStr string) time.Time {
 
 // reindexTasks adds all tasks from the datastore into the search index.
 var reindexTasks = func(ctx context.Context, s *MigrationService) error {
+	span := trace.FromContext(ctx).NewChild("trythings.migration.reindexTasks")
+	defer span.Finish()
+
 	var tasks []*Task
 	_, err := datastore.NewQuery("Task").
 		Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
@@ -436,6 +440,9 @@ func (s *MigrationService) run(ctx context.Context, m *Migration) error {
 }
 
 func (s *MigrationService) RunAll(ctx context.Context) error {
+	span := trace.FromContext(ctx).NewChild("trythings.migration.RunAll")
+	defer span.Finish()
+
 	su, err := IsSuperuser(ctx)
 	if err != nil {
 		return err

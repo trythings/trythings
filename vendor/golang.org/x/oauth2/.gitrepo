@@ -1,0 +1,11 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = git@github.com:golang/oauth2.git
+	branch = master
+	commit = 1364adb2c63445016c5ed4518fc71f6a3cda6169
+	parent = d52b569263b9b24da8ee453afa61f258eab78659
+	cmdver = 0.3.0

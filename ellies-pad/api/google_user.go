@@ -8,6 +8,7 @@ import (
 
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/urlfetch"
+	"google.golang.org/cloud/trace"
 	"gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
 )
@@ -25,6 +26,9 @@ type GoogleUser struct {
 var googleKeys jose.JSONWebKeySet
 
 func updateGoogleKeys(ctx context.Context) error {
+	span := trace.FromContext(ctx).NewChild("trythings.google_user.updateGoogleKeys")
+	defer span.Finish()
+
 	// Try to fetch new public keys from Google.
 	client := urlfetch.Client(ctx)
 	client.Timeout = 1 * time.Second
@@ -43,6 +47,9 @@ func updateGoogleKeys(ctx context.Context) error {
 }
 
 func GetGoogleUser(ctx context.Context, idToken string) (*GoogleUser, error) {
+	span := trace.FromContext(ctx).NewChild("trythings.google_user.GetGoogleUser")
+	defer span.Finish()
+
 	tok, err := jwt.ParseSigned(idToken)
 	if err != nil {
 		return nil, err

@@ -1,0 +1,11 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = git@github.com:GoogleCloudPlatform/gcloud-golang.git
+	branch = master
+	commit = 69b01b438ae3f83e093598fd4d8bfcc0f9addba5
+	parent = cee295ea9c12961ad22fa2e9a8c6c19a8cdad88d
+	cmdver = 0.3.0

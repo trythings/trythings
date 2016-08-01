@@ -8,6 +8,7 @@ import (
 	"github.com/graphql-go/handler"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
+	"google.golang.org/cloud/trace"
 )
 
 func init() {
@@ -21,8 +22,25 @@ func init() {
 		Pretty: true,
 	})
 
+	tracer, err := trace.NewClient(appengine.BackgroundContext(), "ellies-pad")
+	if err != nil {
+		panic(err)
+	}
+
 	http.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
 		ctx := appengine.NewContext(r)
+
+		// Tracing.
+		span := tracer.SpanFromRequest(r)
+		defer func() {
+			err := span.FinishWait()
+			if err != nil {
+				log.Errorf(ctx, "Failed to trace request: %s", err)
+			}
+		}()
+		ctx = trace.NewContext(ctx, span)
+
+		// Authentication.
 		auth := r.Header.Get("Authorization")
 		if auth != "" {
 			idToken, err := getIDToken(auth)
@@ -44,6 +62,7 @@ func init() {
 			ctx = NewGoogleUserContext(ctx, gu)
 		}
 
+		// Caching.
 		ctx = NewCacheContext(ctx)
 
 		h.ContextHandler(ctx, w, r)

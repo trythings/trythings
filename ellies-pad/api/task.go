@@ -11,6 +11,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/search"
+	"google.golang.org/cloud/trace"
 )
 
 // Task represents a particular action or piece of work to be completed.
@@ -62,6 +63,8 @@ func (s *TaskService) ByID(ctx context.Context, id string) (*Task, error) {
 	if ok {
 		return ct, nil
 	}
+	span := trace.FromContext(ctx).NewChild("trythings.task.ByID")
+	defer span.Finish()
 
 	var t Task
 	err := datastore.Get(ctx, k, &t)
@@ -84,6 +87,9 @@ func (s *TaskService) ByID(ctx context.Context, id string) (*Task, error) {
 
 // ByIDs filters out Tasks that are not visible to the current User.
 func (s *TaskService) ByIDs(ctx context.Context, ids []string) ([]*Task, error) {
+	span := trace.FromContext(ctx).NewChild("trythings.task.ByIDs")
+	defer span.Finish()
+
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
 
 	ks := []*datastore.Key{}
@@ -115,6 +121,9 @@ func (s *TaskService) ByIDs(ctx context.Context, ids []string) ([]*Task, error) 
 }
 
 func (s *TaskService) Create(ctx context.Context, t *Task) error {
+	span := trace.FromContext(ctx).NewChild("trythings.task.Create")
+	defer span.Finish()
+
 	if t.ID != "" {
 		return fmt.Errorf("t already has id %q", t.ID)
 	}
@@ -158,6 +167,9 @@ func (s *TaskService) Create(ctx context.Context, t *Task) error {
 }
 
 func (s *TaskService) Update(ctx context.Context, t *Task) error {
+	span := trace.FromContext(ctx).NewChild("trythings.task.Update")
+	defer span.Finish()
+
 	if t.ID == "" {
 		return errors.New("cannot update task with no ID")
 	}
@@ -195,6 +207,9 @@ func (s *TaskService) Update(ctx context.Context, t *Task) error {
 }
 
 func (s *TaskService) Search(ctx context.Context, sp *Space, query string) ([]*Task, error) {
+	span := trace.FromContext(ctx).NewChild("trythings.task.Search")
+	defer span.Finish()
+
 	ok, err := s.SpaceService.IsVisible(ctx, sp)
 	if err != nil {
 		return nil, err
@@ -252,6 +267,9 @@ func (s *TaskService) Search(ctx context.Context, sp *Space, query string) ([]*T
 }
 
 func (s *TaskService) Index(ctx context.Context, t *Task) error {
+	span := trace.FromContext(ctx).NewChild("trythings.task.Index")
+	defer span.Finish()
+
 	index, err := search.Open("Task")
 	if err != nil {
 		return err
