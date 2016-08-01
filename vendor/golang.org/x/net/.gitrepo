@@ -6,6 +6,6 @@
 [subrepo]
 	remote = git@github.com:golang/net.git
 	branch = master
-	commit = d513e58596cd55e6f47cd1dcbff6b46035baeccb
-	parent = 38755ad482f857f736069b9eb4de319292eceeab
+	commit = 35028a49ca5a73b486af60cd20ac21cd6b67bfdb
+	parent = b4d0c16cc2b39c852146339b9a3df71ff95045ea
 	cmdver = 0.3.0

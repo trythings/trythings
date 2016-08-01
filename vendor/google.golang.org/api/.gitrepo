@@ -1,0 +1,11 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = git@github.com:google/google-api-go-client.git
+	branch = master
+	commit = fa0566afd4c8fdae644725fdf9b57b5851a20742
+	parent = afd88cc3a3ee38e6235aa0491d7b2419f66f46b8
+	cmdver = 0.3.0
