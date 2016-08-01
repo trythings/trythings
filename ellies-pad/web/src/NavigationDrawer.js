@@ -8,22 +8,18 @@ import theme from './theme.js';
 class NavigationDrawer extends React.Component {
 	static propTypes = {
 		onSignOutClick: React.PropTypes.func.isRequired,
+		onViewNameClick: React.PropTypes.func.isRequired,
 
 		spaces: React.PropTypes.arrayOf(React.PropTypes.shape({
 			id: React.PropTypes.string.isRequired,
 			name: React.PropTypes.string.isRequired,
-			view: React.PropTypes.shape({
-				id: React.PropTypes.string.isRequired,
-				searches: React.PropTypes.arrayOf(React.PropTypes.shape({
-					id: React.PropTypes.string.isRequired,
-					name: React.PropTypes.string.isRequired,
-				})).isRequired,
-			}).isRequired,
 			views: React.PropTypes.arrayOf(React.PropTypes.shape({
 				id: React.PropTypes.string.isRequired,
 				name: React.PropTypes.string.isRequired,
 			})).isRequired,
 		})).isRequired,
+
+		selectedViewId: React.PropTypes.string,
 	};
 
 	static styles = {
@@ -74,12 +70,14 @@ class NavigationDrawer extends React.Component {
 		viewName: {
 			...resetStyles,
 			...theme.text.dark.secondary,
+			cursor: 'pointer',
 			fontSize: 14,
 			paddingBottom: 16,
 		},
 		selectedViewName: {
 			...resetStyles,
 			...theme.text.dark.primary,
+			cursor: 'pointer',
 			fontSize: 14,
 			fontWeight: 500,
 			paddingBottom: 16,
@@ -101,6 +99,10 @@ class NavigationDrawer extends React.Component {
 		},
 	};
 
+	onViewNameClick = (event) => {
+		this.props.onViewNameClick(event.currentTarget.dataset.viewId);
+	}
+
 	render() {
 		return (
 			<nav style={NavigationDrawer.styles.nav}>
@@ -117,13 +119,17 @@ class NavigationDrawer extends React.Component {
 						<li style={NavigationDrawer.styles.space} key={space.id}>
 							<span style={NavigationDrawer.styles.spaceName}>{space.name}</span>
 							<ul style={NavigationDrawer.styles.views}>
-								{space.views.map(view => {
-									const nameStyle = space.view.id === view.id ?
-											NavigationDrawer.styles.selectedViewName :
-											NavigationDrawer.styles.viewName;
+								{space.views.map((view, index) => {
+									let nameStyle = NavigationDrawer.styles.viewName;
+									if ((!this.props.selectedViewId && !index) ||
+										this.props.selectedViewId === view.id) {
+										nameStyle = NavigationDrawer.styles.selectedViewName;
+									}
 									return (
 										<li style={NavigationDrawer.styles.view} key={view.id}>
-											<span style={nameStyle}>{view.name}</span>
+											<a onClick={this.onViewNameClick} data-view-id={view.id}>
+												<span style={nameStyle}>{view.name}</span>
+											</a>
 											<ul style={NavigationDrawer.styles.searches}>
 												{view.searches.map(search => (
 													<li style={NavigationDrawer.styles.search} key={search.id}>
@@ -151,9 +157,6 @@ export default Relay.createContainer(NavigationDrawer, {
 			fragment on Space @relay(plural: true) {
 				id,
 				name,
-				view {
-					id,
-				},
 				views {
 					id,
 					name,
