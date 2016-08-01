@@ -22,10 +22,11 @@ func init() {
 		Pretty: true,
 	})
 
-	tracer, err := trace.NewClient(appengine.BackgroundContext(), "ellies-pad")
-	if err != nil {
-		panic(err)
-	}
+	var tracer *trace.Client
+	// tracer, err := trace.NewClient(appengine.BackgroundContext(), "ellies-pad")
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 	http.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
 		ctx := appengine.NewContext(r)
