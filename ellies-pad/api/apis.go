@@ -266,8 +266,9 @@ func (apis *apis) Start() error {
 						}
 
 						t = &Task{
-							Title:   "Use #now, #next, and #later to prioritize tasks",
-							SpaceID: sp.ID,
+							Title:       "Use #now, #next, and #later to prioritize tasks",
+							Description: "https://medium.com/@noah_weiss/now-next-later-roadmaps-without-the-drudgery-1cfe65656645#.lcwurwozj",
+							SpaceID:     sp.ID,
 						}
 						err = apis.TaskService.Create(p.Context, t)
 						if err != nil {
@@ -275,8 +276,9 @@ func (apis *apis) Start() error {
 						}
 
 						t = &Task{
-							Title:   "#now means that you're currently working on it",
-							SpaceID: sp.ID,
+							Title:       "#now is the next 2–4 weeks",
+							Description: "For many people that use bi-weekly sprints, this fits perfectly into their planning cadence.",
+							SpaceID:     sp.ID,
 						}
 						err = apis.TaskService.Create(p.Context, t)
 						if err != nil {
@@ -284,8 +286,9 @@ func (apis *apis) Start() error {
 						}
 
 						t = &Task{
-							Title:   "#next is the stuff you want to do after you're done with #now",
-							SpaceID: sp.ID,
+							Title:       "#next is 1-3 months out",
+							Description: "Effectively, it’s the rest of the quarter after now.",
+							SpaceID:     sp.ID,
 						}
 						err = apis.TaskService.Create(p.Context, t)
 						if err != nil {
@@ -293,8 +296,9 @@ func (apis *apis) Start() error {
 						}
 
 						t = &Task{
-							Title:   "#later is for other stuff you want to do eventually",
-							SpaceID: sp.ID,
+							Title:       "#later is 3+ months out",
+							Description: "It’s a useful place to park ideas you're passionate about.",
+							SpaceID:     sp.ID,
 						}
 						err = apis.TaskService.Create(p.Context, t)
 						if err != nil {
