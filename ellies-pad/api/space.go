@@ -9,6 +9,7 @@ import (
 	"github.com/graphql-go/relay"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
+	"google.golang.org/cloud/trace"
 )
 
 type Space struct {
@@ -30,6 +31,8 @@ func (s *SpaceService) ByID(ctx context.Context, id string) (*Space, error) {
 	if ok {
 		return csp, nil
 	}
+	span := trace.FromContext(ctx).NewChild("trythings.space.ByID")
+	defer span.Finish()
 
 	var sp Space
 	err := datastore.Get(ctx, k, &sp)
@@ -50,6 +53,9 @@ func (s *SpaceService) ByID(ctx context.Context, id string) (*Space, error) {
 }
 
 func (s *SpaceService) ByUser(ctx context.Context, u *User) ([]*Space, error) {
+	span := trace.FromContext(ctx).NewChild("trythings.space.ByUser")
+	defer span.Finish()
+
 	var sps []*Space
 	_, err := datastore.NewQuery("Space").
 		Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
@@ -76,6 +82,9 @@ func (s *SpaceService) ByUser(ctx context.Context, u *User) ([]*Space, error) {
 }
 
 func (s *SpaceService) Create(ctx context.Context, sp *Space) error {
+	span := trace.FromContext(ctx).NewChild("trythings.space.Create")
+	defer span.Finish()
+
 	if sp.ID != "" {
 		return fmt.Errorf("sp already has id %q", sp.ID)
 	}
@@ -117,6 +126,9 @@ func (s *SpaceService) Create(ctx context.Context, sp *Space) error {
 }
 
 func (s *SpaceService) IsVisible(ctx context.Context, sp *Space) (bool, error) {
+	span := trace.FromContext(ctx).NewChild("trythings.space.IsVisible")
+	defer span.Finish()
+
 	su, err := IsSuperuser(ctx)
 	if err != nil {
 		return false, err
@@ -175,6 +187,9 @@ func (api *SpaceAPI) Start() error {
 				},
 				Type: api.SearchAPI.Type,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					span := trace.FromContext(p.Context).NewChild("trythings.spaceAPI.savedSearch")
+					defer span.Finish()
+
 					id, ok := p.Args["id"].(string)
 					if !ok {
 						return nil, errors.New("id is required")
@@ -201,6 +216,9 @@ func (api *SpaceAPI) Start() error {
 				},
 				Type: api.SearchAPI.Type,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					span := trace.FromContext(p.Context).NewChild("trythings.spaceAPI.querySearch")
+					defer span.Finish()
+
 					sp, ok := p.Source.(*Space)
 					if !ok {
 						return nil, errors.New("expected a space source")
@@ -227,6 +245,9 @@ func (api *SpaceAPI) Start() error {
 				},
 				Type: api.ViewAPI.Type,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					span := trace.FromContext(p.Context).NewChild("trythings.spaceAPI.view")
+					defer span.Finish()
+
 					id, ok := p.Args["id"].(string)
 					if ok {
 						resolvedID := relay.FromGlobalID(id)
@@ -261,6 +282,9 @@ func (api *SpaceAPI) Start() error {
 			"views": &graphql.Field{
 				Type: graphql.NewList(api.ViewAPI.Type),
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					span := trace.FromContext(p.Context).NewChild("trythings.spaceAPI.views")
+					defer span.Finish()
+
 					sp, ok := p.Source.(*Space)
 					if !ok {
 						return nil, errors.New("expected space source")
