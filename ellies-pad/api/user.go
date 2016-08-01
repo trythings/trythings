@@ -29,6 +29,42 @@ type User struct {
 type UserService struct {
 }
 
+func (s *UserService) IsVisible(ctx context.Context, u *User) (bool, error) {
+	me, err := s.FromContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	return me.ID == u.ID, nil
+}
+
+func (s *UserService) ByID(ctx context.Context, id string) (*User, error) {
+	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
+	k := datastore.NewKey(ctx, "User", id, 0, rootKey)
+
+	cu, ok := CacheFromContext(ctx).Get(k).(*User)
+	if ok {
+		return cu, nil
+	}
+
+	var u User
+	err := datastore.Get(ctx, k, &u)
+	if err != nil {
+		return nil, err
+	}
+
+	ok, err = s.IsVisible(ctx, &u)
+	if err != nil {
+		return nil, err
+	}
+
+	if !ok {
+		return nil, errors.New("cannot access user")
+	}
+
+	CacheFromContext(ctx).Set(k, &u)
+	return &u, nil
+}
+
 func (s *UserService) Create(ctx context.Context, u *User) error {
 	// TODO Make sure u.GoogleID == user.Current(ctx).ID
 

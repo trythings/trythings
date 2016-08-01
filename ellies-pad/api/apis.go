@@ -36,9 +36,13 @@ func NewAPIs() (*apis, error) {
 			resolvedID := relay.FromGlobalID(id)
 			switch resolvedID.Type {
 			case "Search":
-				return apis.SearchAPI.SearchService.ByClientID(ctx, resolvedID.ID)
+				return apis.SearchService.ByClientID(ctx, resolvedID.ID)
+			case "Space":
+				return apis.SpaceService.ByID(ctx, resolvedID.ID)
+			case "User":
+				return apis.UserService.ByID(ctx, resolvedID.ID)
 			default:
-				return nil, errors.New("Unknown node type")
+				return nil, fmt.Errorf("Unknown node type %s", resolvedID.Type)
 			}
 		},
 		TypeResolve: func(p graphql.ResolveTypeParams) *graphql.Object {
