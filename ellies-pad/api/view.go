@@ -9,6 +9,7 @@ import (
 	"github.com/graphql-go/relay"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
+	"google.golang.org/cloud/trace"
 )
 
 type View struct {
@@ -38,6 +39,8 @@ func (s *ViewService) ByID(ctx context.Context, id string) (*View, error) {
 	if ok {
 		return cv, nil
 	}
+	span := trace.FromContext(ctx).NewChild("trythings.view.ByID")
+	defer span.Finish()
 
 	var v View
 	err := datastore.Get(ctx, k, &v)
@@ -58,6 +61,9 @@ func (s *ViewService) ByID(ctx context.Context, id string) (*View, error) {
 }
 
 func (s *ViewService) BySpace(ctx context.Context, sp *Space) ([]*View, error) {
+	span := trace.FromContext(ctx).NewChild("trythings.view.BySpace")
+	defer span.Finish()
+
 	var vs []*View
 	_, err := datastore.NewQuery("View").
 		Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
@@ -84,6 +90,9 @@ func (s *ViewService) BySpace(ctx context.Context, sp *Space) ([]*View, error) {
 }
 
 func (s *ViewService) Create(ctx context.Context, v *View) error {
+	span := trace.FromContext(ctx).NewChild("trythings.view.Create")
+	defer span.Finish()
+
 	if v.ID != "" {
 		return fmt.Errorf("v already has id %q", v.ID)
 	}
@@ -153,6 +162,9 @@ func (api *ViewAPI) Start() error {
 			"searches": &graphql.Field{
 				Type: graphql.NewList(api.SearchAPI.Type),
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					span := trace.FromContext(p.Context).NewChild("trythings.viewAPI.searches")
+					defer span.Finish()
+
 					v, ok := p.Source.(*View)
 					if !ok {
 						return nil, errors.New("expected view source")

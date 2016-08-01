@@ -9,6 +9,7 @@ import (
 	"github.com/graphql-go/relay"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
+	"google.golang.org/cloud/trace"
 )
 
 var ErrUserNotFound = errors.New("user not found")
@@ -30,6 +31,9 @@ type UserService struct {
 }
 
 func (s *UserService) Create(ctx context.Context, u *User) error {
+	span := trace.FromContext(ctx).NewChild("trythings.user.Create")
+	defer span.Finish()
+
 	// TODO Make sure u.GoogleID == user.Current(ctx).ID
 
 	if u.ID != "" {
@@ -57,6 +61,9 @@ func (s *UserService) Create(ctx context.Context, u *User) error {
 }
 
 func (s *UserService) byGoogleID(ctx context.Context, googleID string) (*User, error) {
+	span := trace.FromContext(ctx).NewChild("trythings.user.byGoogleID")
+	defer span.Finish()
+
 	var us []*User
 	_, err := datastore.NewQuery("User").
 		Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
@@ -77,6 +84,9 @@ func (s *UserService) byGoogleID(ctx context.Context, googleID string) (*User, e
 // FromContext should not be subject to access control,
 // because it would create a circular dependency.
 func (s *UserService) FromContext(ctx context.Context) (*User, error) {
+	span := trace.FromContext(ctx).NewChild("trythings.user.FromContext")
+	defer span.Finish()
+
 	gu, ok := GoogleUserFromContext(ctx)
 	if !ok {
 		return nil, errors.New("expected google user, probably missing Authorization header")
@@ -134,6 +144,9 @@ func (api *UserAPI) Start() error {
 				Description: "space is a disjoint universe of views, searches and tasks.",
 				Type:        api.SpaceAPI.Type,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					span := trace.FromContext(p.Context).NewChild("trythings.userAPI.space")
+					defer span.Finish()
+
 					id, ok := p.Args["id"].(string)
 					if ok {
 						resolvedID := relay.FromGlobalID(id)
@@ -168,6 +181,9 @@ func (api *UserAPI) Start() error {
 			"spaces": &graphql.Field{
 				Type: graphql.NewList(api.SpaceAPI.Type),
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					span := trace.FromContext(p.Context).NewChild("trythings.userAPI.spaces")
+					defer span.Finish()
+
 					u, ok := p.Source.(*User)
 					if !ok {
 						return nil, errors.New("expected user source")

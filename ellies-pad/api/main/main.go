@@ -9,6 +9,7 @@ import (
 	"github.com/trythings/trythings/ellies-pad/api"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
+	"google.golang.org/cloud/trace"
 )
 
 func main() {
@@ -22,8 +23,22 @@ func main() {
 		Pretty: true,
 	})
 
+	tracer, err := trace.NewClient(appengine.BackgroundContext(), "ellies-pad")
+	if err != nil {
+		panic(err)
+	}
+
 	http.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
 		ctx := appengine.NewContext(r)
+		span := tracer.SpanFromRequest(r)
+		defer func() {
+			err := span.FinishWait()
+			if err != nil {
+				log.Errorf(ctx, "Failed to trace request: %s", err)
+			}
+		}()
+		ctx = trace.NewContext(ctx, span)
+
 		auth := r.Header.Get("Authorization")
 		if auth != "" {
 			idToken, err := getIDToken(auth)

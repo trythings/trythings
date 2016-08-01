@@ -10,6 +10,7 @@ import (
 	"github.com/graphql-go/relay"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
+	"google.golang.org/cloud/trace"
 )
 
 type Search struct {
@@ -89,6 +90,8 @@ func (s *SearchService) ByID(ctx context.Context, id string) (*Search, error) {
 	if ok {
 		return cse, nil
 	}
+	span := trace.FromContext(ctx).NewChild("trythings.search.ByID")
+	defer span.Finish()
 
 	var se Search
 	err := datastore.Get(ctx, k, &se)
@@ -109,6 +112,9 @@ func (s *SearchService) ByID(ctx context.Context, id string) (*Search, error) {
 }
 
 func (s *SearchService) ByView(ctx context.Context, v *View) ([]*Search, error) {
+	span := trace.FromContext(ctx).NewChild("trythings.search.ByView")
+	defer span.Finish()
+
 	var ss []*Search
 	_, err := datastore.NewQuery("Search").
 		Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
@@ -136,6 +142,9 @@ func (s *SearchService) ByView(ctx context.Context, v *View) ([]*Search, error) 
 }
 
 func (s *SearchService) Create(ctx context.Context, se *Search) error {
+	span := trace.FromContext(ctx).NewChild("trythings.search.Create")
+	defer span.Finish()
+
 	if se.ID != "" {
 		return fmt.Errorf("se already has id %q", se.ID)
 	}
@@ -197,6 +206,9 @@ func (s *SearchService) Create(ctx context.Context, se *Search) error {
 }
 
 func (s *SearchService) Update(ctx context.Context, se *Search) error {
+	span := trace.FromContext(ctx).NewChild("trythings.search.Update")
+	defer span.Finish()
+
 	if se.ID == "" {
 		return errors.New("cannot update search with no ID")
 	}
@@ -270,6 +282,9 @@ func (api *SearchAPI) Start() error {
 				Description: "The total number of results that match the query",
 				Type:        graphql.Int,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					span := trace.FromContext(p.Context).NewChild("trythings.searchAPI.numResults")
+					defer span.Finish()
+
 					se, ok := p.Source.(*Search)
 					if !ok {
 						return nil, errors.New("expected search source")
@@ -298,6 +313,9 @@ func (api *SearchAPI) Start() error {
 				Type:        api.TaskAPI.ConnectionType,
 				Args:        relay.ConnectionArgs,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					span := trace.FromContext(p.Context).NewChild("trythings.searchAPI.results")
+					defer span.Finish()
+
 					se, ok := p.Source.(*Search)
 					if !ok {
 						return nil, errors.New("expected search source")
