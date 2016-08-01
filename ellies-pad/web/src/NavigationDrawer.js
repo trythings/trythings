@@ -124,20 +124,15 @@ class NavigationDrawer extends React.Component {
 									return (
 										<li style={NavigationDrawer.styles.view} key={view.id}>
 											<span style={nameStyle}>{view.name}</span>
-											{space.view.id === view.id ?
-												(
-													<ul style={NavigationDrawer.styles.searches}>
-														{space.view.searches.map(search => (
-															<li style={NavigationDrawer.styles.search} key={search.id}>
-																<span style={NavigationDrawer.styles.searchName}>
-																	{search.name}
-																</span>
-															</li>
-														))}
-													</ul>
-												) :
-												null
-											}
+											<ul style={NavigationDrawer.styles.searches}>
+												{view.searches.map(search => (
+													<li style={NavigationDrawer.styles.search} key={search.id}>
+														<span style={NavigationDrawer.styles.searchName}>
+															{search.name}
+														</span>
+													</li>
+												))}
+											</ul>
 										</li>
 									);
 								})}
@@ -158,14 +153,14 @@ export default Relay.createContainer(NavigationDrawer, {
 				name,
 				view {
 					id,
-					searches {
-						id,
-						name,
-					},
 				},
 				views {
 					id,
 					name,
+					searches {
+						id,
+						name,
+					},
 				},
 			},
 		`,
