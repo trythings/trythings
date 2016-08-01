@@ -54,12 +54,6 @@ func (s *TaskService) IsVisible(ctx context.Context, t *Task) (bool, error) {
 	return s.SpaceService.IsVisible(ctx, sp)
 }
 
-type ErrAccessDenied struct{}
-
-func (e ErrAccessDenied) Error() string {
-	return "cannot access task"
-}
-
 func (s *TaskService) ByID(ctx context.Context, id string) (*Task, error) {
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
 	k := datastore.NewKey(ctx, "Task", id, 0, rootKey)
@@ -81,7 +75,7 @@ func (s *TaskService) ByID(ctx context.Context, id string) (*Task, error) {
 	}
 
 	if !ok {
-		return nil, ErrAccessDenied{}
+		return nil, errors.New("cannot access task")
 	}
 
 	CacheFromContext(ctx).Set(k, &t)
