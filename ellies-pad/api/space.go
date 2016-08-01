@@ -125,7 +125,17 @@ func (s *SpaceService) Create(ctx context.Context, sp *Space) error {
 	return nil
 }
 
-func (s *SpaceService) IsVisible(ctx context.Context, sp *Space) (bool, error) {
+func (s *SpaceService) IsVisible(ctx context.Context, sp *Space) (isVisible bool, err error) {
+	isVisible, ok := CacheFromContext(ctx).IsVisible(sp)
+	if ok {
+		return isVisible, nil
+	}
+	defer func() {
+		if err == nil {
+			CacheFromContext(ctx).SetIsVisible(sp, isVisible)
+		}
+	}()
+
 	span := trace.FromContext(ctx).NewChild("trythings.space.IsVisible")
 	defer span.Finish()
 
