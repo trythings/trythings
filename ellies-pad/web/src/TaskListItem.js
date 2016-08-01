@@ -11,7 +11,7 @@ class TaskListItem extends React.Component {
 		// ...TaskTile.propTypes.task
 		task: React.PropTypes.shape({
 			id: React.PropTypes.string.isRequired,
-			title: React.PropTypes.string.isRequired,
+			title: React.PropTypes.string,
 			description: React.PropTypes.string,
 			isArchived: React.PropTypes.bool,
 		}).isRequired,
