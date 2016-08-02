@@ -174,11 +174,43 @@ func (s *SearchService) Create(ctx context.Context, se *Search) error {
 		return errors.New("Search's SpaceID must match View's")
 	}
 
+	if len(se.ViewRank) != 0 {
+		return fmt.Errorf("se already has a view rank %x", se.ViewRank)
+	}
+
 	// TODO#Performance: Add a shared or per-request cache to support these small, repeated queries.
 
 	if se.Query == "" {
 		return errors.New("Query is required")
 	}
+
+	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
+
+	// Create a ViewRank for the search.
+	// It should come after every other search in the view.
+	var ranks []*struct {
+		ViewRank datastore.ByteString
+	}
+	_, err = datastore.NewQuery("Search").
+		Ancestor(rootKey).
+		Filter("ViewID =", se.ViewID).
+		Project("ViewRank").
+		Order("-ViewRank").
+		Limit(1).
+		GetAll(ctx, &ranks)
+	if err != nil {
+		return err
+	}
+
+	maxViewRank := MinRank
+	if len(ranks) != 0 {
+		maxViewRank = Rank(ranks[0].ViewRank)
+	}
+	rank, err := NewRank(maxViewRank, MaxRank)
+	if err != nil {
+		return err
+	}
+	se.ViewRank = datastore.ByteString(rank)
 
 	ok, err := s.IsVisible(ctx, se)
 	if err != nil {
@@ -195,7 +227,6 @@ func (s *SearchService) Create(ctx context.Context, se *Search) error {
 	}
 	se.ID = fmt.Sprintf("%x", id)
 
-	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
 	k := datastore.NewKey(ctx, "Search", se.ID, 0, rootKey)
 	k, err = datastore.Put(ctx, k, se)
 	if err != nil {

@@ -37,6 +37,13 @@ class SignedInApp extends React.Component {
 			query: React.PropTypes.string,
 		}).isRequired,
 
+		relay: React.PropTypes.shape({
+			setVariables: React.PropTypes.func.isRequired,
+			variables: React.PropTypes.shape({
+				viewId: React.PropTypes.string,
+			}).isRequired,
+		}).isRequired,
+
 		viewer: React.PropTypes.shape({
 			space: React.PropTypes.shape({
 				// ...AddTask.propTypes.space,
@@ -169,6 +176,10 @@ class SignedInApp extends React.Component {
 		});
 	};
 
+	onViewNameClick = (viewId) => {
+		this.props.relay.setVariables({ viewId });
+	};
+
 	refetch = () => {
 		if (this.view) {
 			this.view.refetch();
@@ -233,6 +244,8 @@ class SignedInApp extends React.Component {
 			<div style={SignedInApp.styles.rootContainer}>
 				<NavigationDrawer
 					onSignOutClick={this.onSignOutClick}
+					onViewNameClick={this.onViewNameClick}
+					selectedViewId={this.props.relay.variables.viewId}
 					spaces={this.props.viewer.spaces}
 				/>
 
@@ -271,6 +284,10 @@ class SignedInApp extends React.Component {
 }
 
 const SignedInAppContainer = Relay.createContainer(SignedInApp, {
+	initialVariables: {
+		viewId: null,
+	},
+
 	fragments: {
 		viewer: () => Relay.QL`
 			fragment on User {
@@ -278,7 +295,7 @@ const SignedInAppContainer = Relay.createContainer(SignedInApp, {
 					name,
 					${AddTask.getFragment('space')},
 					${QuerySearch.getFragment('space')},
-					view {
+					view(id: $viewId) {
 						${View.getFragment('view')},
 					},
 				},

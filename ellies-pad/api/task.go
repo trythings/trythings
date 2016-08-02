@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/graphql-go/graphql"
@@ -34,6 +35,7 @@ func (t *Task) Save() ([]search.Field, *search.DocumentMetadata, error) {
 		isArchived = search.Atom("true")
 	}
 	return []search.Field{
+		{Name: "CreatedAt", Value: t.CreatedAt},
 		{Name: "Title", Value: t.Title},
 		{Name: "Description", Value: t.Description},
 		{Name: "IsArchived", Value: isArchived},
@@ -51,12 +53,6 @@ func (s *TaskService) IsVisible(ctx context.Context, t *Task) (bool, error) {
 		return false, err
 	}
 	return s.SpaceService.IsVisible(ctx, sp)
-}
-
-type ErrAccessDenied struct{}
-
-func (e ErrAccessDenied) Error() string {
-	return "cannot access task"
 }
 
 func (s *TaskService) ByID(ctx context.Context, id string) (*Task, error) {
@@ -82,7 +78,7 @@ func (s *TaskService) ByID(ctx context.Context, id string) (*Task, error) {
 	}
 
 	if !ok {
-		return nil, ErrAccessDenied{}
+		return nil, errors.New("cannot access task")
 	}
 
 	CacheFromContext(ctx).Set(k, &t)
@@ -222,6 +218,11 @@ func (s *TaskService) Search(ctx context.Context, sp *Space, query string) ([]*T
 		return nil, errors.New("cannot access space to search")
 	}
 
+	// Replace the fake today() expression with the actual date.
+	// TODO: Have this reflect the user's time zone.
+	today := time.Now().Format(" 2006-01-02 ")
+	query = strings.Replace(query, " today() ", today, -1)
+
 	if query != "" {
 		// Restrict the query to the space.
 		query = fmt.Sprintf("%s AND SpaceID: %q", query, sp.ID)
@@ -236,6 +237,11 @@ func (s *TaskService) Search(ctx context.Context, sp *Space, query string) ([]*T
 
 	it := index.Search(ctx, query, &search.SearchOptions{
 		IDsOnly: true,
+		Sort: &search.SortOptions{
+			Expressions: []search.SortExpression{
+				{Expr: "CreatedAt", Reverse: true},
+			},
+		},
 	})
 	ids := []string{}
 	for {

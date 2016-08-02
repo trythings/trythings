@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/facebookgo/inject"
 	"github.com/facebookgo/startstop"
@@ -18,7 +19,11 @@ type apis struct {
 	TaskAPI   *TaskAPI   `inject:""`
 	UserAPI   *UserAPI   `inject:""`
 
-	UserService *UserService `inject:""`
+	SearchService *SearchService `inject:""`
+	SpaceService  *SpaceService  `inject:""`
+	TaskService   *TaskService   `inject:""`
+	UserService   *UserService   `inject:""`
+	ViewService   *ViewService   `inject:""`
 
 	Schema          *graphql.Schema
 	nodeDefinitions *relay.NodeDefinitions
@@ -31,9 +36,13 @@ func NewAPIs() (*apis, error) {
 			resolvedID := relay.FromGlobalID(id)
 			switch resolvedID.Type {
 			case "Search":
-				return apis.SearchAPI.SearchService.ByClientID(ctx, resolvedID.ID)
+				return apis.SearchService.ByClientID(ctx, resolvedID.ID)
+			case "Space":
+				return apis.SpaceService.ByID(ctx, resolvedID.ID)
+			case "User":
+				return apis.UserService.ByID(ctx, resolvedID.ID)
 			default:
-				return nil, errors.New("Unknown node type")
+				return nil, fmt.Errorf("Unknown node type %s", resolvedID.Type)
 			}
 		},
 		TypeResolve: func(p graphql.ResolveTypeParams) *graphql.Object {
@@ -95,7 +104,7 @@ func (apis *apis) Start() error {
 						}
 						// TODO Some of the google user's fields could change after user creation.
 						// Consider updating the user to reflect those changes (e.g. IsEmailVerified).
-						err := apis.UserService.Create(p.Context, &User{
+						u := &User{
 							GoogleID:        gu.ID,
 							Email:           gu.Email,
 							IsEmailVerified: gu.EmailVerified,
@@ -103,11 +112,200 @@ func (apis *apis) Start() error {
 							GivenName:       gu.GivenName,
 							FamilyName:      gu.FamilyName,
 							ImageURL:        gu.Picture,
-						})
+						}
+						err := apis.UserService.Create(p.Context, u)
 						if err != nil {
 							return nil, err
 						}
-						// TODO create default space and view
+
+						sp := &Space{
+							Name: fmt.Sprintf("%s's Personal Space", u.GivenName),
+						}
+						err = apis.SpaceService.Create(p.Context, sp)
+						if err != nil {
+							return nil, err
+						}
+
+						v := &View{
+							SpaceID: sp.ID,
+							Name:    "Everything View",
+						}
+						err = apis.ViewService.Create(p.Context, v)
+						if err != nil {
+							return nil, err
+						}
+
+						se := &Search{
+							Name:   "#welcome Search",
+							ViewID: v.ID,
+							Query:  "#welcome",
+						}
+						err = apis.SearchService.Create(p.Context, se)
+						if err != nil {
+							return nil, err
+						}
+
+						se = &Search{
+							Name:   "Recent Search",
+							ViewID: v.ID,
+							Query:  "CreatedAt >= today() ",
+						}
+						err = apis.SearchService.Create(p.Context, se)
+						if err != nil {
+							return nil, err
+						}
+
+						se = &Search{
+							Name:   "Everything Else Search",
+							ViewID: v.ID,
+							Query:  "CreatedAt < today() ",
+						}
+						err = apis.SearchService.Create(p.Context, se)
+						if err != nil {
+							return nil, err
+						}
+
+						var t *Task
+
+						t = &Task{
+							Title:   "Recently changed or added tasks will show up in 'Recent'",
+							SpaceID: sp.ID,
+						}
+						err = apis.TaskService.Create(p.Context, t)
+						if err != nil {
+							return nil, err
+						}
+
+						t = &Task{
+							Title:       "Searches help you find and organize tasks",
+							Description: "#welcome",
+							SpaceID:     sp.ID,
+						}
+						err = apis.TaskService.Create(p.Context, t)
+						if err != nil {
+							return nil, err
+						}
+
+						t = &Task{
+							Title:       "The same task can show up in multiple searches",
+							Description: "#welcome",
+							SpaceID:     sp.ID,
+						}
+						err = apis.TaskService.Create(p.Context, t)
+						if err != nil {
+							return nil, err
+						}
+
+						t = &Task{
+							Title:       fmt.Sprintf("Tasks in '%s' are only visible to you", sp.Name),
+							Description: "You can also add people to your space to share it. #welcome",
+							SpaceID:     sp.ID,
+						}
+						err = apis.TaskService.Create(p.Context, t)
+						if err != nil {
+							return nil, err
+						}
+
+						t = &Task{
+							Title:       "Add #tags to help you find tasks later",
+							Description: "#welcome",
+							SpaceID:     sp.ID,
+						}
+						err = apis.TaskService.Create(p.Context, t)
+						if err != nil {
+							return nil, err
+						}
+
+						v = &View{
+							SpaceID: sp.ID,
+							Name:    "Priority View",
+						}
+						err = apis.ViewService.Create(p.Context, v)
+						if err != nil {
+							return nil, err
+						}
+
+						se = &Search{
+							Name:   "Unprioritized Search",
+							ViewID: v.ID,
+							Query:  "NOT (#now OR #next OR #later OR IsArchived: true)",
+						}
+						err = apis.SearchService.Create(p.Context, se)
+						if err != nil {
+							return nil, err
+						}
+
+						se = &Search{
+							Name:   "#now Search",
+							ViewID: v.ID,
+							Query:  "#now",
+						}
+						err = apis.SearchService.Create(p.Context, se)
+						if err != nil {
+							return nil, err
+						}
+
+						se = &Search{
+							Name:   "#next Search",
+							ViewID: v.ID,
+							Query:  "#next AND NOT #now",
+						}
+						err = apis.SearchService.Create(p.Context, se)
+						if err != nil {
+							return nil, err
+						}
+
+						se = &Search{
+							Name:   "#later Search",
+							ViewID: v.ID,
+							Query:  "#later AND NOT (#now OR #next)",
+						}
+						err = apis.SearchService.Create(p.Context, se)
+						if err != nil {
+							return nil, err
+						}
+
+						t = &Task{
+							Title:       "Use #now, #next, and #later to prioritize tasks",
+							Description: "https://medium.com/@noah_weiss/now-next-later-roadmaps-without-the-drudgery-1cfe65656645#.lcwurwozj",
+							SpaceID:     sp.ID,
+						}
+						err = apis.TaskService.Create(p.Context, t)
+						if err != nil {
+							return nil, err
+						}
+
+						t = &Task{
+							Title:       "#now is the next 2–4 weeks",
+							Description: "For many people that use bi-weekly sprints, this fits perfectly into their planning cadence.",
+							SpaceID:     sp.ID,
+						}
+						err = apis.TaskService.Create(p.Context, t)
+						if err != nil {
+							return nil, err
+						}
+
+						t = &Task{
+							Title:       "#next is 1-3 months out",
+							Description: "Effectively, it’s the rest of the quarter after now.",
+							SpaceID:     sp.ID,
+						}
+						err = apis.TaskService.Create(p.Context, t)
+						if err != nil {
+							return nil, err
+						}
+
+						t = &Task{
+							Title:       "#later is 3+ months out",
+							Description: "It’s a useful place to park ideas you're passionate about.",
+							SpaceID:     sp.ID,
+						}
+						err = apis.TaskService.Create(p.Context, t)
+						if err != nil {
+							return nil, err
+						}
+
+						return u, nil
 					}
 					return u, err
 				},
