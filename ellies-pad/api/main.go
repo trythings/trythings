@@ -11,6 +11,8 @@ import (
 	"google.golang.org/cloud/trace"
 )
 
+var Tracer *trace.Client
+
 func init() {
 	apis, err := NewAPIs()
 	if err != nil {
@@ -22,17 +24,11 @@ func init() {
 		Pretty: true,
 	})
 
-	var tracer *trace.Client
-	// tracer, err := trace.NewClient(appengine.BackgroundContext(), "ellies-pad")
-	// if err != nil {
-	// 	panic(err)
-	// }
-
 	http.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
 		ctx := appengine.NewContext(r)
 
 		// Tracing.
-		span := tracer.SpanFromRequest(r)
+		span := Tracer.SpanFromRequest(r)
 		defer func() {
 			err := span.FinishWait()
 			if err != nil {
