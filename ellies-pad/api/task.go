@@ -206,11 +206,22 @@ func (s *TaskService) Update(ctx context.Context, t *Task) error {
 	return nil
 }
 
-func (s *TaskService) Search(ctx context.Context, sp *Space, query string) ([]*Task, error) {
+func (s *TaskService) Search(ctx context.Context, sp *Space, query string) (ts []*Task, err error) {
 	span := trace.FromContext(ctx).NewChild("trythings.task.Search")
 	defer span.Finish()
 
-	ok, err := s.SpaceService.IsVisible(ctx, sp)
+	ts, ok := CacheFromContext(ctx).SearchResults(sp, query)
+	if ok {
+		return ts, nil
+	}
+	originalQuery := query
+	defer func() {
+		if err == nil {
+			CacheFromContext(ctx).SetSearchResults(sp, originalQuery, ts)
+		}
+	}()
+
+	ok, err = s.SpaceService.IsVisible(ctx, sp)
 	if err != nil {
 		return nil, err
 	}
@@ -258,7 +269,7 @@ func (s *TaskService) Search(ctx context.Context, sp *Space, query string) ([]*T
 
 	// FIXME Deleted tasks may still show up in the search index,
 	// so we should just not return them.
-	ts, err := s.ByIDs(ctx, ids)
+	ts, err = s.ByIDs(ctx, ids)
 	if err != nil {
 		return nil, err
 	}
