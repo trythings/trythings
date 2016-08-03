@@ -218,9 +218,10 @@ func (s *TaskService) Search(ctx context.Context, sp *Space, query string) (ts [
 	if ok {
 		return ts, nil
 	}
+	originalQuery := query
 	defer func() {
 		if err == nil {
-			CacheFromContext(ctx).SetSearchResults(sp, query, ts)
+			CacheFromContext(ctx).SetSearchResults(sp, originalQuery, ts)
 		}
 	}()
 
