@@ -52,7 +52,7 @@ class TaskListItem extends React.Component {
 	};
 
 	taskCardRef = (taskCard) => {
-		this.taskCard = taskCard && taskCard.refs.component;
+		this.taskCard = taskCard && taskCard.refs['component'];
 	};
 
 	render() {
