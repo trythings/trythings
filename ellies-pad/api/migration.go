@@ -345,7 +345,7 @@ var migrations = []*Migration{
 	},
 	{
 		Version:     version("2016-07-28T15:20:00"),
-		Author:      "annie, daniel",
+		Author:      "annie",
 		Description: "Add spaceID to searches",
 		Run: func(ctx context.Context, s *MigrationService) error {
 			root := datastore.NewKey(ctx, "Root", "root", 0, nil)
@@ -372,6 +372,79 @@ var migrations = []*Migration{
 				for _, se := range ss {
 					se.SpaceID = sp.ID
 					err := s.SearchService.Update(ctx, se)
+					if err != nil {
+						return err
+					}
+				}
+			}
+
+			return nil
+		},
+	},
+	{
+		Version:     version("2016-08-04T20:11:00"),
+		Author:      "annie",
+		Description: "Renamed Task.Description => Task.Body",
+		Run: func(ctx context.Context, s *MigrationService) error {
+			root := datastore.NewKey(ctx, "Root", "root", 0, nil)
+
+			var tasks []*Task
+			_, err := datastore.NewQuery("Task").
+				Ancestor(root).
+				GetAll(ctx, &tasks)
+			if err != nil {
+				return err
+			}
+
+			for _, t := range tasks {
+				if t.Body == "" {
+					t.Body = t.Description
+				}
+
+				err = s.TaskService.Update(ctx, t)
+				if err != nil {
+					return err
+				}
+			}
+
+			return nil
+		},
+	},
+	{
+		Version:     version("2016-08-04T20:46:00"),
+		Author:      "annie",
+		Description: "Create root tasks for each user. All existing tasks are children of all of the root tasks.",
+		Run: func(ctx context.Context, s *MigrationService) error {
+			root := datastore.NewKey(ctx, "Root", "root", 0, nil)
+
+			var users []*User
+			_, err := datastore.NewQuery("User").
+				Ancestor(root).
+				GetAll(ctx, &users)
+			if err != nil {
+				return err
+			}
+
+			var allTasks []*Task
+			_, err = datastore.NewQuery("Task").
+				Ancestor(root).
+				GetAll(ctx, &allTasks)
+			if err != nil {
+				return err
+			}
+
+			var rootTasks []*Task
+			for _, u := range users {
+				t, err := s.TaskService.GetOrCreateRootTask(ctx, u)
+				if err != nil {
+					return err
+				}
+				rootTasks = append(rootTasks, t)
+			}
+
+			for _, t := range allTasks {
+				for _, r := range rootTasks {
+					err = s.TaskService.CreateRelationship(ctx, t, r)
 					if err != nil {
 						return err
 					}

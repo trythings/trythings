@@ -25,12 +25,25 @@ type User struct {
 	GivenName       string    `json:"givenName"`
 	FamilyName      string    `json:"familyName"`
 	ImageURL        string    `json:"imageUrl"`
+
+	RootTaskID string `json:"rootTaskId"`
 }
 
 type UserService struct {
 }
 
 func (s *UserService) IsVisible(ctx context.Context, u *User) (bool, error) {
+	span := trace.FromContext(ctx).NewChild("trythings.user.IsVisible")
+	defer span.Finish()
+
+	su, err := IsSuperuser(ctx)
+	if err != nil {
+		return false, err
+	}
+	if su {
+		return true, nil
+	}
+
 	me, err := s.FromContext(ctx)
 	if err != nil {
 		return false, err
@@ -85,6 +98,39 @@ func (s *UserService) Create(ctx context.Context, u *User) error {
 		return err
 	}
 	u.ID = fmt.Sprintf("%x", id)
+
+	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
+	k := datastore.NewKey(ctx, "User", u.ID, 0, rootKey)
+	k, err = datastore.Put(ctx, k, u)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *UserService) Update(ctx context.Context, u *User) error {
+	span := trace.FromContext(ctx).NewChild("trythings.user.Update")
+	defer span.Finish()
+
+	if u.ID == "" {
+		return errors.New("cannot update user with no ID")
+	}
+
+	// Make sure that we have access to the user to start.
+	_, err := s.ByID(ctx, u.ID)
+	if err != nil {
+		return err
+	}
+
+	// Make sure we continue to have access to the task after the update.
+	ok, err := s.IsVisible(ctx, u)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return errors.New("cannot update user to lose access")
+	}
 
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
 	k := datastore.NewKey(ctx, "User", u.ID, 0, rootKey)

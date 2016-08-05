@@ -19,9 +19,15 @@ type Task struct {
 	ID          string    `json:"id"`
 	CreatedAt   time.Time `json:"createdAt"`
 	Title       string    `json:"title"`
-	Description string    `json:"description" datastore:",noindex"`
+	Description string    `json:"description" datastore:",noindex"` // TODO#ModelRewrite: Deprecated.
+	Body        string    `json:"body" datastore:",noindex"`
 	IsArchived  bool      `json:"isArchived"`
-	SpaceID     string    `json:"spaceId"`
+	SpaceID     string    `json:"spaceId"` // TODO#ModelRewrite: Deprecated.
+}
+
+type TaskRelationship struct {
+	ParentTaskID string `json:"parentTaskId"`
+	ChildTaskID  string `json:"childTaskId"`
 }
 
 func (t *Task) Load(fields []search.Field, meta *search.DocumentMetadata) error {
@@ -45,9 +51,15 @@ func (t *Task) Save() ([]search.Field, *search.DocumentMetadata, error) {
 
 type TaskService struct {
 	SpaceService *SpaceService `inject:""`
+	UserService  *UserService  `inject:""`
 }
 
 func (s *TaskService) IsVisible(ctx context.Context, t *Task) (bool, error) {
+	// TODO #ModelRewrite: Kill the entire notion of a Space.
+	if t.SpaceID == "" {
+		return true, nil
+	}
+
 	sp, err := s.SpaceService.ByID(ctx, t.SpaceID)
 	if err != nil {
 		return false, err
@@ -120,6 +132,52 @@ func (s *TaskService) ByIDs(ctx context.Context, ids []string) ([]*Task, error) 
 	return ts, nil
 }
 
+// TODO#ModelRewrite: General task creation should take a parent task?
+
+func (s *TaskService) CreateRelationship(ctx context.Context, childTask *Task, parentTask *Task) error {
+	span := trace.FromContext(ctx).NewChild("trythings.task.CreateRelationship")
+	defer span.Finish()
+
+	// Do not create duplicates of a relationship.
+	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
+	var existing []*TaskRelationship
+	_, err := datastore.NewQuery("TaskRelationship").
+		Ancestor(rootKey).
+		Filter("ParentTaskID =", parentTask.ID).
+		Filter("ChildTaskID =", childTask.ID).
+		GetAll(ctx, &existing)
+	if err != nil {
+		return err
+	}
+	if len(existing) > 0 {
+		return fmt.Errorf("Task %s is already a child of %s", childTask.ID, parentTask.ID)
+	}
+
+	// Does the child exist?
+	_, err = s.ByID(ctx, childTask.ID)
+	if err != nil {
+		return err
+	}
+
+	// Does the parent exist?
+	_, err = s.ByID(ctx, parentTask.ID)
+	if err != nil {
+		return err
+	}
+
+	// Create the relationship
+	k := datastore.NewIncompleteKey(ctx, "TaskRelationship", rootKey)
+	_, err = datastore.Put(ctx, k, &TaskRelationship{
+		ChildTaskID:  childTask.ID,
+		ParentTaskID: parentTask.ID,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *TaskService) Create(ctx context.Context, t *Task) error {
 	span := trace.FromContext(ctx).NewChild("trythings.task.Create")
 	defer span.Finish()
@@ -130,10 +188,6 @@ func (s *TaskService) Create(ctx context.Context, t *Task) error {
 
 	if t.CreatedAt.IsZero() {
 		t.CreatedAt = time.Now()
-	}
-
-	if t.SpaceID == "" {
-		return errors.New("SpaceID is required")
 	}
 
 	ok, err := s.IsVisible(ctx, t)
@@ -164,6 +218,38 @@ func (s *TaskService) Create(ctx context.Context, t *Task) error {
 	}
 
 	return nil
+}
+
+// TODO#Transactional: Make sure updates are rolled back if an error is returned at any level.
+
+// TODO#CircularDependencies: This probably actually belongs on the UserService.
+// To avoid circular dependencies, I'm leaving it here. Once we have a distinction between service implementations and interfaces, move it.
+
+func (s *TaskService) GetOrCreateRootTask(ctx context.Context, u *User) (*Task, error) {
+	if u.RootTaskID != "" {
+		return s.ByID(ctx, u.RootTaskID)
+	}
+
+	t := &Task{
+		Title:      fmt.Sprintf("%s's Home", u.GivenName),
+		IsArchived: false,
+	}
+	err := s.Create(ctx, t)
+	if err != nil {
+		return nil, err
+	}
+
+	if t.ID == "" {
+		return nil, errors.New("Expected newly-created task to have a non-empty ID")
+	}
+
+	u.RootTaskID = t.ID
+	err = s.UserService.Update(ctx, u)
+	if err != nil {
+		return nil, err
+	}
+
+	return t, nil
 }
 
 func (s *TaskService) Update(ctx context.Context, t *Task) error {
