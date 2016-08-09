@@ -72,8 +72,14 @@ class TaskList extends React.Component {
 		},
 	};
 
+	static LoadingState = {
+		COLLAPSED: 'COLLAPSED',
+		LOADING: 'LOADING',
+		EXPANDED: 'EXPANDED',
+	}
+
 	state = {
-		isShowingAll: false,
+		loadingState: TaskList.LoadingState.COLLAPSED,
 	};
 
 	onFocus = (event) => {
@@ -81,13 +87,14 @@ class TaskList extends React.Component {
 	};
 
 	onShowAllClick = () => {
+		this.setState({ loadingState: TaskList.LoadingState.LOADING });
 		this.props.relay.setVariables({
 			// Since we can't specify that we want all of the results,
 			// we fetch 100 more than we know about.
 			numTasksToShow: this.props.search.numResults + 100,
 		}, (readyState) => {
 			if (readyState.ready) {
-				this.setState({ isShowingAll: true });
+				this.setState({ loadingState: TaskList.LoadingState.EXPANDED });
 			}
 			// TODO#Errors: Figure out how we want to handle client errors (readyState.errors != null).
 		});
@@ -106,11 +113,12 @@ class TaskList extends React.Component {
 			return this.renderEmpty();
 		}
 
-		const isShowAllVisible = !this.state.isShowingAll &&
-			this.props.search.results.pageInfo.hasNextPage;
+		const isShowingAll = (this.state.loadingState === TaskList.LoadingState.EXPANDED)
+			|| (this.state.loadingState === TaskList.LoadingState.COLLAPSED &&
+					!this.props.search.results.pageInfo.hasNextPage);
 
 		let numRemainingTasks =
-			this.props.search.numResults - this.props.relay.variables.numTasksToShow;
+				this.props.search.numResults - this.props.relay.variables.numTasksToShow;
 		numRemainingTasks = numRemainingTasks < 0 ? 0 : numRemainingTasks;
 
 		return (
@@ -127,16 +135,27 @@ class TaskList extends React.Component {
 					))}
 
 					{
-						isShowAllVisible ?
+						!isShowingAll ?
 							<hr style={TaskList.styles.divider} /> :
 							null
 					}
 					{
-						isShowAllVisible ?
+						!isShowingAll && this.state.loadingState === TaskList.LoadingState.COLLAPSED ?
 							(
 								<li style={TaskList.styles.showAll} onClick={this.onShowAllClick}>
 									<span style={TaskList.styles.showAllText}>
 										{`Show ${numRemainingTasks} remaining tasks`}
+									</span>
+								</li>
+							) :
+							null
+					}
+					{
+						!isShowingAll && this.state.loadingState === TaskList.LoadingState.LOADING ?
+							(
+								<li style={TaskList.styles.showAll} onClick={this.onShowAllClick}>
+									<span style={TaskList.styles.showAllText}>
+										{'Loading...'}
 									</span>
 								</li>
 							) :
