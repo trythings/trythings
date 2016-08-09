@@ -16,13 +16,11 @@ import (
 
 // Task represents a particular action or piece of work to be completed.
 type Task struct {
-	ID          string    `json:"id"`
-	CreatedAt   time.Time `json:"createdAt"`
-	Title       string    `json:"title"`
-	Description string    `json:"description" datastore:",noindex"` // TODO#ModelRewrite: Deprecated.
-	Body        string    `json:"body" datastore:",noindex"`
-	IsArchived  bool      `json:"isArchived"`
-	SpaceID     string    `json:"spaceId"` // TODO#ModelRewrite: Deprecated.
+	ID         string    `json:"id"`
+	CreatedAt  time.Time `json:"createdAt"`
+	Title      string    `json:"title"`
+	Body       string    `json:"body" datastore:",noindex"`
+	IsArchived bool      `json:"isArchived"`
 }
 
 // TODO#Ranks: We might eventually want ranks here so that we can load a limited number of subtasks / searches.
@@ -75,26 +73,18 @@ func (t *Task) Save() ([]search.Field, *search.DocumentMetadata, error) {
 		{Name: "Title", Value: t.Title},
 		{Name: "Description", Value: t.Description},
 		{Name: "IsArchived", Value: isArchived},
-		{Name: "SpaceID", Value: search.Atom(t.SpaceID)},
+		// TODO#xcxc: Figure out how to populate this with appropriate ancestors (more denormalization!).
+		// {Name: "SpaceID", Value: search.Atom(t.SpaceID)},
 	}, nil, nil
 }
 
 type TaskService struct {
-	SpaceService *SpaceService `inject:""`
-	UserService  *UserService  `inject:""`
+	UserService *UserService `inject:""`
 }
 
 func (s *TaskService) IsVisible(ctx context.Context, t *Task) (bool, error) {
-	// TODO #ModelRewrite: Kill the entire notion of a Space.
-	if t.SpaceID == "" {
-		return true, nil
-	}
-
-	sp, err := s.SpaceService.ByID(ctx, t.SpaceID)
-	if err != nil {
-		return false, err
-	}
-	return s.SpaceService.IsVisible(ctx, sp)
+	// TODO#AccessControl: Add back access control, which will do some form of "edge" access control.
+	return true, nil
 }
 
 func (s *TaskService) ByID(ctx context.Context, id string) (*Task, error) {
@@ -171,7 +161,7 @@ func (s *TaskService) CreateRelationship(ctx context.Context, childTask *Task, p
 	// Do not create duplicates of a relationship.
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
 	var existing []*TaskRelationship
-	_, err := datastore.NewQuery("TaskRelationship").
+	_, err := datastore.NewQuery("TaskSubtaskRelationship").
 		Ancestor(rootKey).
 		Filter("ParentTaskID =", parentTask.ID).
 		Filter("ChildTaskID =", childTask.ID).
@@ -196,7 +186,7 @@ func (s *TaskService) CreateRelationship(ctx context.Context, childTask *Task, p
 	}
 
 	// Create the relationship
-	k := datastore.NewIncompleteKey(ctx, "TaskRelationship", rootKey)
+	k := datastore.NewIncompleteKey(ctx, "TaskSubtaskRelationship", rootKey)
 	_, err = datastore.Put(ctx, k, &TaskRelationship{
 		ChildTaskID:  childTask.ID,
 		ParentTaskID: parentTask.ID,
@@ -208,7 +198,7 @@ func (s *TaskService) CreateRelationship(ctx context.Context, childTask *Task, p
 	return nil
 }
 
-func (s *TaskService) Create(ctx context.Context, t *Task) error {
+func (s *TaskService) Create(ctx context.Context, pt *Task, t *Task) error {
 	span := trace.FromContext(ctx).NewChild("trythings.task.Create")
 	defer span.Finish()
 
@@ -238,6 +228,10 @@ func (s *TaskService) Create(ctx context.Context, t *Task) error {
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
 	k := datastore.NewKey(ctx, "Task", t.ID, 0, rootKey)
 	k, err = datastore.Put(ctx, k, t)
+	if err != nil {
+		return err
+	}
+	err = s.CreateRelationship(ctx, t, pt)
 	if err != nil {
 		return err
 	}
@@ -296,6 +290,8 @@ func (s *TaskService) Update(ctx context.Context, t *Task) error {
 		return err
 	}
 
+	// TODO#Validation: Every task should be a root task or have a parent task.
+
 	// Make sure we continue to have access to the task after our update.
 	ok, err := s.IsVisible(ctx, t)
 	if err != nil {
@@ -337,12 +333,12 @@ func (s *TaskService) Search(ctx context.Context, pt *Task, query string) (ts []
 		}
 	}()
 
-	ok, err = s.SpaceService.IsVisible(ctx, sp)
+	ok, err = s.IsVisible(ctx, pt)
 	if err != nil {
 		return nil, err
 	}
 	if !ok {
-		return nil, errors.New("cannot access space to search")
+		return nil, errors.New("cannot access task to search")
 	}
 
 	// Replace the fake today() expression with the actual date.
@@ -350,12 +346,13 @@ func (s *TaskService) Search(ctx context.Context, pt *Task, query string) (ts []
 	today := time.Now().Format(" 2006-01-02 ")
 	query = strings.Replace(query, " today() ", today, -1)
 
-	if query != "" {
-		// Restrict the query to the space.
-		query = fmt.Sprintf("%s AND SpaceID: %q", query, sp.ID)
-	} else {
-		query = fmt.Sprintf("SpaceID: %q", sp.ID)
-	}
+	// TODO#Search: Restrict the search query to pt and its subtasks.
+	// if query != "" {
+	// 	// Restrict the query to the space.
+	// 	query = fmt.Sprintf("%s AND SpaceID: %q", query, sp.ID)
+	// } else {
+	// 	query = fmt.Sprintf("SpaceID: %q", sp.ID)
+	// }
 
 	index, err := search.Open("Task")
 	if err != nil {
@@ -459,7 +456,7 @@ func (api *TaskAPI) Start() error {
 				"description": &graphql.InputObjectFieldConfig{
 					Type: graphql.String,
 				},
-				"spaceId": &graphql.InputObjectFieldConfig{
+				"parentTaskId": &graphql.InputObjectFieldConfig{
 					Type: graphql.NewNonNull(graphql.String),
 				},
 			},
@@ -498,21 +495,20 @@ func (api *TaskAPI) Start() error {
 					}
 				}
 
-				spaceID, ok := inputMap["spaceId"].(string)
+				parentTaskID, ok := inputMap["parentTaskId"].(string)
 				if !ok {
-					return nil, errors.New("could not cast spaceId to string")
+					return nil, errors.New("could not cast parentTaskId to string")
 				}
-				resolvedSpaceID := relay.FromGlobalID(spaceID)
-				if resolvedSpaceID == nil {
-					return nil, fmt.Errorf("invalid id %q", spaceID)
+				resolvedParentTaskID := relay.FromGlobalID(parentTaskID)
+				if resolvedParentTaskID == nil {
+					return nil, fmt.Errorf("invalid id %q", parentTaskID)
 				}
 
 				t := &Task{
 					Title:       title,
 					Description: desc,
-					SpaceID:     resolvedSpaceID.ID,
 				}
-				err := api.TaskService.Create(ctx, t)
+				err := api.TaskService.Create(ctx, resolvedParentTaskID.ID, t)
 				if err != nil {
 					return nil, err
 				}

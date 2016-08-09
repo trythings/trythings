@@ -8,6 +8,7 @@ import (
 	"github.com/graphql-go/handler"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
+	"google.golang.org/appengine/user"
 	"google.golang.org/cloud/trace"
 )
 
@@ -26,6 +27,11 @@ func init() {
 
 	http.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
 		ctx := appengine.NewContext(r)
+
+		if !user.IsAdmin(ctx) {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
 
 		// Tracing.
 		span := Tracer.SpanFromRequest(r)
