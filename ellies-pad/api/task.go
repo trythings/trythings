@@ -25,9 +25,39 @@ type Task struct {
 	SpaceID     string    `json:"spaceId"` // TODO#ModelRewrite: Deprecated.
 }
 
-type TaskRelationship struct {
+// TODO#Ranks: We might eventually want ranks here so that we can load a limited number of subtasks / searches.
+// For reference, we used to do this on search creation:
+// var ranks []*struct {
+// 	ViewRank datastore.ByteString
+// }
+// _, err = datastore.NewQuery("Search").
+// 	Ancestor(rootKey).
+// 	Filter("ViewID =", se.ViewID).
+// 	Project("ViewRank").
+// 	Order("-ViewRank").
+// 	Limit(1).
+// 	GetAll(ctx, &ranks)
+// if err != nil {
+// 	return err
+// }
+// maxViewRank := MinRank
+// if len(ranks) != 0 {
+// 	maxViewRank = Rank(ranks[0].ViewRank)
+// }
+// rank, err := NewRank(maxViewRank, MaxRank)
+// if err != nil {
+// 	return err
+// }
+// se.ViewRank = datastore.ByteString(rank)
+
+type TaskSubtaskRelationship struct {
 	ParentTaskID string `json:"parentTaskId"`
 	ChildTaskID  string `json:"childTaskId"`
+}
+
+type TaskSearchRelationship struct {
+	TaskID   string `json:"taskId"`
+	SearchID string `json:"searchId"`
 }
 
 func (t *Task) Load(fields []search.Field, meta *search.DocumentMetadata) error {
@@ -292,7 +322,7 @@ func (s *TaskService) Update(ctx context.Context, t *Task) error {
 	return nil
 }
 
-func (s *TaskService) Search(ctx context.Context, sp *Space, query string) (ts []*Task, err error) {
+func (s *TaskService) Search(ctx context.Context, pt *Task, query string) (ts []*Task, err error) {
 	span := trace.FromContext(ctx).NewChild("trythings.task.Search")
 	defer span.Finish()
 

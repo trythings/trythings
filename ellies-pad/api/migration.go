@@ -454,6 +454,9 @@ var migrations = []*Migration{
 			return nil
 		},
 	},
+
+	// TODO#xcxc: Rename TaskRelationship => TaskSubtaskRelationship.
+	// TODO#xcxc: One migration after the fact to move all of the old types to the new types.
 }
 
 type MigrationService struct {

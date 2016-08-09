@@ -118,27 +118,15 @@ func (apis *apis) Start() error {
 							return nil, err
 						}
 
-						sp := &Space{
-							Name: fmt.Sprintf("%s's Personal Space", u.GivenName),
-						}
-						err = apis.SpaceService.Create(p.Context, sp)
-						if err != nil {
-							return nil, err
-						}
-
-						v := &View{
-							SpaceID: sp.ID,
-							Name:    "Everything View",
-						}
-						err = apis.ViewService.Create(p.Context, v)
+						rt, err := apis.TaskService.GetOrCreateRootTask(ctx, u)
 						if err != nil {
 							return nil, err
 						}
 
 						se := &Search{
-							Name:   "#welcome Search",
-							ViewID: v.ID,
-							Query:  "#welcome",
+							Name:         "#welcome Search",
+							ParentTaskID: rt.ID,
+							Query:        "#welcome",
 						}
 						err = apis.SearchService.Create(p.Context, se)
 						if err != nil {
@@ -146,9 +134,9 @@ func (apis *apis) Start() error {
 						}
 
 						se = &Search{
-							Name:   "Recent Search",
-							ViewID: v.ID,
-							Query:  "CreatedAt >= today() ",
+							Name:         "Recent Search",
+							ParentTaskID: rt.ID,
+							Query:        "CreatedAt >= today() ",
 						}
 						err = apis.SearchService.Create(p.Context, se)
 						if err != nil {
@@ -156,9 +144,9 @@ func (apis *apis) Start() error {
 						}
 
 						se = &Search{
-							Name:   "Everything Else Search",
-							ViewID: v.ID,
-							Query:  "CreatedAt < today() ",
+							Name:         "Everything Else Search",
+							ParentTaskID: rt.ID,
+							Query:        "CreatedAt < today() ",
 						}
 						err = apis.SearchService.Create(p.Context, se)
 						if err != nil {
