@@ -99,317 +99,317 @@ var migrations = []*Migration{
 		Description: "Add task.IsArchived to search index.",
 		Run:         reindexTasks,
 	},
-	{
-		Version:     version("2016-02-27T19:20:00"),
-		Author:      "annie, daniel",
-		Description: "Add Annie and Daniel's space.",
-		Run: func(ctx context.Context, s *MigrationService) error {
-			numSpaces, err := datastore.NewQuery("Space").
-				Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
-				Count(ctx)
-			if err != nil {
-				return err
-			}
+	// {
+	// 	Version:     version("2016-02-27T19:20:00"),
+	// 	Author:      "annie, daniel",
+	// 	Description: "Add Annie and Daniel's space.",
+	// 	Run: func(ctx context.Context, s *MigrationService) error {
+	// 		numSpaces, err := datastore.NewQuery("Space").
+	// 			Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
+	// 			Count(ctx)
+	// 		if err != nil {
+	// 			return err
+	// 		}
 
-			if numSpaces != 0 {
-				return nil
-			}
+	// 		if numSpaces != 0 {
+	// 			return nil
+	// 		}
 
-			sp := &Space{
-				Name: "Annie and Daniel",
-			}
-			err = s.SpaceService.Create(ctx, sp)
-			if err != nil {
-				return err
-			}
+	// 		sp := &Space{
+	// 			Name: "Annie and Daniel",
+	// 		}
+	// 		err = s.SpaceService.Create(ctx, sp)
+	// 		if err != nil {
+	// 			return err
+	// 		}
 
-			var tasks []*Task
-			_, err = datastore.NewQuery("Task").
-				Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
-				GetAll(ctx, &tasks)
-			if err != nil {
-				return err
-			}
+	// 		var tasks []*Task
+	// 		_, err = datastore.NewQuery("Task").
+	// 			Ancestor(datastore.NewKey(ctx, "Root", "root", 0, nil)).
+	// 			GetAll(ctx, &tasks)
+	// 		if err != nil {
+	// 			return err
+	// 		}
 
-			for _, t := range tasks {
-				if t.SpaceID == "" {
-					t.SpaceID = sp.ID
-					err = s.TaskService.Update(ctx, t)
-					if err != nil {
-						return err
-					}
-				}
-			}
+	// 		for _, t := range tasks {
+	// 			if t.SpaceID == "" {
+	// 				t.SpaceID = sp.ID
+	// 				err = s.TaskService.Update(ctx, t)
+	// 				if err != nil {
+	// 					return err
+	// 				}
+	// 			}
+	// 		}
 
-			return nil
-		},
-	},
+	// 		return nil
+	// 	},
+	// },
 	{
 		Version:     version("2016-02-29T02:22:00"),
 		Author:      "annie, daniel",
 		Description: "Add task.SpaceID to search index.",
 		Run:         reindexTasks,
 	},
-	{
-		Version:     version("2016-02-29T22:59:00"),
-		Author:      "annie, daniel",
-		Description: "Add users to default space.",
-		Run: func(ctx context.Context, s *MigrationService) error {
-			root := datastore.NewKey(ctx, "Root", "root", 0, nil)
+	// {
+	// 	Version:     version("2016-02-29T22:59:00"),
+	// 	Author:      "annie, daniel",
+	// 	Description: "Add users to default space.",
+	// 	Run: func(ctx context.Context, s *MigrationService) error {
+	// 		root := datastore.NewKey(ctx, "Root", "root", 0, nil)
 
-			var sps []*Space
-			_, err := datastore.NewQuery("Space").
-				Ancestor(root).
-				Limit(1).
-				GetAll(ctx, &sps)
-			if err != nil {
-				return err
-			}
+	// 		var sps []*Space
+	// 		_, err := datastore.NewQuery("Space").
+	// 			Ancestor(root).
+	// 			Limit(1).
+	// 			GetAll(ctx, &sps)
+	// 		if err != nil {
+	// 			return err
+	// 		}
 
-			if len(sps) == 0 {
-				return errors.New("expected a space")
-			}
-			sp := sps[0]
+	// 		if len(sps) == 0 {
+	// 			return errors.New("expected a space")
+	// 		}
+	// 		sp := sps[0]
 
-			var us []*User
-			_, err = datastore.NewQuery("User").
-				Ancestor(root).
-				GetAll(ctx, &us)
-			if err != nil {
-				return err
-			}
+	// 		var us []*User
+	// 		_, err = datastore.NewQuery("User").
+	// 			Ancestor(root).
+	// 			GetAll(ctx, &us)
+	// 		if err != nil {
+	// 			return err
+	// 		}
 
-			var ids []string
-			for _, u := range us {
-				ids = append(ids, u.ID)
-			}
+	// 		var ids []string
+	// 		for _, u := range us {
+	// 			ids = append(ids, u.ID)
+	// 		}
 
-			sp.UserIDs = ids
-			_, err = datastore.Put(ctx, datastore.NewKey(ctx, "Space", sp.ID, 0, root), sp)
-			if err != nil {
-				return err
-			}
+	// 		sp.UserIDs = ids
+	// 		_, err = datastore.Put(ctx, datastore.NewKey(ctx, "Space", sp.ID, 0, root), sp)
+	// 		if err != nil {
+	// 			return err
+	// 		}
 
-			return nil
-		},
-	},
-	{
-		Version:     version("2016-03-29T14:14:00"),
-		Author:      "annie, daniel",
-		Description: "Add default view to each space.",
-		Run: func(ctx context.Context, s *MigrationService) error {
-			root := datastore.NewKey(ctx, "Root", "root", 0, nil)
+	// 		return nil
+	// 	},
+	// },
+	// {
+	// 	Version:     version("2016-03-29T14:14:00"),
+	// 	Author:      "annie, daniel",
+	// 	Description: "Add default view to each space.",
+	// 	Run: func(ctx context.Context, s *MigrationService) error {
+	// 		root := datastore.NewKey(ctx, "Root", "root", 0, nil)
 
-			var sps []*Space
-			_, err := datastore.NewQuery("Space").
-				Ancestor(root).
-				GetAll(ctx, &sps)
-			if err != nil {
-				return err
-			}
+	// 		var sps []*Space
+	// 		_, err := datastore.NewQuery("Space").
+	// 			Ancestor(root).
+	// 			GetAll(ctx, &sps)
+	// 		if err != nil {
+	// 			return err
+	// 		}
 
-			for _, sp := range sps {
-				vs, err := s.ViewService.BySpace(ctx, sp)
-				if err != nil {
-					return err
-				}
+	// 		for _, sp := range sps {
+	// 			vs, err := s.ViewService.BySpace(ctx, sp)
+	// 			if err != nil {
+	// 				return err
+	// 			}
 
-				if len(vs) != 0 {
-					continue
-				}
+	// 			if len(vs) != 0 {
+	// 				continue
+	// 			}
 
-				err = s.ViewService.Create(ctx, &View{
-					Name:    "Default",
-					SpaceID: sp.ID,
-				})
-				if err != nil {
-					return err
-				}
-			}
+	// 			err = s.ViewService.Create(ctx, &View{
+	// 				Name:    "Default",
+	// 				SpaceID: sp.ID,
+	// 			})
+	// 			if err != nil {
+	// 				return err
+	// 			}
+	// 		}
 
-			return nil
-		},
-	},
-	{
-		Version:     version("2016-03-29T15:18:00"),
-		Author:      "annie, daniel",
-		Description: "Add default searches to each view.",
-		Run: func(ctx context.Context, s *MigrationService) error {
-			root := datastore.NewKey(ctx, "Root", "root", 0, nil)
+	// 		return nil
+	// 	},
+	// },
+	// {
+	// 	Version:     version("2016-03-29T15:18:00"),
+	// 	Author:      "annie, daniel",
+	// 	Description: "Add default searches to each view.",
+	// 	Run: func(ctx context.Context, s *MigrationService) error {
+	// 		root := datastore.NewKey(ctx, "Root", "root", 0, nil)
 
-			var vs []*View
-			_, err := datastore.NewQuery("View").
-				Ancestor(root).
-				GetAll(ctx, &vs)
-			if err != nil {
-				return err
-			}
+	// 		var vs []*View
+	// 		_, err := datastore.NewQuery("View").
+	// 			Ancestor(root).
+	// 			GetAll(ctx, &vs)
+	// 		if err != nil {
+	// 			return err
+	// 		}
 
-			for _, v := range vs {
-				ss, err := s.SearchService.ByView(ctx, v)
-				if err != nil {
-					return err
-				}
+	// 		for _, v := range vs {
+	// 			ss, err := s.SearchService.ByView(ctx, v)
+	// 			if err != nil {
+	// 				return err
+	// 			}
 
-				if len(ss) != 0 {
-					continue
-				}
+	// 			if len(ss) != 0 {
+	// 				continue
+	// 			}
 
-				err = s.SearchService.Create(ctx, &Search{
-					Name:     "#now",
-					ViewID:   v.ID,
-					Query:    "#now AND IsArchived: false",
-					ViewRank: datastore.ByteString("0"),
-				})
-				if err != nil {
-					return err
-				}
+	// 			err = s.SearchService.Create(ctx, &Search{
+	// 				Name:     "#now",
+	// 				ViewID:   v.ID,
+	// 				Query:    "#now AND IsArchived: false",
+	// 				ViewRank: datastore.ByteString("0"),
+	// 			})
+	// 			if err != nil {
+	// 				return err
+	// 			}
 
-				err = s.SearchService.Create(ctx, &Search{
-					Name:     "Incoming",
-					ViewID:   v.ID,
-					Query:    "NOT #now AND NOT #next AND NOT #later AND IsArchived: false",
-					ViewRank: datastore.ByteString("1"),
-				})
-				if err != nil {
-					return err
-				}
+	// 			err = s.SearchService.Create(ctx, &Search{
+	// 				Name:     "Incoming",
+	// 				ViewID:   v.ID,
+	// 				Query:    "NOT #now AND NOT #next AND NOT #later AND IsArchived: false",
+	// 				ViewRank: datastore.ByteString("1"),
+	// 			})
+	// 			if err != nil {
+	// 				return err
+	// 			}
 
-				err = s.SearchService.Create(ctx, &Search{
-					Name:     "#next",
-					ViewID:   v.ID,
-					Query:    "#next AND NOT #now AND IsArchived: false",
-					ViewRank: datastore.ByteString("2"),
-				})
-				if err != nil {
-					return err
-				}
+	// 			err = s.SearchService.Create(ctx, &Search{
+	// 				Name:     "#next",
+	// 				ViewID:   v.ID,
+	// 				Query:    "#next AND NOT #now AND IsArchived: false",
+	// 				ViewRank: datastore.ByteString("2"),
+	// 			})
+	// 			if err != nil {
+	// 				return err
+	// 			}
 
-				err = s.SearchService.Create(ctx, &Search{
-					Name:     "#later",
-					ViewID:   v.ID,
-					Query:    "#later AND NOT #next AND NOT #now AND IsArchived: false",
-					ViewRank: datastore.ByteString("3"),
-				})
-				if err != nil {
-					return err
-				}
+	// 			err = s.SearchService.Create(ctx, &Search{
+	// 				Name:     "#later",
+	// 				ViewID:   v.ID,
+	// 				Query:    "#later AND NOT #next AND NOT #now AND IsArchived: false",
+	// 				ViewRank: datastore.ByteString("3"),
+	// 			})
+	// 			if err != nil {
+	// 				return err
+	// 			}
 
-				err = s.SearchService.Create(ctx, &Search{
-					Name:     "Archived",
-					ViewID:   v.ID,
-					Query:    "IsArchived: true",
-					ViewRank: datastore.ByteString("4"),
-				})
-				if err != nil {
-					return err
-				}
-			}
+	// 			err = s.SearchService.Create(ctx, &Search{
+	// 				Name:     "Archived",
+	// 				ViewID:   v.ID,
+	// 				Query:    "IsArchived: true",
+	// 				ViewRank: datastore.ByteString("4"),
+	// 			})
+	// 			if err != nil {
+	// 				return err
+	// 			}
+	// 		}
 
-			return nil
-		},
-	},
-	{
-		Version:     version("2016-03-29T22:57:00"),
-		Author:      "annie, daniel",
-		Description: "Add ranks to searches.",
-		Run: func(ctx context.Context, s *MigrationService) error {
-			root := datastore.NewKey(ctx, "Root", "root", 0, nil)
+	// 		return nil
+	// 	},
+	// },
+	// {
+	// 	Version:     version("2016-03-29T22:57:00"),
+	// 	Author:      "annie, daniel",
+	// 	Description: "Add ranks to searches.",
+	// 	Run: func(ctx context.Context, s *MigrationService) error {
+	// 		root := datastore.NewKey(ctx, "Root", "root", 0, nil)
 
-			var vs []*View
-			_, err := datastore.NewQuery("View").
-				Ancestor(root).
-				GetAll(ctx, &vs)
-			if err != nil {
-				return err
-			}
+	// 		var vs []*View
+	// 		_, err := datastore.NewQuery("View").
+	// 			Ancestor(root).
+	// 			GetAll(ctx, &vs)
+	// 		if err != nil {
+	// 			return err
+	// 		}
 
-			for _, v := range vs {
-				ss, err := s.SearchService.ByView(ctx, v)
-				if err != nil {
-					return err
-				}
+	// 		for _, v := range vs {
+	// 			ss, err := s.SearchService.ByView(ctx, v)
+	// 			if err != nil {
+	// 				return err
+	// 			}
 
-				rs := NewRanks(len(ss))
-				for i, se := range ss {
-					se.ViewRank = datastore.ByteString(rs[i])
-					err := s.SearchService.Update(ctx, se)
-					if err != nil {
-						return err
-					}
-				}
-			}
+	// 			rs := NewRanks(len(ss))
+	// 			for i, se := range ss {
+	// 				se.ViewRank = datastore.ByteString(rs[i])
+	// 				err := s.SearchService.Update(ctx, se)
+	// 				if err != nil {
+	// 					return err
+	// 				}
+	// 			}
+	// 		}
 
-			return nil
-		},
-	},
-	{
-		Version:     version("2016-07-28T15:20:00"),
-		Author:      "annie",
-		Description: "Add spaceID to searches",
-		Run: func(ctx context.Context, s *MigrationService) error {
-			root := datastore.NewKey(ctx, "Root", "root", 0, nil)
+	// 		return nil
+	// 	},
+	// },
+	// {
+	// 	Version:     version("2016-07-28T15:20:00"),
+	// 	Author:      "annie",
+	// 	Description: "Add spaceID to searches",
+	// 	Run: func(ctx context.Context, s *MigrationService) error {
+	// 		root := datastore.NewKey(ctx, "Root", "root", 0, nil)
 
-			var vs []*View
-			_, err := datastore.NewQuery("View").
-				Ancestor(root).
-				GetAll(ctx, &vs)
-			if err != nil {
-				return err
-			}
+	// 		var vs []*View
+	// 		_, err := datastore.NewQuery("View").
+	// 			Ancestor(root).
+	// 			GetAll(ctx, &vs)
+	// 		if err != nil {
+	// 			return err
+	// 		}
 
-			for _, v := range vs {
-				sp, err := s.ViewService.Space(ctx, v)
-				if err != nil {
-					return err
-				}
+	// 		for _, v := range vs {
+	// 			sp, err := s.ViewService.Space(ctx, v)
+	// 			if err != nil {
+	// 				return err
+	// 			}
 
-				ss, err := s.SearchService.ByView(ctx, v)
-				if err != nil {
-					return err
-				}
+	// 			ss, err := s.SearchService.ByView(ctx, v)
+	// 			if err != nil {
+	// 				return err
+	// 			}
 
-				for _, se := range ss {
-					se.SpaceID = sp.ID
-					err := s.SearchService.Update(ctx, se)
-					if err != nil {
-						return err
-					}
-				}
-			}
+	// 			for _, se := range ss {
+	// 				se.SpaceID = sp.ID
+	// 				err := s.SearchService.Update(ctx, se)
+	// 				if err != nil {
+	// 					return err
+	// 				}
+	// 			}
+	// 		}
 
-			return nil
-		},
-	},
-	{
-		Version:     version("2016-08-04T20:11:00"),
-		Author:      "annie",
-		Description: "Renamed Task.Description => Task.Body",
-		Run: func(ctx context.Context, s *MigrationService) error {
-			root := datastore.NewKey(ctx, "Root", "root", 0, nil)
+	// 		return nil
+	// 	},
+	// },
+	// {
+	// 	Version:     version("2016-08-04T20:11:00"),
+	// 	Author:      "annie",
+	// 	Description: "Renamed Task.Description => Task.Body",
+	// 	Run: func(ctx context.Context, s *MigrationService) error {
+	// 		root := datastore.NewKey(ctx, "Root", "root", 0, nil)
 
-			var tasks []*Task
-			_, err := datastore.NewQuery("Task").
-				Ancestor(root).
-				GetAll(ctx, &tasks)
-			if err != nil {
-				return err
-			}
+	// 		var tasks []*Task
+	// 		_, err := datastore.NewQuery("Task").
+	// 			Ancestor(root).
+	// 			GetAll(ctx, &tasks)
+	// 		if err != nil {
+	// 			return err
+	// 		}
 
-			for _, t := range tasks {
-				if t.Body == "" {
-					t.Body = t.Description
-				}
+	// 		for _, t := range tasks {
+	// 			if t.Body == "" {
+	// 				t.Body = t.Description
+	// 			}
 
-				err = s.TaskService.Update(ctx, t)
-				if err != nil {
-					return err
-				}
-			}
+	// 			err = s.TaskService.Update(ctx, t)
+	// 			if err != nil {
+	// 				return err
+	// 			}
+	// 		}
 
-			return nil
-		},
-	},
+	// 		return nil
+	// 	},
+	// },
 	{
 		Version:     version("2016-08-04T20:46:00"),
 		Author:      "annie",
@@ -461,9 +461,7 @@ var migrations = []*Migration{
 
 type MigrationService struct {
 	SearchService *SearchService `inject:""`
-	SpaceService  *SpaceService  `inject:""`
 	TaskService   *TaskService   `inject:""`
-	ViewService   *ViewService   `inject:""`
 }
 
 // latestVersion returns the largest version stored in the Migrations table.

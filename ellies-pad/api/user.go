@@ -178,9 +178,9 @@ func (s *UserService) FromContext(ctx context.Context) (*User, error) {
 
 type UserAPI struct {
 	NodeInterface *graphql.Interface `inject:"node"`
-	SpaceService  *SpaceService      `inject:""`
-	SpaceAPI      *SpaceAPI          `inject:""`
 	UserService   *UserService       `inject:""`
+	TaskAPI       *TaskAPI           `inject:""`
+	TaskService   *TaskService       `inject:""`
 
 	Type *graphql.Object
 }
@@ -215,18 +215,18 @@ func (api *UserAPI) Start() error {
 				Description: "The user's profile picture URL.",
 				Type:        graphql.String,
 			},
-			"space": &graphql.Field{
+			"task": &graphql.Field{
 				Args: graphql.FieldConfigArgument{
 					"id": &graphql.ArgumentConfig{
 						Type:         graphql.String,
 						DefaultValue: "",
-						Description:  "id can be omitted, which will have space resolve to the user's default space.",
+						Description:  "id can be omitted, which will have task resolve to the user's root task.",
 					},
 				},
-				Description: "space is a disjoint universe of views, searches and tasks.",
-				Type:        api.SpaceAPI.Type,
+				Description: "task is a universe of searches and subtasks.",
+				Type:        api.TaskAPI.Type,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					span := trace.FromContext(p.Context).NewChild("trythings.userAPI.space")
+					span := trace.FromContext(p.Context).NewChild("trythings.userAPI.task")
 					defer span.Finish()
 
 					id, ok := p.Args["id"].(string)
@@ -236,11 +236,11 @@ func (api *UserAPI) Start() error {
 							return nil, fmt.Errorf("invalid id %q", id)
 						}
 
-						sp, err := api.SpaceService.ByID(p.Context, resolvedID.ID)
+						t, err := api.TaskService.ByID(p.Context, resolvedID.ID)
 						if err != nil {
 							return nil, err
 						}
-						return sp, nil
+						return t, nil
 					}
 
 					u, ok := p.Source.(*User)
@@ -248,35 +248,12 @@ func (api *UserAPI) Start() error {
 						return nil, errors.New("expected user source")
 					}
 
-					sps, err := api.SpaceService.ByUser(p.Context, u)
+					rt, err := api.TaskService.GetOrCreateRootTask(p.Context, u)
 					if err != nil {
 						return nil, err
 					}
 
-					if len(sps) == 0 {
-						return nil, errors.New("could not find default space for user")
-					}
-
-					return sps[0], nil
-				},
-			},
-			"spaces": &graphql.Field{
-				Type: graphql.NewList(api.SpaceAPI.Type),
-				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					span := trace.FromContext(p.Context).NewChild("trythings.userAPI.spaces")
-					defer span.Finish()
-
-					u, ok := p.Source.(*User)
-					if !ok {
-						return nil, errors.New("expected user source")
-					}
-
-					sps, err := api.SpaceService.ByUser(p.Context, u)
-					if err != nil {
-						return nil, err
-					}
-
-					return sps, nil
+					return rt, nil
 				},
 			},
 		},

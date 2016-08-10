@@ -162,7 +162,7 @@ func (s *SearchService) Create(ctx context.Context, se *Search) error {
 	if se.ParentTaskID == "" {
 		return errors.New("ParentTaskID is required")
 	}
-	t, err := s.TaskService.ByID(ctx, se.ParentTaskID)
+	_, err := s.TaskService.ByID(ctx, se.ParentTaskID)
 	if err != nil {
 		return err
 	}
@@ -198,7 +198,7 @@ func (s *SearchService) Create(ctx context.Context, se *Search) error {
 		TaskID:   se.ParentTaskID,
 		SearchID: se.ID,
 	}
-	krel, err = datastore.Put(ctx, k, tsrel)
+	krel, err = datastore.Put(ctx, krel, tsrel)
 	if err != nil {
 		return err
 	}
@@ -249,7 +249,8 @@ type SearchAPI struct {
 	TaskService   *TaskService       `inject:""`
 	TaskAPI       *TaskAPI           `inject:""`
 
-	Type *graphql.Object
+	Type           *graphql.Object
+	ConnectionType *graphql.Object
 }
 
 func (api *SearchAPI) Start() error {
@@ -347,5 +348,9 @@ func (api *SearchAPI) Start() error {
 			api.NodeInterface,
 		},
 	})
+	api.ConnectionType = relay.ConnectionDefinitions(relay.ConnectionConfig{
+		Name:     api.Type.Name(),
+		NodeType: api.Type,
+	}).ConnectionType
 	return nil
 }

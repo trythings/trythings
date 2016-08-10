@@ -15,15 +15,12 @@ type apis struct {
 	MigrationAPI *MigrationAPI `inject:""`
 
 	SearchAPI *SearchAPI `inject:""`
-	SpaceAPI  *SpaceAPI  `inject:""`
 	TaskAPI   *TaskAPI   `inject:""`
 	UserAPI   *UserAPI   `inject:""`
 
 	SearchService *SearchService `inject:""`
-	SpaceService  *SpaceService  `inject:""`
 	TaskService   *TaskService   `inject:""`
 	UserService   *UserService   `inject:""`
-	ViewService   *ViewService   `inject:""`
 
 	Schema          *graphql.Schema
 	nodeDefinitions *relay.NodeDefinitions
@@ -37,8 +34,8 @@ func NewAPIs() (*apis, error) {
 			switch resolvedID.Type {
 			case "Search":
 				return apis.SearchService.ByClientID(ctx, resolvedID.ID)
-			case "Space":
-				return apis.SpaceService.ByID(ctx, resolvedID.ID)
+			case "Task":
+				return apis.TaskService.ByID(ctx, resolvedID.ID)
 			case "User":
 				return apis.UserService.ByID(ctx, resolvedID.ID)
 			default:
@@ -49,8 +46,6 @@ func NewAPIs() (*apis, error) {
 			switch p.Value.(type) {
 			case *Search:
 				return apis.SearchAPI.Type
-			case *Space:
-				return apis.SpaceAPI.Type
 			case *Task:
 				return apis.TaskAPI.Type
 			case *User:
@@ -118,7 +113,7 @@ func (apis *apis) Start() error {
 							return nil, err
 						}
 
-						rt, err := apis.TaskService.GetOrCreateRootTask(ctx, u)
+						rt, err := apis.TaskService.GetOrCreateRootTask(p.Context, u)
 						if err != nil {
 							return nil, err
 						}
@@ -156,67 +151,53 @@ func (apis *apis) Start() error {
 						var t *Task
 
 						t = &Task{
-							Title:   "Recently changed or added tasks will show up in 'Recent'",
-							SpaceID: sp.ID,
+							Title: "Recently changed or added tasks will show up in 'Recent'",
 						}
-						err = apis.TaskService.Create(p.Context, t)
+						err = apis.TaskService.Create(p.Context, rt, t)
 						if err != nil {
 							return nil, err
 						}
 
 						t = &Task{
-							Title:       "Searches help you find and organize tasks",
-							Description: "#welcome",
-							SpaceID:     sp.ID,
+							Title: "Searches help you find and organize tasks",
+							Body:  "#welcome",
 						}
-						err = apis.TaskService.Create(p.Context, t)
+						err = apis.TaskService.Create(p.Context, rt, t)
 						if err != nil {
 							return nil, err
 						}
 
 						t = &Task{
-							Title:       "The same task can show up in multiple searches",
-							Description: "#welcome",
-							SpaceID:     sp.ID,
+							Title: "The same task can show up in multiple searches",
+							Body:  "#welcome",
 						}
-						err = apis.TaskService.Create(p.Context, t)
+						err = apis.TaskService.Create(p.Context, rt, t)
 						if err != nil {
 							return nil, err
 						}
 
 						t = &Task{
-							Title:       fmt.Sprintf("Tasks in '%s' are only visible to you", sp.Name),
-							Description: "You can also add people to your space to share it. #welcome",
-							SpaceID:     sp.ID,
+							Title: fmt.Sprintf("Tasks in '%s' are only visible to you", rt.Title),
+							Body:  "You can also add people to your space to share it. #welcome",
 						}
-						err = apis.TaskService.Create(p.Context, t)
+						err = apis.TaskService.Create(p.Context, rt, t)
 						if err != nil {
 							return nil, err
 						}
 
 						t = &Task{
-							Title:       "Add #tags to help you find tasks later",
-							Description: "#welcome",
-							SpaceID:     sp.ID,
+							Title: "Add #tags to help you find tasks later",
+							Body:  "#welcome",
 						}
-						err = apis.TaskService.Create(p.Context, t)
-						if err != nil {
-							return nil, err
-						}
-
-						v = &View{
-							SpaceID: sp.ID,
-							Name:    "Priority View",
-						}
-						err = apis.ViewService.Create(p.Context, v)
+						err = apis.TaskService.Create(p.Context, rt, t)
 						if err != nil {
 							return nil, err
 						}
 
 						se = &Search{
-							Name:   "Unprioritized Search",
-							ViewID: v.ID,
-							Query:  "NOT (#now OR #next OR #later OR IsArchived: true)",
+							Name:         "Unprioritized Search",
+							Query:        "NOT (#now OR #next OR #later OR IsArchived: true)",
+							ParentTaskID: rt.ID,
 						}
 						err = apis.SearchService.Create(p.Context, se)
 						if err != nil {
@@ -224,9 +205,9 @@ func (apis *apis) Start() error {
 						}
 
 						se = &Search{
-							Name:   "#now Search",
-							ViewID: v.ID,
-							Query:  "#now",
+							Name:         "#now Search",
+							Query:        "#now",
+							ParentTaskID: rt.ID,
 						}
 						err = apis.SearchService.Create(p.Context, se)
 						if err != nil {
@@ -234,9 +215,9 @@ func (apis *apis) Start() error {
 						}
 
 						se = &Search{
-							Name:   "#next Search",
-							ViewID: v.ID,
-							Query:  "#next AND NOT #now",
+							Name:         "#next Search",
+							Query:        "#next AND NOT #now",
+							ParentTaskID: rt.ID,
 						}
 						err = apis.SearchService.Create(p.Context, se)
 						if err != nil {
@@ -244,9 +225,9 @@ func (apis *apis) Start() error {
 						}
 
 						se = &Search{
-							Name:   "#later Search",
-							ViewID: v.ID,
-							Query:  "#later AND NOT (#now OR #next)",
+							Name:         "#later Search",
+							Query:        "#later AND NOT (#now OR #next)",
+							ParentTaskID: rt.ID,
 						}
 						err = apis.SearchService.Create(p.Context, se)
 						if err != nil {
@@ -254,41 +235,37 @@ func (apis *apis) Start() error {
 						}
 
 						t = &Task{
-							Title:       "Use #now, #next, and #later to prioritize tasks",
-							Description: "https://medium.com/@noah_weiss/now-next-later-roadmaps-without-the-drudgery-1cfe65656645#.lcwurwozj",
-							SpaceID:     sp.ID,
+							Title: "Use #now, #next, and #later to prioritize tasks",
+							Body:  "https://medium.com/@noah_weiss/now-next-later-roadmaps-without-the-drudgery-1cfe65656645#.lcwurwozj",
 						}
-						err = apis.TaskService.Create(p.Context, t)
+						err = apis.TaskService.Create(p.Context, rt, t)
 						if err != nil {
 							return nil, err
 						}
 
 						t = &Task{
-							Title:       "#now is the next 2–4 weeks",
-							Description: "For many people that use bi-weekly sprints, this fits perfectly into their planning cadence.",
-							SpaceID:     sp.ID,
+							Title: "#now is the next 2–4 weeks",
+							Body:  "For many people that use bi-weekly sprints, this fits perfectly into their planning cadence.",
 						}
-						err = apis.TaskService.Create(p.Context, t)
+						err = apis.TaskService.Create(p.Context, rt, t)
 						if err != nil {
 							return nil, err
 						}
 
 						t = &Task{
-							Title:       "#next is 1-3 months out",
-							Description: "Effectively, it’s the rest of the quarter after now.",
-							SpaceID:     sp.ID,
+							Title: "#next is 1-3 months out",
+							Body:  "Effectively, it’s the rest of the quarter after now.",
 						}
-						err = apis.TaskService.Create(p.Context, t)
+						err = apis.TaskService.Create(p.Context, rt, t)
 						if err != nil {
 							return nil, err
 						}
 
 						t = &Task{
-							Title:       "#later is 3+ months out",
-							Description: "It’s a useful place to park ideas you're passionate about.",
-							SpaceID:     sp.ID,
+							Title: "#later is 3+ months out",
+							Body:  "It’s a useful place to park ideas you're passionate about.",
 						}
-						err = apis.TaskService.Create(p.Context, t)
+						err = apis.TaskService.Create(p.Context, rt, t)
 						if err != nil {
 							return nil, err
 						}

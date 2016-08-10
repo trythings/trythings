@@ -71,7 +71,7 @@ func (t *Task) Save() ([]search.Field, *search.DocumentMetadata, error) {
 	return []search.Field{
 		{Name: "CreatedAt", Value: t.CreatedAt},
 		{Name: "Title", Value: t.Title},
-		{Name: "Description", Value: t.Description},
+		{Name: "Body", Value: t.Body},
 		{Name: "IsArchived", Value: isArchived},
 		// TODO#xcxc: Figure out how to populate this with appropriate ancestors (more denormalization!).
 		// {Name: "SpaceID", Value: search.Atom(t.SpaceID)},
@@ -86,6 +86,42 @@ func (s *TaskService) IsVisible(ctx context.Context, t *Task) (bool, error) {
 	// TODO#AccessControl: Add back access control, which will do some form of "edge" access control.
 	return true, nil
 }
+
+// TODO: For later, here is Space's old IsVisible:
+// isVisible, ok := CacheFromContext(ctx).IsVisible(sp)
+// 	if ok {
+// 		return isVisible, nil
+// 	}
+// 	defer func() {
+// 		if err == nil {
+// 			CacheFromContext(ctx).SetIsVisible(sp, isVisible)
+// 		}
+// 	}()
+
+// 	span := trace.FromContext(ctx).NewChild("trythings.space.IsVisible")
+// 	defer span.Finish()
+
+// 	su, err := IsSuperuser(ctx)
+// 	if err != nil {
+// 		return false, err
+// 	}
+
+// 	if su {
+// 		return true, nil
+// 	}
+
+// 	u, err := s.UserService.FromContext(ctx)
+// 	if err != nil {
+// 		return false, err
+// 	}
+
+// 	for _, id := range sp.UserIDs {
+// 		if u.ID == id {
+// 			return true, nil
+// 		}
+// 	}
+
+// 	return false, nil
 
 func (s *TaskService) ByID(ctx context.Context, id string) (*Task, error) {
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
@@ -160,7 +196,7 @@ func (s *TaskService) CreateRelationship(ctx context.Context, childTask *Task, p
 
 	// Do not create duplicates of a relationship.
 	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
-	var existing []*TaskRelationship
+	var existing []*TaskSubtaskRelationship
 	_, err := datastore.NewQuery("TaskSubtaskRelationship").
 		Ancestor(rootKey).
 		Filter("ParentTaskID =", parentTask.ID).
@@ -187,7 +223,7 @@ func (s *TaskService) CreateRelationship(ctx context.Context, childTask *Task, p
 
 	// Create the relationship
 	k := datastore.NewIncompleteKey(ctx, "TaskSubtaskRelationship", rootKey)
-	_, err = datastore.Put(ctx, k, &TaskRelationship{
+	_, err = datastore.Put(ctx, k, &TaskSubtaskRelationship{
 		ChildTaskID:  childTask.ID,
 		ParentTaskID: parentTask.ID,
 	})
@@ -196,6 +232,63 @@ func (s *TaskService) CreateRelationship(ctx context.Context, childTask *Task, p
 	}
 
 	return nil
+}
+
+// TODO#Perf: Consider caching this relationship.
+func (s *TaskService) Subtasks(ctx context.Context, pt *Task) ([]*Task, error) {
+	span := trace.FromContext(ctx).NewChild("trythings.task.Subtasks")
+	defer span.Finish()
+
+	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
+	var subtaskRels []*TaskSubtaskRelationship
+	_, err := datastore.NewQuery("TaskSubtaskRelationship").
+		Ancestor(rootKey).
+		Filter("ParentTaskID =", pt.ID).
+		GetAll(ctx, &subtaskRels)
+	if err != nil {
+		return nil, err
+	}
+
+	var subtaskIDs []string
+	for _, st := range subtaskRels {
+		subtaskIDs = append(subtaskIDs, st.ChildTaskID)
+	}
+
+	return s.ByIDs(ctx, subtaskIDs)
+}
+
+// TODO#Perf: Consider caching this relationship.
+// TODO#CircularDependencies: Call out to search service's ByID rather than taking it in.
+func (s *TaskService) Searches(ctx context.Context, pt *Task, byID func(ctx context.Context, id string) (*Search, error)) ([]*Search, error) {
+	span := trace.FromContext(ctx).NewChild("trythings.task.Searches")
+	defer span.Finish()
+
+	rootKey := datastore.NewKey(ctx, "Root", "root", 0, nil)
+	var searchRels []*TaskSearchRelationship
+	_, err := datastore.NewQuery("TaskSearchRelationship").
+		Ancestor(rootKey).
+		Filter("TaskID =", pt.ID).
+		GetAll(ctx, &searchRels)
+	if err != nil {
+		return nil, err
+	}
+
+	var searchIDs []string
+	for _, se := range searchRels {
+		searchIDs = append(searchIDs, se.SearchID)
+	}
+
+	// TODO#Perf: Consider a batch ByID for searches.
+	var searches []*Search
+	for _, id := range searchIDs {
+		se, err := byID(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		searches = append(searches, se)
+	}
+
+	return searches, nil
 }
 
 func (s *TaskService) Create(ctx context.Context, pt *Task, t *Task) error {
@@ -231,9 +324,12 @@ func (s *TaskService) Create(ctx context.Context, pt *Task, t *Task) error {
 	if err != nil {
 		return err
 	}
-	err = s.CreateRelationship(ctx, t, pt)
-	if err != nil {
-		return err
+
+	if pt != nil {
+		err = s.CreateRelationship(ctx, t, pt)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = s.Index(ctx, t)
@@ -258,7 +354,7 @@ func (s *TaskService) GetOrCreateRootTask(ctx context.Context, u *User) (*Task, 
 		Title:      fmt.Sprintf("%s's Home", u.GivenName),
 		IsArchived: false,
 	}
-	err := s.Create(ctx, t)
+	err := s.Create(ctx, nil, t)
 	if err != nil {
 		return nil, err
 	}
@@ -322,14 +418,14 @@ func (s *TaskService) Search(ctx context.Context, pt *Task, query string) (ts []
 	span := trace.FromContext(ctx).NewChild("trythings.task.Search")
 	defer span.Finish()
 
-	ts, ok := CacheFromContext(ctx).SearchResults(sp, query)
+	ts, ok := CacheFromContext(ctx).SearchResults(pt, query)
 	if ok {
 		return ts, nil
 	}
 	originalQuery := query
 	defer func() {
 		if err == nil {
-			CacheFromContext(ctx).SetSearchResults(sp, originalQuery, ts)
+			CacheFromContext(ctx).SetSearchResults(pt, originalQuery, ts)
 		}
 	}()
 
@@ -408,6 +504,8 @@ func (s *TaskService) Index(ctx context.Context, t *Task) error {
 type TaskAPI struct {
 	NodeInterface *graphql.Interface `inject:"node"`
 	TaskService   *TaskService       `inject:""`
+	// TODO#CircularDependencies
+	// SearchAPI     *SearchAPI         `inject:""`
 
 	Type           *graphql.Object
 	ConnectionType *graphql.Object
@@ -428,14 +526,70 @@ func (api *TaskAPI) Start() error {
 				Description: "A short summary of the task",
 				Type:        graphql.String,
 			},
-			"description": &graphql.Field{
-				Description: "A more detailed explanation of the task",
-				Type:        graphql.String,
+			"body": &graphql.Field{
+				Type: graphql.String,
 			},
 			"isArchived": &graphql.Field{
 				Description: "Whether this task requires attention",
 				Type:        graphql.Boolean,
 			},
+			// "subtasks": &graphql.Field{
+			// 	Type: api.ConnectionType,
+			// 	Args: relay.ConnectionArgs,
+			// 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			// 		span := trace.FromContext(p.Context).NewChild("trythings.taskAPI.subtasks")
+			// 		defer span.Finish()
+
+			// 		pt, ok := p.Source.(*Task)
+			// 		if !ok {
+			// 			return nil, errors.New("expected task source")
+			// 		}
+
+			// 		ts, err := api.TaskService.Subtasks(p.Context, pt)
+			// 		if err != nil {
+			// 			return nil, err
+			// 		}
+
+			// 		objs := []interface{}{}
+			// 		for _, t := range ts {
+			// 			objs = append(objs, *t)
+			// 		}
+
+			// 		// TODO#Performance: Run a limited query instead of filtering after the query.
+			// 		args := relay.NewConnectionArguments(p.Args)
+			// 		return relay.ConnectionFromArray(objs, args), nil
+			// 	},
+			// },
+			// TODO#Features: Support creating a search.
+			// TODO#Features: Support moving a task into a different task (for drag and drop).
+			// TODO#CircularDependencies
+			// "searches": &graphql.Field{
+			// 	Type: api.SearchAPI.ConnectionType,
+			// 	Args: relay.ConnectionArgs,
+			// 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			// 		span := trace.FromContext(p.Context).NewChild("trythings.taskAPI.searches")
+			// 		defer span.Finish()
+
+			// 		pt, ok := p.Source.(*Task)
+			// 		if !ok {
+			// 			return nil, errors.New("expected task source")
+			// 		}
+
+			// 		ses, err := api.TaskService.Searches(p.Context, pt, api.SearchAPI.SearchService.ByID)
+			// 		if err != nil {
+			// 			return nil, err
+			// 		}
+
+			// 		objs := []interface{}{}
+			// 		for _, se := range ses {
+			// 			objs = append(objs, *se)
+			// 		}
+
+			// 		// TODO#Performance: Run a limited query instead of filtering after the query.
+			// 		args := relay.NewConnectionArguments(p.Args)
+			// 		return relay.ConnectionFromArray(objs, args), nil
+			// 	},
+			// },
 		},
 		Interfaces: []*graphql.Interface{
 			api.NodeInterface,
@@ -486,12 +640,12 @@ func (api *TaskAPI) Start() error {
 					return nil, errors.New("could not cast title to string")
 				}
 
-				var desc string
-				descOrNil := inputMap["description"]
-				if descOrNil != nil {
-					desc, ok = descOrNil.(string)
+				var body string
+				bodyOrNil := inputMap["body"]
+				if bodyOrNil != nil {
+					body, ok = bodyOrNil.(string)
 					if !ok {
-						return nil, errors.New("could not cast description to string")
+						return nil, errors.New("could not cast body to string")
 					}
 				}
 
@@ -503,12 +657,16 @@ func (api *TaskAPI) Start() error {
 				if resolvedParentTaskID == nil {
 					return nil, fmt.Errorf("invalid id %q", parentTaskID)
 				}
+				parentTask, err := api.TaskService.ByID(ctx, resolvedParentTaskID.ID)
+				if err != nil {
+					return nil, err
+				}
 
 				t := &Task{
-					Title:       title,
-					Description: desc,
+					Title: title,
+					Body:  body,
 				}
-				err := api.TaskService.Create(ctx, resolvedParentTaskID.ID, t)
+				err = api.TaskService.Create(ctx, parentTask, t)
 				if err != nil {
 					return nil, err
 				}
@@ -527,7 +685,7 @@ func (api *TaskAPI) Start() error {
 				"title": &graphql.InputObjectFieldConfig{
 					Type: graphql.String,
 				},
-				"description": &graphql.InputObjectFieldConfig{
+				"body": &graphql.InputObjectFieldConfig{
 					Type: graphql.String,
 				},
 				"isArchived": &graphql.InputObjectFieldConfig{
@@ -575,9 +733,9 @@ func (api *TaskAPI) Start() error {
 					t.Title = title
 				}
 
-				description, ok := inputMap["description"].(string)
+				body, ok := inputMap["body"].(string)
 				if ok {
-					t.Description = description
+					t.Body = body
 				}
 
 				isArchived, ok := inputMap["isArchived"].(bool)
