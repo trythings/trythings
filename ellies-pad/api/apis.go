@@ -79,6 +79,11 @@ func NewAPIs() (*apis, error) {
 		return nil, err
 	}
 
+	// We manually add TaskAPI's dependency on SearchAPI after the graph has been populated,
+	// because inject doesn't support circular references.
+	// TODO#CircularDependencies: Come up with a cleaner way to do this.
+	apis.TaskAPI.AfterStart(apis.SearchAPI)
+
 	return apis, nil
 }
 

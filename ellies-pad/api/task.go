@@ -505,11 +505,73 @@ type TaskAPI struct {
 	NodeInterface *graphql.Interface `inject:"node"`
 	TaskService   *TaskService       `inject:""`
 	// TODO#CircularDependencies
-	// SearchAPI     *SearchAPI         `inject:""`
+	SearchAPI *SearchAPI
 
 	Type           *graphql.Object
 	ConnectionType *graphql.Object
 	Mutations      map[string]*graphql.Field
+}
+
+func (api *TaskAPI) AfterStart(searchAPI *SearchAPI) {
+	// Our dependency-injection library doesn't support circular dependencies, so we add this manually here.
+	api.SearchAPI = searchAPI
+
+	// This doesn't strictly need to be here, but it seems to belong.
+	api.Type.AddFieldConfig("subtasks", &graphql.Field{
+		Type: api.ConnectionType,
+		Args: relay.ConnectionArgs,
+		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			span := trace.FromContext(p.Context).NewChild("trythings.taskAPI.subtasks")
+			defer span.Finish()
+
+			pt, ok := p.Source.(*Task)
+			if !ok {
+				return nil, errors.New("expected task source")
+			}
+
+			ts, err := api.TaskService.Subtasks(p.Context, pt)
+			if err != nil {
+				return nil, err
+			}
+
+			objs := []interface{}{}
+			for _, t := range ts {
+				objs = append(objs, *t)
+			}
+
+			// TODO#Performance: Run a limited query instead of filtering after the query.
+			args := relay.NewConnectionArguments(p.Args)
+			return relay.ConnectionFromArray(objs, args), nil
+		},
+	})
+
+	api.Type.AddFieldConfig("searches", &graphql.Field{
+		Type: api.SearchAPI.ConnectionType,
+		Args: relay.ConnectionArgs,
+		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			span := trace.FromContext(p.Context).NewChild("trythings.taskAPI.searches")
+			defer span.Finish()
+
+			pt, ok := p.Source.(*Task)
+			if !ok {
+				return nil, errors.New("expected task source")
+			}
+
+			ses, err := api.TaskService.Searches(p.Context, pt, api.SearchAPI.SearchService.ByID)
+			if err != nil {
+				return nil, err
+			}
+
+			objs := []interface{}{}
+			for _, se := range ses {
+				objs = append(objs, *se)
+			}
+
+			// TODO#Performance: Run a limited query instead of filtering after the query.
+			args := relay.NewConnectionArguments(p.Args)
+			return relay.ConnectionFromArray(objs, args), nil
+		},
+	})
 }
 
 func (api *TaskAPI) Start() error {
@@ -533,63 +595,6 @@ func (api *TaskAPI) Start() error {
 				Description: "Whether this task requires attention",
 				Type:        graphql.Boolean,
 			},
-			// "subtasks": &graphql.Field{
-			// 	Type: api.ConnectionType,
-			// 	Args: relay.ConnectionArgs,
-			// 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-			// 		span := trace.FromContext(p.Context).NewChild("trythings.taskAPI.subtasks")
-			// 		defer span.Finish()
-
-			// 		pt, ok := p.Source.(*Task)
-			// 		if !ok {
-			// 			return nil, errors.New("expected task source")
-			// 		}
-
-			// 		ts, err := api.TaskService.Subtasks(p.Context, pt)
-			// 		if err != nil {
-			// 			return nil, err
-			// 		}
-
-			// 		objs := []interface{}{}
-			// 		for _, t := range ts {
-			// 			objs = append(objs, *t)
-			// 		}
-
-			// 		// TODO#Performance: Run a limited query instead of filtering after the query.
-			// 		args := relay.NewConnectionArguments(p.Args)
-			// 		return relay.ConnectionFromArray(objs, args), nil
-			// 	},
-			// },
-			// TODO#Features: Support creating a search.
-			// TODO#Features: Support moving a task into a different task (for drag and drop).
-			// TODO#CircularDependencies
-			// "searches": &graphql.Field{
-			// 	Type: api.SearchAPI.ConnectionType,
-			// 	Args: relay.ConnectionArgs,
-			// 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-			// 		span := trace.FromContext(p.Context).NewChild("trythings.taskAPI.searches")
-			// 		defer span.Finish()
-
-			// 		pt, ok := p.Source.(*Task)
-			// 		if !ok {
-			// 			return nil, errors.New("expected task source")
-			// 		}
-
-			// 		ses, err := api.TaskService.Searches(p.Context, pt, api.SearchAPI.SearchService.ByID)
-			// 		if err != nil {
-			// 			return nil, err
-			// 		}
-
-			// 		objs := []interface{}{}
-			// 		for _, se := range ses {
-			// 			objs = append(objs, *se)
-			// 		}
-
-			// 		// TODO#Performance: Run a limited query instead of filtering after the query.
-			// 		args := relay.NewConnectionArguments(p.Args)
-			// 		return relay.ConnectionFromArray(objs, args), nil
-			// 	},
-			// },
 		},
 		Interfaces: []*graphql.Interface{
 			api.NodeInterface,
@@ -600,6 +605,8 @@ func (api *TaskAPI) Start() error {
 		NodeType: api.Type,
 	}).ConnectionType
 
+	// TODO#Features: Support creating a search.
+	// TODO#Features: Support moving a task into a different task (for drag and drop).
 	api.Mutations = map[string]*graphql.Field{
 		"addTask": relay.MutationWithClientMutationID(relay.MutationConfig{
 			Name: "AddTask",
