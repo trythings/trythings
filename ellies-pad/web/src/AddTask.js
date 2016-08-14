@@ -94,8 +94,8 @@ class AddTask extends React.Component {
 export default Relay.createContainer(AddTask, {
 	fragments: {
 		space: () => Relay.QL`
-			fragment on Space {
-				${AddTaskMole.getFragment('space')},
+			fragment on Task {
+				${AddTaskMole.getFragment('parentTask')},
 			},
 		`,
 	},

@@ -9,8 +9,8 @@ import theme from './theme.js';
 
 class AddTaskMutation extends Relay.Mutation {
 	static fragments = {
-		space: () => Relay.QL`
-			fragment on Space {
+		parentTask: () => Relay.QL`
+			fragment on Task {
 				id,
 			}
 		`,
@@ -40,7 +40,7 @@ class AddTaskMutation extends Relay.Mutation {
 		return {
 			title: this.props.title,
 			description: this.props.description,
-			spaceId: this.props.space.id,
+			parentTaskId: this.props.parentTask.id,
 		};
 	}
 
@@ -208,9 +208,9 @@ class AddTaskMole extends React.Component {
 
 export default Relay.createContainer(AddTaskMole, {
 	fragments: {
-		space: () => Relay.QL`
-			fragment on Space {
-				${AddTaskMutation.getFragment('space')},
+		parentTask: () => Relay.QL`
+			fragment on Task {
+				${AddTaskMutation.getFragment('parentTask')},
 			}
 		`,
 	},
