@@ -28,11 +28,6 @@ func init() {
 	http.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
 		ctx := appengine.NewContext(r)
 
-		if !user.IsAdmin(ctx) {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-
 		// Tracing.
 		span := Tracer.SpanFromRequest(r)
 		defer func() {
@@ -74,6 +69,22 @@ func init() {
 	http.Handle("/static/", http.FileServer(http.Dir(".")))
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		ctx := appengine.NewContext(r)
+
+		// While AC is disabled, only allow appengine admins to view our data.
+		// TODO#AccessControl: Once it is re-enabled, remove this.
+
+		if u := user.Current(ctx); u == nil {
+			url, _ := user.LoginURL(ctx, "/")
+			http.Redirect(w, r, url, http.StatusFound)
+			return
+		}
+
+		if !user.IsAdmin(ctx) {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
 		http.ServeFile(w, r, "./static/index.html")
 	})
 }
