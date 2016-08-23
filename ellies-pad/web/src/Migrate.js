@@ -2,7 +2,7 @@ import gapi from 'gapi';
 import React from 'react';
 import Relay from 'react-relay';
 
-import Icon from './Icon.js';
+import IconButton from './IconButton.js';
 import resetStyles from './resetStyles.js';
 import theme from './theme.js';
 
@@ -56,9 +56,6 @@ class Migrate extends React.Component {
 	};
 
 	static propTypes = {
-		style: React.PropTypes.shape({
-			color: React.PropTypes.string,
-		}),
 		viewer: React.PropTypes.shape({
 			isAdmin: React.PropTypes.bool.isRequired,
 		}),
@@ -85,18 +82,10 @@ class Migrate extends React.Component {
 			paddingRight: 8,
 			paddingTop: 8,
 		},
-		icon: {
-			...resetStyles,
-			...theme.text.light.primary,
-		},
 		label: {
 			...resetStyles,
 			...theme.text.light.primary,
 		},
-	};
-
-	state = {
-		isHovering: false,
 	};
 
 	componentWillMount() {
@@ -111,39 +100,17 @@ class Migrate extends React.Component {
 		);
 	};
 
-	onEnter = () => {
-		this.setState({ isHovering: true });
-	};
-
-	onLeave = () => {
-		this.setState({ isHovering: false });
-	};
-
 	render() {
-		let iconStyle = Migrate.styles.icon;
-		if (this.props.style && this.props.style.color) {
-			iconStyle = {
-				...iconStyle,
-				color: this.props.style.color,
-			};
-		}
-
 		return (
 			<div style={Migrate.styles.container}>
 				<div style={Migrate.styles.buttonContainer}>
-					<button
-						style={{
-							...Migrate.styles.button,
-							backgroundColor: this.state.isHovering ?
-								'rgba(255, 255, 255, 0.12)' :
-								'rgba(255, 255, 255, 0)',
-						}}
+					<IconButton
+						iconName="update"
 						onClick={this.onClick}
-						onMouseEnter={this.onEnter}
-						onMouseLeave={this.onLeave}
-					>
-						<Icon style={iconStyle} name="update" />
-					</button>
+						style={{
+							color: theme.text.light.primary.color,
+						}}
+					/>
 					<span style={Migrate.styles.label}>Run Migrations</span>
 				</div>
 			</div>
