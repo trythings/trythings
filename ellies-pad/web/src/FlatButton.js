@@ -90,10 +90,8 @@ export default class FlatButton extends React.Component {
 				style={{
 					...FlatButton.styles.button,
 					...this.buttonStateStyle(),
-					color: this.props.style.color,
 				}}
 				onClick={this.props.onClick}
-
 				onMouseEnter={this.onMouseEnter}
 				onMouseLeave={this.onMouseLeave}
 				onFocus={this.onFocus}

@@ -11,7 +11,6 @@ export default class IconButton extends React.Component {
 		iconName: React.PropTypes.string.isRequired,
 		onClick: React.PropTypes.func,
 		style: React.PropTypes.shape({
-			backgroundColor: React.PropTypes.string,
 			color: React.PropTypes.string.isRequired,
 		}).isRequired,
 	};
@@ -29,12 +28,15 @@ export default class IconButton extends React.Component {
 	};
 
 	state = {
-		isHovering: false,
 		hasFocus: false,
+		isActive: false,
+		isHovering: false,
 	};
 
-	onBlur = () => {
-		this.setState({ hasFocus: false });
+	onBlur = (event) => {
+		if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) {
+			this.setState({ hasFocus: false, isActive: false });
+		}
 	};
 
 	onFocus = () => {
@@ -46,23 +48,42 @@ export default class IconButton extends React.Component {
 	};
 
 	onMouseLeave = () => {
-		this.setState({ isHovering: false });
+		this.setState({ isHovering: false, isActive: false });
 	};
 
-	render() {
-		let backgroundColor = this.props.style.backgroundColor ||
-			color(this.props.style.color).alpha(0).rgbString();
-		if (this.state.isHovering || this.state.hasFocus) {
-			backgroundColor = color(backgroundColor).
-					mix(color(this.props.style.color), 1 - 0.12).
-					rgbString();
-		}
+	onMouseDown = () => {
+		this.setState({ isActive: true });
+	};
 
+	onMouseUp = () => {
+		this.setState({ isActive: false });
+	};
+
+	buttonStateStyle() {
+		if (this.state.isActive) {
+			return {
+				backgroundColor: color(this.props.style.color).alpha(0.38).rgbString(),
+			};
+		}
+		if (this.state.hasFocus) {
+			return {
+				backgroundColor: color(this.props.style.color).alpha(0.24).rgbString(),
+			};
+		}
+		if (this.state.isHovering) {
+			return {
+				backgroundColor: color(this.props.style.color).alpha(0.12).rgbString(),
+			};
+		}
+		return {};
+	}
+
+	render() {
 		return (
 			<button
 				style={{
 					...IconButton.styles.button,
-					backgroundColor,
+					...this.buttonStateStyle(),
 				}}
 				onBlur={this.onBlur}
 				onClick={this.props.onClick}
