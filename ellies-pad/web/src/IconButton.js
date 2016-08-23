@@ -4,7 +4,6 @@ import React from 'react';
 
 import Icon from './Icon.js';
 import resetStyles from './resetStyles.js';
-// import theme from './theme.js';
 
 export default class IconButton extends React.Component {
 	static propTypes = {
