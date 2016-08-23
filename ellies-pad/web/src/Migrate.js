@@ -74,17 +74,7 @@ class Migrate extends React.Component {
 		},
 		button: {
 			...resetStyles,
-
-			borderRadius: '50%',
-
-			paddingBottom: 8,
-			paddingLeft: 8,
-			paddingRight: 8,
-			paddingTop: 8,
-		},
-		label: {
-			...resetStyles,
-			...theme.text.light.primary,
+			...theme.text.light.primary.color,
 		},
 	};
 
@@ -107,9 +97,7 @@ class Migrate extends React.Component {
 					<IconButton
 						iconName="update"
 						onClick={this.onClick}
-						style={{
-							color: theme.text.light.primary.color,
-						}}
+						style={Migrate.styles.button}
 					/>
 					<span style={Migrate.styles.label}>Run Migrations</span>
 				</div>
