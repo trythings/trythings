@@ -7,9 +7,9 @@ import TaskTile from './TaskTile.js';
 
 class TaskListItem extends React.Component {
 	static propTypes = {
-		// ...TaskCard.propTypes.task
-		// ...TaskTile.propTypes.task
 		task: React.PropTypes.shape({
+			// ...TaskCard.propTypes.task
+			// ...TaskTile.propTypes.task
 			id: React.PropTypes.string.isRequired,
 			title: React.PropTypes.string,
 			description: React.PropTypes.string,
