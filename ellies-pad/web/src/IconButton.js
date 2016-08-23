@@ -30,6 +30,15 @@ export default class IconButton extends React.Component {
 
 	state = {
 		isHovering: false,
+		hasFocus: false,
+	};
+
+	onBlur = () => {
+		this.setState({ hasFocus: false });
+	};
+
+	onFocus = () => {
+		this.setState({ hasFocus: true });
 	};
 
 	onMouseEnter = () => {
@@ -43,7 +52,7 @@ export default class IconButton extends React.Component {
 	render() {
 		let backgroundColor = this.props.style.backgroundColor ||
 			color(this.props.style.color).alpha(0).rgbString();
-		if (this.state.isHovering) {
+		if (this.state.isHovering || this.state.hasFocus) {
 			backgroundColor = color(backgroundColor).
 					mix(color(this.props.style.color), 1 - 0.12).
 					rgbString();
@@ -55,7 +64,9 @@ export default class IconButton extends React.Component {
 					...IconButton.styles.button,
 					backgroundColor,
 				}}
+				onBlur={this.onBlur}
 				onClick={this.props.onClick}
+				onFocus={this.onFocus}
 				onMouseEnter={this.onMouseEnter}
 				onMouseLeave={this.onMouseLeave}
 			>
