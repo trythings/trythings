@@ -34,26 +34,26 @@ export default class FlatButton extends React.Component {
 	};
 
 	state = {
-		isFocused: false,
-		isHovered: false,
+		hasFocus: false,
+		isHovering: false,
 		isActive: false,
 	};
 
 	onMouseEnter = () => {
-		this.setState({ isHovered: true });
+		this.setState({ isHovering: true });
 	};
 
 	onMouseLeave = () => {
-		this.setState({ isHovered: false, isActive: false });
+		this.setState({ isHovering: false, isActive: false });
 	};
 
 	onFocus = () => {
-		this.setState({ isFocused: true });
+		this.setState({ hasFocus: true });
 	};
 
 	onBlur = (event) => {
 		if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) {
-			this.setState({ isFocused: false, isActive: false });
+			this.setState({ hasFocus: false, isActive: false });
 		}
 	};
 
@@ -71,12 +71,12 @@ export default class FlatButton extends React.Component {
 				backgroundColor: color(this.props.style.color).alpha(0.38).rgbString(),
 			};
 		}
-		if (this.state.isFocused) {
+		if (this.state.hasFocus) {
 			return {
 				backgroundColor: color(this.props.style.color).alpha(0.24).rgbString(),
 			};
 		}
-		if (this.state.isHovered) {
+		if (this.state.isHovering) {
 			return {
 				backgroundColor: color(this.props.style.color).alpha(0.12).rgbString(),
 			};

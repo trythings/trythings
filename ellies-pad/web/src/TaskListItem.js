@@ -34,11 +34,11 @@ class TaskListItem extends React.Component {
 	};
 
 	state = {
-		isFocused: false,
+		hasFocus: false,
 	};
 
 	onFocus = () => {
-		this.setState({ isFocused: true });
+		this.setState({ hasFocus: true });
 	};
 
 	onBlur = (event) => {
@@ -48,7 +48,7 @@ class TaskListItem extends React.Component {
 	};
 
 	close = () => {
-		this.setState({ isFocused: false });
+		this.setState({ hasFocus: false });
 	};
 
 	taskCardRef = (taskCard) => {
@@ -63,7 +63,7 @@ class TaskListItem extends React.Component {
 				style={TaskListItem.styles.item}
 				tabIndex={-1}
 			>
-				{this.state.isFocused
+				{this.state.hasFocus
 					? (
 							<TaskCard
 								autoFocus
