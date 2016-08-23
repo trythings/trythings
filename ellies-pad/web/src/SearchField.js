@@ -14,7 +14,7 @@ export default class SearchField extends React.Component {
 		onBlur: React.PropTypes.func,
 		onQueryChange: React.PropTypes.func,
 		style: React.PropTypes.shape({
-			backgroundColor: React.PropTypes.string.isRequired,
+			backgroundColor: React.PropTypes.string,
 			color: React.PropTypes.string.isRequired,
 			flex: React.PropTypes.string,
 		}).isRequired,
@@ -98,12 +98,13 @@ export default class SearchField extends React.Component {
 	};
 
 	render() {
-		let backgroundColor = this.props.style.backgroundColor;
+		let backgroundColor = this.props.style.backgroundColor ||
+			color(this.props.style.color).alpha(0).rgbString();
 		if (this.state.isHovered || this.state.hasFocus) {
 			// Bring the background color closer to the text color.
 			backgroundColor = color(this.props.style.backgroundColor).
 					mix(color(this.props.style.color), 1 - 0.12).
-					hexString();
+					rgbString();
 		}
 
 		return (
