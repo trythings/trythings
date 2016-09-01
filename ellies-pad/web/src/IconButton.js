@@ -1,12 +1,13 @@
+import _pick from 'lodash/pick';
 import color from 'color';
 import React from 'react';
 
+import Icon from './Icon.js';
 import resetStyles from './resetStyles.js';
-import theme from './theme.js';
 
-export default class FlatButton extends React.Component {
+export default class IconButton extends React.Component {
 	static propTypes = {
-		label: React.PropTypes.string.isRequired,
+		iconName: React.PropTypes.string.isRequired,
 		onClick: React.PropTypes.func,
 		style: React.PropTypes.shape({
 			color: React.PropTypes.string.isRequired,
@@ -17,26 +18,28 @@ export default class FlatButton extends React.Component {
 		button: {
 			...resetStyles,
 
-			borderRadius: 2,
-			height: 36,
-			justifyContent: 'center',
+			borderRadius: '50%',
+			paddingBottom: 8,
 			paddingLeft: 8,
 			paddingRight: 8,
-		},
-		label: {
-			...resetStyles,
-			...theme.text,
-
-			fontSize: 14,
-			fontWeight: 500,
-			textTransform: 'uppercase',
+			paddingTop: 8,
 		},
 	};
 
 	state = {
 		hasFocus: false,
-		isHovering: false,
 		isActive: false,
+		isHovering: false,
+	};
+
+	onBlur = (event) => {
+		if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) {
+			this.setState({ hasFocus: false, isActive: false });
+		}
+	};
+
+	onFocus = () => {
+		this.setState({ hasFocus: true });
 	};
 
 	onMouseEnter = () => {
@@ -45,16 +48,6 @@ export default class FlatButton extends React.Component {
 
 	onMouseLeave = () => {
 		this.setState({ isHovering: false, isActive: false });
-	};
-
-	onFocus = () => {
-		this.setState({ hasFocus: true });
-	};
-
-	onBlur = (event) => {
-		if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) {
-			this.setState({ hasFocus: false, isActive: false });
-		}
 	};
 
 	onMouseDown = () => {
@@ -88,25 +81,19 @@ export default class FlatButton extends React.Component {
 		return (
 			<button
 				style={{
-					...FlatButton.styles.button,
+					...IconButton.styles.button,
 					...this.buttonStateStyle(),
 				}}
+				onBlur={this.onBlur}
 				onClick={this.props.onClick}
+				onFocus={this.onFocus}
 				onMouseEnter={this.onMouseEnter}
 				onMouseLeave={this.onMouseLeave}
-				onFocus={this.onFocus}
-				onBlur={this.onBlur}
-				onMouseDown={this.onMouseDown}
-				onMouseUp={this.onMouseUp}
 			>
-				<span
-					style={{
-						...FlatButton.styles.label,
-						color: this.props.style.color,
-					}}
-				>
-					{this.props.label}
-				</span>
+				<Icon
+					name={this.props.iconName}
+					style={_pick(this.props.style, 'color')}
+				/>
 			</button>
 		);
 	}

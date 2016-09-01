@@ -62,11 +62,11 @@ class SavedSearch extends React.Component {
 	}
 
 	componentDidMount() {
-		this.interval = setInterval(this.refetch, 60 * 1000);
+		// this.interval = setInterval(this.refetch, 60 * 1000);
 	}
 
 	componentWillUnmount() {
-		clearInterval(this.interval);
+		// clearInterval(this.interval);
 		if (this.timeout) {
 			clearTimeout(this.timeout);
 		}

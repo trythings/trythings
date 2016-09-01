@@ -194,7 +194,7 @@ class SignedInApp extends React.Component {
 
 	viewRef = (view) => {
 		if (view) {
-			this.view = view.refs.component;
+			this.view = view.refs['component'];
 		} else {
 			this.view = null;
 		}

@@ -38,7 +38,7 @@ export default class View extends React.Component {
 
 	savedSearchRef = (id) => (savedSearch) => {
 		if (savedSearch) {
-			this.savedSearches.set(id, savedSearch.refs.component);
+			this.savedSearches.set(id, savedSearch.refs['component']);
 		} else {
 			this.savedSearches.delete(id);
 		}
