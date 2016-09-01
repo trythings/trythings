@@ -92,9 +92,9 @@ class QuerySearch extends React.Component {
 
 export default Relay.createContainer(QuerySearch, {
 	fragments: {
-		space: () => Relay.QL`
-			fragment on Space {
-				name,
+		parentTask: () => Relay.QL`
+			fragment on Task {
+				title,
 			},
 		`,
 	},

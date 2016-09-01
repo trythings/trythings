@@ -298,6 +298,8 @@ func (apis *apis) Start() error {
 	schema, err := graphql.NewSchema(graphql.SchemaConfig{
 		Query:    query,
 		Mutation: mutation,
+		// TODO#ModelRewrite: Understand why this is required.
+		Types: []graphql.Type{apis.SearchAPI.Type},
 	})
 
 	if err != nil {

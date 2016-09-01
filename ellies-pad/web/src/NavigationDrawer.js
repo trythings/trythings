@@ -5,6 +5,7 @@ import FlatButton from './FlatButton.js';
 import resetStyles from './resetStyles.js';
 import theme from './theme.js';
 
+// TODO#Rewrite: The NavigationDrawer is no longer in use. Repurpose it or remove it.
 class NavigationDrawer extends React.Component {
 	static propTypes = {
 		onSignOutClick: React.PropTypes.func.isRequired,
@@ -151,21 +152,21 @@ class NavigationDrawer extends React.Component {
 	}
 }
 
-export default Relay.createContainer(NavigationDrawer, {
-	fragments: {
-		spaces: () => Relay.QL`
-			fragment on Space @relay(plural: true) {
-				id,
-				name,
-				views {
-					id,
-					name,
-					searches {
-						id,
-						name,
-					},
-				},
-			},
-		`,
-	},
-});
+// export default Relay.createContainer(NavigationDrawer, {
+// 	fragments: {
+// 		spaces: () => Relay.QL`
+// 			fragment on Space @relay(plural: true) {
+// 				id,
+// 				name,
+// 				views {
+// 					id,
+// 					name,
+// 					searches {
+// 						id,
+// 						name,
+// 					},
+// 				},
+// 			},
+// 		`,
+// 	},
+// });

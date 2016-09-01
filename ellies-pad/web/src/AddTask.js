@@ -9,8 +9,8 @@ import resetStyles from './resetStyles.js';
 class AddTask extends React.Component {
 	static propTypes = {
 		refetch: React.PropTypes.func.isRequired,
-		space: React.PropTypes.shape({
-			// ...AddTaskMole.propTypes.space,
+		parentTask: React.PropTypes.shape({
+			// ...AddTaskMole.propTypes.parentTask,
 		}).isRequired,
 		style: React.PropTypes.shape({
 			flex: React.PropTypes.string,
@@ -74,7 +74,7 @@ class AddTask extends React.Component {
 							<AddTaskMole
 								autoFocus
 								refetch={this.props.refetch}
-								space={this.props.space}
+								parentTask={this.props.parentTask}
 								onCancelClick={this.onCancelClick}
 								style={AddTask.styles.addTaskMole}
 							/>
@@ -93,7 +93,7 @@ class AddTask extends React.Component {
 
 export default Relay.createContainer(AddTask, {
 	fragments: {
-		space: () => Relay.QL`
+		parentTask: () => Relay.QL`
 			fragment on Task {
 				${AddTaskMole.getFragment('parentTask')},
 			},

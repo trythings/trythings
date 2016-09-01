@@ -6,7 +6,7 @@ import TaskList from './TaskList.js';
 class QuerySearchResults extends React.Component {
 	static propTypes = {
 		viewer: React.PropTypes.shape({
-			space: React.PropTypes.shape({
+			task: React.PropTypes.shape({
 				querySearch: React.PropTypes.shape({
 					// ...TaskList.propTypes.search,
 				}).isRequired,
@@ -15,7 +15,7 @@ class QuerySearchResults extends React.Component {
 	};
 
 	render() {
-		return <TaskList search={this.props.viewer.space.querySearch} />;
+		return <TaskList search={this.props.viewer.task.querySearch} />;
 	}
 }
 
@@ -27,7 +27,7 @@ export default Relay.createContainer(QuerySearchResults, {
 	fragments: {
 		viewer: () => Relay.QL`
 			fragment on User {
-				space {
+				task {
 					querySearch(query: $query) {
 						${TaskList.getFragment('search')},
 					},

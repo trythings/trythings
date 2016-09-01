@@ -29,7 +29,7 @@ class EditTaskMutation extends Relay.Mutation {
 			fragment on EditTaskPayload {
 				task {
 					title,
-					description,
+					body,
 					isArchived,
 				},
 			}
@@ -49,7 +49,7 @@ class EditTaskMutation extends Relay.Mutation {
 		return {
 			id: this.props.task.id,
 			title: this.props.title,
-			description: this.props.description,
+			body: this.props.body,
 			// isArchived: this.props.isArchived,
 		};
 	}
@@ -59,7 +59,7 @@ class EditTaskMutation extends Relay.Mutation {
 			task: {
 				id: this.props.task.id,
 				title: this.props.title,
-				description: this.props.description,
+				body: this.props.body,
 			},
 		};
 	}
@@ -73,7 +73,7 @@ class TaskCard extends React.Component {
 		}),
 		task: React.PropTypes.shape({
 			title: React.PropTypes.string.isRequired,
-			description: React.PropTypes.string,
+			body: React.PropTypes.string,
 			isArchived: React.PropTypes.bool,
 		}).isRequired,
 		onClose: React.PropTypes.func,
@@ -93,7 +93,7 @@ class TaskCard extends React.Component {
 			fontSize: 24,
 			fontWeight: 300,
 		},
-		description: {
+		body: {
 			...resetStyles,
 			...theme.text.dark.secondary,
 			minHeight: 0,
@@ -117,15 +117,15 @@ class TaskCard extends React.Component {
 
 	state = {
 		title: this.props.task.title,
-		description: this.props.task.description,
+		body: this.props.task.body,
 	};
 
 	onTitleChange = (event) => {
 		this.setState({ title: event.target.value });
 	};
 
-	onDescriptionChange = (event) => {
-		this.setState({ description: event.target.value });
+	onbodyChange = (event) => {
+		this.setState({ body: event.target.value });
 	};
 
 	onSaveClick = () => {
@@ -137,7 +137,7 @@ class TaskCard extends React.Component {
 
 	hasUnsavedChanges() {
 		return this.state.title !== this.props.task.title ||
-			this.state.description !== this.props.task.description;
+			this.state.body !== this.props.task.body;
 	}
 
 	requestClose = () => {
@@ -154,7 +154,7 @@ class TaskCard extends React.Component {
 			new EditTaskMutation({
 				task: this.props.task,
 				title: this.state.title,
-				description: this.state.description,
+				body: this.state.body,
 			}),
 		);
 	};
@@ -174,9 +174,9 @@ class TaskCard extends React.Component {
 
 					<TextareaAutosize
 						placeholder="Description"
-						value={this.state.description}
+						value={this.state.body}
 						onChange={this.onDescriptionChange}
-						style={TaskCard.styles.description}
+						style={TaskCard.styles.body}
 					/>
 				</header>
 
@@ -198,7 +198,7 @@ export default Relay.createContainer(TaskCard, {
 			fragment on Task {
 				${EditTaskMutation.getFragment('task')},
 				title,
-				description,
+				body,
 				isArchived,
 			}
 		`,

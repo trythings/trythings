@@ -572,6 +572,64 @@ func (api *TaskAPI) AfterStart(searchAPI *SearchAPI) {
 			return relay.ConnectionFromArray(objs, args), nil
 		},
 	})
+
+	api.Type.AddFieldConfig("querySearch", &graphql.Field{
+		Args: graphql.FieldConfigArgument{
+			"query": &graphql.ArgumentConfig{
+				Type:         graphql.String,
+				DefaultValue: "",
+				Description:  "query filters the result to only subtasks that contain particular terms in their title or description",
+			},
+		},
+		Type: api.SearchAPI.Type,
+		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			span := trace.FromContext(p.Context).NewChild("trythings.taskAPI.querySearch")
+			defer span.Finish()
+
+			t, ok := p.Source.(*Task)
+			if !ok {
+				return nil, errors.New("expected a task source")
+			}
+
+			q, ok := p.Args["query"].(string)
+			if !ok {
+				q = "" // Return all subtasks.
+			}
+
+			return &Search{
+				Query:        q,
+				ParentTaskID: t.ID,
+			}, nil
+		},
+	})
+
+	api.Type.AddFieldConfig("savedSearch", &graphql.Field{
+		Args: graphql.FieldConfigArgument{
+			"id": &graphql.ArgumentConfig{
+				Type: graphql.String,
+			},
+		},
+		Type: api.SearchAPI.Type,
+		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			span := trace.FromContext(p.Context).NewChild("trythings.taskAPI.savedSearch")
+			defer span.Finish()
+
+			id, ok := p.Args["id"].(string)
+			if !ok {
+				return nil, errors.New("id is required")
+			}
+			resolvedID := relay.FromGlobalID(id)
+			if resolvedID == nil {
+				return nil, fmt.Errorf("invalid id %q", id)
+			}
+
+			se, err := api.SearchAPI.SearchService.ByClientID(p.Context, resolvedID.ID)
+			if err != nil {
+				return nil, err
+			}
+			return se, nil
+		},
+	})
 }
 
 func (api *TaskAPI) Start() error {

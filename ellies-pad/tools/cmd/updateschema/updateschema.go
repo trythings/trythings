@@ -14,6 +14,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	err = apis.Start()
+	if err != nil {
+		panic(err)
+	}
 
 	res := graphql.Do(graphql.Params{
 		Schema:        *apis.Schema,

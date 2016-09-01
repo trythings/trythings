@@ -5,7 +5,6 @@ import Relay from 'react-relay';
 
 import AddTask from './AddTask.js';
 import AppBar from './AppBar.js';
-import NavigationDrawer from './NavigationDrawer.js';
 import QuerySearch from './QuerySearch.js';
 import resetStyles from './resetStyles.js';
 import SearchField from './SearchField.js';
@@ -37,24 +36,18 @@ class SignedInApp extends React.Component {
 			query: React.PropTypes.string,
 		}).isRequired,
 
-		relay: React.PropTypes.shape({
-			setVariables: React.PropTypes.func.isRequired,
-			variables: React.PropTypes.shape({
-				viewId: React.PropTypes.string,
-			}).isRequired,
-		}).isRequired,
+		// relay: React.PropTypes.shape({
+		// 	setVariables: React.PropTypes.func.isRequired,
+		// 	variables: React.PropTypes.shape({
+		// 		viewId: React.PropTypes.string,
+		// 	}).isRequired,
+		// }).isRequired,
 
 		viewer: React.PropTypes.shape({
-			space: React.PropTypes.shape({
-				// ...AddTask.propTypes.space,
-				// ...QuerySearch.propTypes.space,
-				view: React.PropTypes.shape({
-					// ...View.propTypes.view,
-				}).isRequired,
+			task: React.PropTypes.shape({
+				// ...AddTask.propTypes.parentTask,
+				// ...QuerySearch.propTypes.parentTask,
 			}).isRequired,
-			spaces: React.PropTypes.arrayOf(React.PropTypes.shape({
-				// ...NavigationDrawer.propTypes.space,
-			})).isRequired,
 		}).isRequired,
 	};
 
@@ -176,8 +169,8 @@ class SignedInApp extends React.Component {
 		});
 	};
 
-	onViewNameClick = (viewId) => {
-		this.props.relay.setVariables({ viewId });
+	onViewNameClick = () => {
+		// this.props.relay.setVariables({ viewId });
 	};
 
 	refetch = () => {
@@ -213,12 +206,12 @@ class SignedInApp extends React.Component {
 				<QuerySearch
 					name="Search results"
 					query={this.state.searchQuery}
-					space={this.props.viewer.space}
+					parentTask={this.props.viewer.task}
 				/>
 			);
 		}
 
-		return <View ref={this.viewRef} view={this.props.viewer.space.view} />;
+		return <View ref={this.viewRef} task={this.props.viewer.task} />;
 	}
 
 	render() {
@@ -242,13 +235,6 @@ class SignedInApp extends React.Component {
 
 		return (
 			<div style={SignedInApp.styles.rootContainer}>
-				<NavigationDrawer
-					onSignOutClick={this.onSignOutClick}
-					onViewNameClick={this.onViewNameClick}
-					selectedViewId={this.props.relay.variables.viewId}
-					spaces={this.props.viewer.spaces}
-				/>
-
 				<div style={SignedInApp.styles.appBarContainer}>
 					<AppBar style={appBarStyle}>
 						<SearchField
@@ -272,7 +258,7 @@ class SignedInApp extends React.Component {
 							<div style={SignedInApp.styles.addTaskSpacer} />
 							<AddTask
 								refetch={this.refetch}
-								space={this.props.viewer.space}
+								parentTask={this.props.viewer.task}
 								style={SignedInApp.styles.addTask}
 							/>
 						</div>
@@ -284,23 +270,18 @@ class SignedInApp extends React.Component {
 }
 
 const SignedInAppContainer = Relay.createContainer(SignedInApp, {
-	initialVariables: {
-		viewId: null,
-	},
+	// initialVariables: {
+	// 	viewId: null,
+	// },
 
 	fragments: {
 		viewer: () => Relay.QL`
 			fragment on User {
-				space {
-					name,
-					${AddTask.getFragment('space')},
-					${QuerySearch.getFragment('space')},
-					view(id: $viewId) {
-						${View.getFragment('view')},
-					},
-				},
-				spaces {
-					${NavigationDrawer.getFragment('spaces')},
+				task {
+					title,
+					${AddTask.getFragment('parentTask')},
+					${QuerySearch.getFragment('parentTask')},
+					${View.getFragment('task')},
 				},
 			}
 		`,

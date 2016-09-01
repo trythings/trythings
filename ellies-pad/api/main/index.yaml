@@ -16,21 +16,14 @@ indexes:
   - name: Version
     direction: desc
 
-- kind: Search
-  ancestor: yes
-  properties:
-  - name: ViewID
-  - name: ViewRank
-
-- kind: Search
-  ancestor: yes
-  properties:
-  - name: ViewID
-  - name: ViewRank
-    direction: desc
-
 - kind: Task
   ancestor: yes
   properties:
   - name: CreatedAt
     direction: desc
+
+- kind: TaskSearchRelationship
+  ancestor: yes
+  properties:
+  - name: SearchID
+  - name: TaskID

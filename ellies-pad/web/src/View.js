@@ -6,11 +6,15 @@ import SavedSearch from './SavedSearch.js';
 
 export default class View extends React.Component {
 	static propTypes = {
-		view: React.PropTypes.shape({
-			searches: React.PropTypes.arrayOf(React.PropTypes.shape({
-				id: React.PropTypes.string.isRequired,
-				// ...SavedSearch.propTypes.search,
-			})).isRequired,
+		task: React.PropTypes.shape({
+			searches: React.PropTypes.shape({
+				edges: React.PropTypes.arrayOf(React.PropTypes.shape({
+					node: React.PropTypes.shape({
+						id: React.PropTypes.string.isRequired,
+						// ...SavedSearch.propTypes.search,
+					}).isRequired,
+				})).isRequired,
+			}).isRequired,
 		}).isRequired,
 	};
 
@@ -45,9 +49,10 @@ export default class View extends React.Component {
 	}
 
 	render() {
+		const viewSearches = this.props.task.searches.edges.map((edge) => edge.node);
 		return (
 			<div style={View.styles.container}>
-				{this.props.view.searches.map((search, i, searches) => {
+				{viewSearches.map((search, i, searches) => {
 					if (i === searches.length - 1) {
 						return (
 							<SavedSearch
@@ -69,11 +74,15 @@ export default class View extends React.Component {
 
 export default Relay.createContainer(View, {
 	fragments: {
-		view: () => Relay.QL`
-			fragment on View {
-				searches {
-					id,
-					${SavedSearch.getFragment('search')},
+		task: () => Relay.QL`
+			fragment on Task {
+				searches(first: 1000) {
+					edges {
+						node {
+							id,
+							${SavedSearch.getFragment('search')},
+						},
+					},
 				},
 			},
 		`,

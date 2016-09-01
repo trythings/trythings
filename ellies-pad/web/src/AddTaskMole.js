@@ -58,8 +58,8 @@ class AddTaskMole extends React.Component {
 	static propTypes = {
 		autoFocus: React.PropTypes.bool,
 		refetch: React.PropTypes.func.isRequired,
-		space: React.PropTypes.shape({
-			// ...AddTaskMutation.propTypes.space
+		parentTask: React.PropTypes.shape({
+			// ...AddTaskMutation.propTypes.parentTask
 		}).isRequired,
 		onCancelClick: React.PropTypes.func,
 		style: React.PropTypes.shape({
@@ -146,7 +146,7 @@ class AddTaskMole extends React.Component {
 			new AddTaskMutation({
 				title: `${this.state.title}`,
 				description: this.state.description || null,
-				space: this.props.space,
+				parentTask: this.props.parentTask,
 			}),
 		);
 		this.setState({

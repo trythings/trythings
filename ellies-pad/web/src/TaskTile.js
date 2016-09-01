@@ -66,7 +66,7 @@ class TaskTile extends React.Component {
 		}),
 		task: React.PropTypes.shape({
 			title: React.PropTypes.string.isRequired,
-			description: React.PropTypes.string,
+			body: React.PropTypes.string,
 			isArchived: React.PropTypes.bool,
 		}).isRequired,
 	};
@@ -143,7 +143,7 @@ class TaskTile extends React.Component {
 		const title = <span style={TaskTile.styles.title}>{this.props.task.title}</span>;
 		const description = (
 			<span style={TaskTile.styles.description}>
-				{this.props.task.description}
+				{this.props.task.body}
 			</span>
 		);
 		if (this.props.task.isArchived) {
@@ -188,7 +188,7 @@ export default Relay.createContainer(TaskTile, {
 			fragment on Task {
 				${ArchiveTaskMutation.getFragment('task')},
 				title,
-				description,
+				body,
 				isArchived,
 			}
 		`,

@@ -260,7 +260,12 @@ func (api *SearchAPI) Start() error {
 			"id": relay.GlobalIDField("Search", func(obj interface{}, info graphql.ResolveInfo, ctx context.Context) (string, error) {
 				se, ok := obj.(*Search)
 				if !ok {
-					return "", fmt.Errorf("Search's GlobalIDField() was called with a non-Search")
+					// TODO#Bug: We *should* only be seeing *Search objs. Figure out who is calling this with a Search.
+					se2, ok := obj.(Search)
+					if !ok {
+						return "", fmt.Errorf("Search's GlobalIDField() was called with a non-Search")
+					}
+					se = &se2
 				}
 
 				cid, err := se.ClientID()
