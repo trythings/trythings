@@ -7,9 +7,9 @@ import TaskTile from './TaskTile.js';
 
 class TaskListItem extends React.Component {
 	static propTypes = {
-		// ...TaskCard.propTypes.task
-		// ...TaskTile.propTypes.task
 		task: React.PropTypes.shape({
+			// ...TaskCard.propTypes.task
+			// ...TaskTile.propTypes.task
 			id: React.PropTypes.string.isRequired,
 			title: React.PropTypes.string,
 			description: React.PropTypes.string,
@@ -34,11 +34,11 @@ class TaskListItem extends React.Component {
 	};
 
 	state = {
-		isFocused: false,
+		hasFocus: false,
 	};
 
 	onFocus = () => {
-		this.setState({ isFocused: true });
+		this.setState({ hasFocus: true });
 	};
 
 	onBlur = (event) => {
@@ -48,11 +48,11 @@ class TaskListItem extends React.Component {
 	};
 
 	close = () => {
-		this.setState({ isFocused: false });
+		this.setState({ hasFocus: false });
 	};
 
 	taskCardRef = (taskCard) => {
-		this.taskCard = taskCard && taskCard.refs.component;
+		this.taskCard = taskCard && taskCard.refs['component'];
 	};
 
 	render() {
@@ -63,7 +63,7 @@ class TaskListItem extends React.Component {
 				style={TaskListItem.styles.item}
 				tabIndex={-1}
 			>
-				{this.state.isFocused
+				{this.state.hasFocus
 					? (
 							<TaskCard
 								autoFocus

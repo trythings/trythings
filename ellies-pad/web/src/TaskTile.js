@@ -116,15 +116,15 @@ class TaskTile extends React.Component {
 	};
 
 	state = {
-		isHovered: false,
+		isHovering: false,
 	};
 
 	onMouseEnter = () => {
-		this.setState({ isHovered: true });
+		this.setState({ isHovering: true });
 	};
 
 	onMouseLeave = () => {
-		this.setState({ isHovered: false });
+		this.setState({ isHovering: false });
 	};
 
 	onArchiveClick = () => {
@@ -164,7 +164,7 @@ class TaskTile extends React.Component {
 				tabIndex={-1}
 			>
 				{this.renderText()}
-				{this.state.isHovered ?
+				{this.state.isHovering ?
 					<button
 						style={TaskTile.styles.archive}
 						onClick={this.onArchiveClick}
