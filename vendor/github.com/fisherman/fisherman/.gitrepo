@@ -1,0 +1,11 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = git@github.com:fisherman/fisherman.git
+	branch = master
+	commit = 0d179a8b3c1541dc4846a1672a725236ee5fa4fc
+	parent = d7d18929a4924647b536b60855b425b8c03dc590
+	cmdver = 0.3.0
