@@ -6,6 +6,6 @@
 [subrepo]
 	remote = git@github.com:golang/protobuf.git
 	branch = master
-	commit = 45bba206dd5270d96bac4942dcfe515726613249
-	parent = 66bbcc41d38f1b0ce398257a321fef1aec28bfd6
+	commit = 8ee79997227bf9b34611aee7946ae64735e6fd93
+	parent = b7ff3b388506195b39e64686b31a995f1ae634a8
 	cmdver = 0.3.0
