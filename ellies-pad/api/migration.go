@@ -10,7 +10,7 @@ import (
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/delay"
 	"google.golang.org/appengine/log"
-	"google.golang.org/cloud/trace"
+	"cloud.google.com/go/trace"
 )
 
 // Migration represents a batch update to existing entities in the datastore.

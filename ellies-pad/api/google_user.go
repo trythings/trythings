@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
+	"cloud.google.com/go/trace"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/urlfetch"
-	"google.golang.org/cloud/trace"
 	"gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
 )
