@@ -39,14 +39,15 @@ import (
 	"io"
 	"math"
 	"net"
-	"reflect"
 	"strconv"
+	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	"golang.org/x/net/context"
 	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/hpack"
 	"google.golang.org/grpc/codes"
 )
 
@@ -59,14 +60,15 @@ type server struct {
 }
 
 var (
-	expectedRequest       = []byte("ping")
-	expectedResponse      = []byte("pong")
-	expectedRequestLarge  = make([]byte, initialWindowSize*2)
-	expectedResponseLarge = make([]byte, initialWindowSize*2)
+	expectedRequest            = []byte("ping")
+	expectedResponse           = []byte("pong")
+	expectedRequestLarge       = make([]byte, initialWindowSize*2)
+	expectedResponseLarge      = make([]byte, initialWindowSize*2)
+	expectedInvalidHeaderField = "invalid/content-type"
 )
 
 type testStreamHandler struct {
-	t ServerTransport
+	t *http2Server
 }
 
 type hType int
@@ -76,6 +78,7 @@ const (
 	suspended
 	misbehaved
 	encodingRequiredStatus
+	invalidHeaderField
 )
 
 func (h *testStreamHandler) handleStream(t *testing.T, s *Stream) {
@@ -111,26 +114,44 @@ func (h *testStreamHandler) handleStreamMisbehave(t *testing.T, s *Stream) {
 	if !ok {
 		t.Fatalf("Failed to convert %v to *http2Server", s.ServerTransport())
 	}
-	size := 1
-	if s.Method() == "foo.MaxFrame" {
-		size = http2MaxFrameLen
-	}
-	// Drain the client side stream flow control window.
 	var sent int
-	for sent <= initialWindowSize {
+	p := make([]byte, http2MaxFrameLen)
+	for sent < initialWindowSize {
 		<-conn.writableChan
-		if err := conn.framer.writeData(true, s.id, false, make([]byte, size)); err != nil {
+		n := initialWindowSize - sent
+		// The last message may be smaller than http2MaxFrameLen
+		if n <= http2MaxFrameLen {
+			if s.Method() == "foo.Connection" {
+				// Violate connection level flow control window of client but do not
+				// violate any stream level windows.
+				p = make([]byte, n)
+			} else {
+				// Violate stream level flow control window of client.
+				p = make([]byte, n+1)
+			}
+		}
+		if err := conn.framer.writeData(true, s.id, false, p); err != nil {
 			conn.writableChan <- 0
 			break
 		}
 		conn.writableChan <- 0
-		sent += size
+		sent += len(p)
 	}
 }
 
 func (h *testStreamHandler) handleStreamEncodingRequiredStatus(t *testing.T, s *Stream) {
 	// raw newline is not accepted by http2 framer so it must be encoded.
 	h.t.WriteStatus(s, encodingTestStatusCode, encodingTestStatusDesc)
+}
+
+func (h *testStreamHandler) handleStreamInvalidHeaderField(t *testing.T, s *Stream) {
+	<-h.t.writableChan
+	h.t.hBuf.Reset()
+	h.t.hEnc.WriteField(hpack.HeaderField{Name: "content-type", Value: expectedInvalidHeaderField})
+	if err := h.t.writeHeaders(s, h.t.hBuf, false); err != nil {
+		t.Fatalf("Failed to write headers: %v", err)
+	}
+	h.t.writableChan <- 0
 }
 
 // start starts server. Other goroutines should block on s.readyChan for further operations.
@@ -158,7 +179,10 @@ func (s *server) start(t *testing.T, port int, maxStreams uint32, ht hType) {
 		if err != nil {
 			return
 		}
-		transport, err := NewServerTransport("http2", conn, maxStreams, nil)
+		config := &ServerConfig{
+			MaxStreams: maxStreams,
+		}
+		transport, err := NewServerTransport("http2", conn, config)
 		if err != nil {
 			return
 		}
@@ -170,21 +194,36 @@ func (s *server) start(t *testing.T, port int, maxStreams uint32, ht hType) {
 		}
 		s.conns[transport] = true
 		s.mu.Unlock()
-		h := &testStreamHandler{transport}
+		h := &testStreamHandler{transport.(*http2Server)}
 		switch ht {
 		case suspended:
-			go transport.HandleStreams(h.handleStreamSuspension)
+			go transport.HandleStreams(h.handleStreamSuspension,
+				func(ctx context.Context, method string) context.Context {
+					return ctx
+				})
 		case misbehaved:
 			go transport.HandleStreams(func(s *Stream) {
 				go h.handleStreamMisbehave(t, s)
+			}, func(ctx context.Context, method string) context.Context {
+				return ctx
 			})
 		case encodingRequiredStatus:
 			go transport.HandleStreams(func(s *Stream) {
 				go h.handleStreamEncodingRequiredStatus(t, s)
+			}, func(ctx context.Context, method string) context.Context {
+				return ctx
+			})
+		case invalidHeaderField:
+			go transport.HandleStreams(func(s *Stream) {
+				go h.handleStreamInvalidHeaderField(t, s)
+			}, func(ctx context.Context, method string) context.Context {
+				return ctx
 			})
 		default:
 			go transport.HandleStreams(func(s *Stream) {
 				go h.handleStream(t, s)
+			}, func(ctx context.Context, method string) context.Context {
+				return ctx
 			})
 		}
 	}
@@ -220,7 +259,10 @@ func setUp(t *testing.T, port int, maxStreams uint32, ht hType) (*server, Client
 		ct      ClientTransport
 		connErr error
 	)
-	ct, connErr = NewClientTransport(addr, &ConnectOptions{})
+	target := TargetInfo{
+		Addr: addr,
+	}
+	ct, connErr = NewClientTransport(context.Background(), target, ConnectOptions{})
 	if connErr != nil {
 		t.Fatalf("failed to create transport: %v", connErr)
 	}
@@ -251,7 +293,7 @@ func TestClientSendAndReceive(t *testing.T) {
 		Last:  true,
 		Delay: false,
 	}
-	if err := ct.Write(s1, expectedRequest, &opts); err != nil {
+	if err := ct.Write(s1, expectedRequest, &opts); err != nil && err != io.EOF {
 		t.Fatalf("failed to send data: %v", err)
 	}
 	p := make([]byte, len(expectedResponse))
@@ -288,7 +330,7 @@ func performOneRPC(ct ClientTransport) {
 		Last:  true,
 		Delay: false,
 	}
-	if err := ct.Write(s, expectedRequest, &opts); err == nil {
+	if err := ct.Write(s, expectedRequest, &opts); err == nil || err == io.EOF {
 		time.Sleep(5 * time.Millisecond)
 		// The following s.Recv()'s could error out because the
 		// underlying transport is gone.
@@ -332,7 +374,7 @@ func TestLargeMessage(t *testing.T) {
 			if err != nil {
 				t.Errorf("%v.NewStream(_, _) = _, %v, want _, <nil>", ct, err)
 			}
-			if err := ct.Write(s, expectedRequestLarge, &Options{Last: true, Delay: false}); err != nil {
+			if err := ct.Write(s, expectedRequestLarge, &Options{Last: true, Delay: false}); err != nil && err != io.EOF {
 				t.Errorf("%v.Write(_, _, _) = %v, want  <nil>", ct, err)
 			}
 			p := make([]byte, len(expectedResponseLarge))
@@ -368,8 +410,8 @@ func TestGracefulClose(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if _, err := ct.NewStream(context.Background(), callHdr); err != ErrConnClosing {
-				t.Errorf("%v.NewStream(_, _) = _, %v, want _, %v", ct, err, ErrConnClosing)
+			if _, err := ct.NewStream(context.Background(), callHdr); err != ErrStreamDrain {
+				t.Errorf("%v.NewStream(_, _) = _, %v, want _, %v", ct, err, ErrStreamDrain)
 			}
 		}()
 	}
@@ -378,7 +420,7 @@ func TestGracefulClose(t *testing.T) {
 		Delay: false,
 	}
 	// The stream which was created before graceful close can still proceed.
-	if err := ct.Write(s, expectedRequest, &opts); err != nil {
+	if err := ct.Write(s, expectedRequest, &opts); err != nil && err != io.EOF {
 		t.Fatalf("%v.Write(_, _, _) = %v, want  <nil>", ct, err)
 	}
 	p := make([]byte, len(expectedResponse))
@@ -407,8 +449,8 @@ func TestLargeMessageSuspension(t *testing.T) {
 	}
 	// Write should not be done successfully due to flow control.
 	err = ct.Write(s, expectedRequestLarge, &Options{Last: true, Delay: false})
-	expectedErr := StreamErrorf(codes.DeadlineExceeded, "%v", context.DeadlineExceeded)
-	if err == nil || err != expectedErr {
+	expectedErr := streamErrorf(codes.DeadlineExceeded, "%v", context.DeadlineExceeded)
+	if err != expectedErr {
 		t.Fatalf("Write got %v, want %v", err, expectedErr)
 	}
 	ct.Close()
@@ -553,6 +595,7 @@ func TestServerContextCanceledOnClosedConnection(t *testing.T) {
 	case <-time.After(5 * time.Second):
 		t.Fatalf("Failed to cancel the context of the sever side stream.")
 	}
+	server.stop()
 }
 
 func TestServerWithMisbehavedClient(t *testing.T) {
@@ -659,7 +702,7 @@ func TestClientWithMisbehavedServer(t *testing.T) {
 	server, ct := setUp(t, 0, math.MaxUint32, misbehaved)
 	callHdr := &CallHdr{
 		Host:   "localhost",
-		Method: "foo",
+		Method: "foo.Stream",
 	}
 	conn, ok := ct.(*http2Client)
 	if !ok {
@@ -670,7 +713,8 @@ func TestClientWithMisbehavedServer(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to open stream: %v", err)
 	}
-	if err := ct.Write(s, expectedRequest, &Options{Last: true, Delay: false}); err != nil {
+	d := make([]byte, 1)
+	if err := ct.Write(s, d, &Options{Last: true, Delay: false}); err != nil && err != io.EOF {
 		t.Fatalf("Failed to write: %v", err)
 	}
 	// Read without window update.
@@ -692,18 +736,15 @@ func TestClientWithMisbehavedServer(t *testing.T) {
 	}
 	// Test the logic for the violation of the connection flow control window size restriction.
 	//
-	// Generate enough streams to drain the connection window.
-	callHdr = &CallHdr{
-		Host:   "localhost",
-		Method: "foo.MaxFrame",
-	}
-	// Make the server flood the traffic to violate flow control window size of the connection.
-	for {
+	// Generate enough streams to drain the connection window. Make the server flood the traffic
+	// to violate flow control window size of the connection.
+	callHdr.Method = "foo.Connection"
+	for i := 0; i < int(initialConnWindowSize/initialWindowSize+10); i++ {
 		s, err := ct.NewStream(context.Background(), callHdr)
 		if err != nil {
 			break
 		}
-		if err := ct.Write(s, expectedRequest, &Options{Last: true, Delay: false}); err != nil {
+		if err := ct.Write(s, d, &Options{Last: true, Delay: false}); err != nil {
 			break
 		}
 	}
@@ -732,7 +773,7 @@ func TestEncodingRequiredStatus(t *testing.T) {
 		Last:  true,
 		Delay: false,
 	}
-	if err := ct.Write(s, expectedRequest, &opts); err != nil {
+	if err := ct.Write(s, expectedRequest, &opts); err != nil && err != io.EOF {
 		t.Fatalf("Failed to write the request: %v", err)
 	}
 	p := make([]byte, http2MaxFrameLen)
@@ -746,12 +787,38 @@ func TestEncodingRequiredStatus(t *testing.T) {
 	server.stop()
 }
 
+func TestInvalidHeaderField(t *testing.T) {
+	server, ct := setUp(t, 0, math.MaxUint32, invalidHeaderField)
+	callHdr := &CallHdr{
+		Host:   "localhost",
+		Method: "foo",
+	}
+	s, err := ct.NewStream(context.Background(), callHdr)
+	if err != nil {
+		return
+	}
+	opts := Options{
+		Last:  true,
+		Delay: false,
+	}
+	if err := ct.Write(s, expectedRequest, &opts); err != nil && err != io.EOF {
+		t.Fatalf("Failed to write the request: %v", err)
+	}
+	p := make([]byte, http2MaxFrameLen)
+	_, err = s.dec.Read(p)
+	if se, ok := err.(StreamError); !ok || se.Code != codes.FailedPrecondition || !strings.Contains(err.Error(), expectedInvalidHeaderField) {
+		t.Fatalf("Read got error %v, want error with code %s and contains %q", err, codes.FailedPrecondition, expectedInvalidHeaderField)
+	}
+	ct.Close()
+	server.stop()
+}
+
 func TestStreamContext(t *testing.T) {
-	expectedStream := Stream{}
-	ctx := newContextWithStream(context.Background(), &expectedStream)
+	expectedStream := &Stream{}
+	ctx := newContextWithStream(context.Background(), expectedStream)
 	s, ok := StreamFromContext(ctx)
-	if !ok || !reflect.DeepEqual(expectedStream, *s) {
-		t.Fatalf("GetStreamFromContext(%v) = %v, %t, want: %v, true", ctx, *s, ok, expectedStream)
+	if !ok || expectedStream != s {
+		t.Fatalf("GetStreamFromContext(%v) = %v, %t, want: %v, true", ctx, s, ok, expectedStream)
 	}
 }
 
