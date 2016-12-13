@@ -1,0 +1,11 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = git@github.com:googleapis/gax-go.git
+	branch = master
+	commit = da06d194a00e19ce00d9011a13931c3f6f6887c7
+	parent = 0e40805dde336d1f45b7a528069c0be278b77aaf
+	cmdver = 0.3.0
