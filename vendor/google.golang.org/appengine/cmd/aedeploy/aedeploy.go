@@ -19,18 +19,12 @@ import (
 	"go/build"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 )
-
-// vendored corresponds to srcDir depending on a vendored version of dir.
-// I.e. `import "dir"` from inside srcDir resolves to `.../some/ancestor/vendor/dir`.
-type vendored struct {
-	srcDir string
-	dir    string
-}
 
 var (
 	skipFiles = map[string]bool{
@@ -39,17 +33,25 @@ var (
 		".hg":         true,
 		".travis.yml": true,
 	}
-
-	gopathCache   = map[string]string{}
-	vendoredCache = map[vendored]string{}
 )
 
 func usage() {
 	fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
-	fmt.Fprintf(os.Stderr, "\t%s gcloud --verbosity debug preview app deploy --version myversion ./app.yaml\tDeploy app to production\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "\t%s gcloud --verbosity debug app deploy --version myversion ./app.yaml\tDeploy app to production\n", os.Args[0])
+}
+
+var verbose bool
+
+// vlogf logs to stderr if the "-v" flag is provided.
+func vlogf(f string, v ...interface{}) {
+	if !verbose {
+		return
+	}
+	log.Printf("[aedeploy] "+f, v...)
 }
 
 func main() {
+	flag.BoolVar(&verbose, "v", false, "Verbose logging.")
 	flag.Usage = usage
 	flag.Parse()
 	if flag.NArg() < 1 {
@@ -86,6 +88,7 @@ func aedeploy() error {
 
 // deploy calls the provided command to deploy the app from the temporary directory.
 func deploy() error {
+	vlogf("Running command %v", flag.Args())
 	cmd := exec.Command(flag.Arg(0), flag.Args()[1:]...)
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
@@ -103,12 +106,12 @@ type app struct {
 // app files, and a map of full directory import names to original import names.
 func analyze(tags []string) (*app, error) {
 	ctxt := buildContext(tags)
+	vlogf("Using build context %#v", ctxt)
 	appFiles, err := appFiles(ctxt)
 	if err != nil {
 		return nil, err
 	}
-	gopath := filepath.SplitList(ctxt.GOPATH)
-	im, err := imports(ctxt, ".", gopath)
+	im, err := imports(ctxt, ".")
 	return &app{
 		appFiles: appFiles,
 		imports:  im,
@@ -123,9 +126,13 @@ func buildContext(tags []string) *build.Context {
 		GOROOT:    build.Default.GOROOT,
 		GOPATH:    build.Default.GOPATH,
 		Compiler:  build.Default.Compiler,
-		BuildTags: append(build.Default.BuildTags, tags...),
+		BuildTags: append(defaultBuildTags, tags...),
 	}
 }
+
+// All build tags except go1.7, since Go 1.6 is the runtime version.
+var defaultBuildTags = []string{
+	"go1.1", "go1.2", "go1.3", "go1.4", "go1.5", "go1.6"}
 
 // bundle bundles the app into a temporary directory.
 func (s *app) bundle() (tmpdir string, err error) {
@@ -146,116 +153,75 @@ func (s *app) bundle() (tmpdir string, err error) {
 	return workDir, nil
 }
 
-// imports returns a map of all import directories (recursively) used by the app.
+// imports returns a map of all import directories used by the app.
 // The return value maps full directory names to original import names.
-func imports(ctxt *build.Context, srcDir string, gopath []string) (map[string]string, error) {
+func imports(ctxt *build.Context, srcDir string) (map[string]string, error) {
+	result := make(map[string]string)
+
+	type importFrom struct {
+		path, fromDir string
+	}
+	var imports []importFrom
+	visited := make(map[importFrom]bool)
+
 	pkg, err := ctxt.ImportDir(srcDir, 0)
 	if err != nil {
 		return nil, err
 	}
-
-	// Resolve imports, preferring vendored packages, then packages in the GOPATH.
-	// Any package that could not be resolved and does not contain a "."
-	// is assumed to be part of the standard libarry and therefore ignored.
-	// Otherwise, unresolved packages will return an error.
-	result := make(map[string]string)
 	for _, v := range pkg.Imports {
-		src, verr := findVendored(srcDir, v, gopath)
-		if verr != nil {
-			var perr error
-			src, perr = findInGopath(v, gopath)
-			if perr != nil {
-				if !strings.Contains(v, ".") {
-					continue
-				}
-				return nil, fmt.Errorf("unable to find import %v: %v, %v", v, perr, verr)
-			}
-		}
+		imports = append(imports, importFrom{
+			path:    v,
+			fromDir: srcDir,
+		})
+	}
 
-		if _, ok := result[src]; ok { // Already processed
+	// Resolve all non-standard-library imports
+	for len(imports) != 0 {
+		i := imports[0]
+		imports = imports[1:] // shift
+		if i.path == "C" {
+			// ignore cgo
 			continue
 		}
-		result[src] = v
-		im, err := imports(ctxt, src, gopath)
-		if err != nil {
-			return nil, fmt.Errorf("unable to parse package %v: %v", src, err)
+		if _, ok := visited[i]; ok {
+			// already scanned
+			continue
 		}
-		for k, v := range im {
-			result[k] = v
+		visited[i] = true
+
+		abs, err := filepath.Abs(i.fromDir)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get absolute directory of %q: %v", i.fromDir, err)
+		}
+		pkg, err := ctxt.Import(i.path, abs, 0)
+		if err != nil {
+			return nil, fmt.Errorf("unable to find import %s, imported from %q: %v", i.path, i.fromDir, err)
+		}
+
+		// TODO(cbro): handle packages that are vendored by multiple imports correctly.
+
+		if pkg.Goroot {
+			// ignore standard library imports
+			continue
+		}
+
+		vlogf("Located %q (imported from %q) -> %q", i.path, i.fromDir, pkg.Dir)
+		result[pkg.Dir] = i.path
+
+		for _, v := range pkg.Imports {
+			imports = append(imports, importFrom{
+				path:    v,
+				fromDir: pkg.Dir,
+			})
 		}
 	}
+
 	return result, nil
-}
-
-// findVendored searches up the tree for vendor directories containing the named import directory.
-func findVendored(srcDir, dir string, gopath []string) (string, error) {
-	if os.Getenv("GO15VENDOREXPERIMENT") != "0" {
-		srcDir, err := filepath.Abs(srcDir)
-		if err != nil {
-			return "", fmt.Errorf("unable to search vendor directories: %v", err)
-		}
-
-		if v, ok := vendoredCache[vendored{srcDir, dir}]; ok {
-			return v, nil
-		}
-
-		// srcDirs collects the directories we see as we walk up the tree.
-		// All of these directories, if they depend on a vendored version of dir,
-		// will depend on the same one.
-		var srcDirs []string
-
-		// Walk up the directory tree, looking for the vendored dir.
-		for s := srcDir; ; s = filepath.Dir(s) {
-			// Don't look in vendor directories outside of the GOPATH.
-			var inGopath bool
-			for _, p := range gopath {
-				if strings.HasPrefix(s, p) {
-					inGopath = true
-					break
-				}
-			}
-			if !inGopath {
-				break
-			}
-
-			srcDirs = append(srcDirs, s)
-			dst := filepath.Join(s, "vendor", dir)
-			if _, err := os.Stat(dst); err == nil {
-				for _, sd := range srcDirs {
-					vendoredCache[vendored{sd, dir}] = dst
-				}
-				return dst, nil
-			}
-
-			// We got to the root directory, but haven't found the vendored dir.
-			// This check isn't used as the loop conditional
-			// because we want the loop to run at least once.
-			if s == filepath.Dir(s) {
-				break
-			}
-		}
-		return "", fmt.Errorf("unable to find package %v in vendor directories at or above %v", dir, srcDir)
-	}
-	return "", fmt.Errorf("vendoring is disabled")
-}
-
-// findInGopath searches the gopath for the named import directory.
-func findInGopath(dir string, gopath []string) (string, error) {
-	if v, ok := gopathCache[dir]; ok {
-		return v, nil
-	}
-	for _, v := range gopath {
-		dst := filepath.Join(v, "src", dir)
-		if _, err := os.Stat(dst); err == nil {
-			gopathCache[dir] = dst
-			return dst, nil
-		}
-	}
-	return "", fmt.Errorf("unable to find package %v in gopath %v", dir, gopath)
 }
 
 // copyTree copies srcDir to dstDir relative to dstRoot, ignoring skipFiles.
 func copyTree(dstRoot, dstDir, srcDir string) error {
+	vlogf("Copying %q to %q", srcDir, dstDir)
 	d := filepath.Join(dstRoot, dstDir)
 	if err := os.MkdirAll(d, 0755); err != nil {
 		return fmt.Errorf("unable to create directory %q: %v", d, err)
@@ -328,5 +294,6 @@ func appFiles(ctxt *build.Context) ([]string, error) {
 		n := filepath.Join(".", f)
 		appFiles = append(appFiles, n)
 	}
+	vlogf("Found application files %v", appFiles)
 	return appFiles, nil
 }
