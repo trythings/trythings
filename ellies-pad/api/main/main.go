@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/trythings/trythings/ellies-pad/api"
 	"google.golang.org/appengine"
-	"google.golang.org/cloud/trace"
+	"cloud.google.com/go/trace"
 )
 
 func main() {

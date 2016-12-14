@@ -36,6 +36,7 @@ package grpc
 import (
 	"bytes"
 	"io"
+	"math"
 	"reflect"
 	"testing"
 
@@ -66,9 +67,9 @@ func TestSimpleParsing(t *testing.T) {
 	} {
 		buf := bytes.NewReader(test.p)
 		parser := &parser{r: buf}
-		pt, b, err := parser.recvMsg()
+		pt, b, err := parser.recvMsg(math.MaxInt32)
 		if err != test.err || !bytes.Equal(b, test.b) || pt != test.pt {
-			t.Fatalf("parser{%v}.recvMsg() = %v, %v, %v\nwant %v, %v, %v", test.p, pt, b, err, test.pt, test.b, test.err)
+			t.Fatalf("parser{%v}.recvMsg(_) = %v, %v, %v\nwant %v, %v, %v", test.p, pt, b, err, test.pt, test.b, test.err)
 		}
 	}
 }
@@ -88,16 +89,16 @@ func TestMultipleParsing(t *testing.T) {
 		{compressionNone, []byte("d")},
 	}
 	for i, want := range wantRecvs {
-		pt, data, err := parser.recvMsg()
+		pt, data, err := parser.recvMsg(math.MaxInt32)
 		if err != nil || pt != want.pt || !reflect.DeepEqual(data, want.data) {
-			t.Fatalf("after %d calls, parser{%v}.recvMsg() = %v, %v, %v\nwant %v, %v, <nil>",
+			t.Fatalf("after %d calls, parser{%v}.recvMsg(_) = %v, %v, %v\nwant %v, %v, <nil>",
 				i, p, pt, data, err, want.pt, want.data)
 		}
 	}
 
-	pt, data, err := parser.recvMsg()
+	pt, data, err := parser.recvMsg(math.MaxInt32)
 	if err != io.EOF {
-		t.Fatalf("after %d recvMsgs calls, parser{%v}.recvMsg() = %v, %v, %v\nwant _, _, %v",
+		t.Fatalf("after %d recvMsgs calls, parser{%v}.recvMsg(_) = %v, %v, %v\nwant _, _, %v",
 			len(wantRecvs), p, pt, data, err, io.EOF)
 	}
 }
@@ -113,7 +114,7 @@ func TestEncode(t *testing.T) {
 	}{
 		{nil, nil, []byte{0, 0, 0, 0, 0}, nil},
 	} {
-		b, err := encode(protoCodec{}, test.msg, nil, nil)
+		b, err := encode(protoCodec{}, test.msg, nil, nil, nil)
 		if err != test.err || !bytes.Equal(b, test.b) {
 			t.Fatalf("encode(_, _, %v, _) = %v, %v\nwant %v, %v", test.cp, b, err, test.b, test.err)
 		}
@@ -151,7 +152,7 @@ func TestToRPCErr(t *testing.T) {
 		// outputs
 		errOut *rpcError
 	}{
-		{transport.StreamErrorf(codes.Unknown, ""), Errorf(codes.Unknown, "").(*rpcError)},
+		{transport.StreamError{codes.Unknown, ""}, Errorf(codes.Unknown, "").(*rpcError)},
 		{transport.ErrConnClosing, Errorf(codes.Internal, transport.ErrConnClosing.Desc).(*rpcError)},
 	} {
 		err := toRPCErr(test.errIn)
@@ -172,8 +173,8 @@ func TestContextErr(t *testing.T) {
 		// outputs
 		errOut transport.StreamError
 	}{
-		{context.DeadlineExceeded, transport.StreamErrorf(codes.DeadlineExceeded, "%v", context.DeadlineExceeded)},
-		{context.Canceled, transport.StreamErrorf(codes.Canceled, "%v", context.Canceled)},
+		{context.DeadlineExceeded, transport.StreamError{codes.DeadlineExceeded, context.DeadlineExceeded.Error()}},
+		{context.Canceled, transport.StreamError{codes.Canceled, context.Canceled.Error()}},
 	} {
 		err := transport.ContextErr(test.errIn)
 		if err != test.errOut {
@@ -198,12 +199,12 @@ func TestErrorsWithSameParameters(t *testing.T) {
 // bytes.
 func bmEncode(b *testing.B, mSize int) {
 	msg := &perfpb.Buffer{Body: make([]byte, mSize)}
-	encoded, _ := encode(protoCodec{}, msg, nil, nil)
+	encoded, _ := encode(protoCodec{}, msg, nil, nil, nil)
 	encodedSz := int64(len(encoded))
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		encode(protoCodec{}, msg, nil, nil)
+		encode(protoCodec{}, msg, nil, nil, nil)
 	}
 	b.SetBytes(encodedSz)
 }

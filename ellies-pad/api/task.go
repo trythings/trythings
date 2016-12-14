@@ -11,7 +11,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/search"
-	"google.golang.org/cloud/trace"
+	"cloud.google.com/go/trace"
 )
 
 // Task represents a particular action or piece of work to be completed.

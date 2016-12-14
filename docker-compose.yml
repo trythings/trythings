@@ -1,0 +1,27 @@
+version: '2'
+services:
+  api:
+    build:
+      context: .
+      dockerfile: ./ellies-pad/api/Dockerfile
+    ports:
+      - "8000:8000"
+      - "8080:8080"
+    volumes:
+      - ".:/go/src/github.com/trythings/trythings"
+  web:
+    build:
+      context: .
+      dockerfile: ./ellies-pad/web/Dockerfile
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
+    volumes:
+      - "./ellies-pad/web/src:/go/src/github.com/trythings/trythings/ellies-pad/web/src"
+  tools:
+    build:
+      context: .
+      dockerfile: ./tools/Dockerfile
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"

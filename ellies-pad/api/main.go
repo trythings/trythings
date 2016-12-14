@@ -8,7 +8,7 @@ import (
 	"github.com/graphql-go/handler"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
-	"google.golang.org/cloud/trace"
+	"cloud.google.com/go/trace"
 )
 
 var Tracer *trace.Client

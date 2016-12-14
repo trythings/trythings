@@ -6,6 +6,6 @@
 [subrepo]
 	remote = git@github.com:golang/oauth2.git
 	branch = master
-	commit = 1364adb2c63445016c5ed4518fc71f6a3cda6169
-	parent = d52b569263b9b24da8ee453afa61f258eab78659
+	commit = da3ce8d62a7f77aadfda06cb82bd604d6469c645
+	parent = a949580de887b9a62640cbeffefb63c0db8d7d04
 	cmdver = 0.3.0

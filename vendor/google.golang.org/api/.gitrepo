@@ -6,6 +6,6 @@
 [subrepo]
 	remote = git@github.com:google/google-api-go-client.git
 	branch = master
-	commit = fa0566afd4c8fdae644725fdf9b57b5851a20742
-	parent = afd88cc3a3ee38e6235aa0491d7b2419f66f46b8
+	commit = 6ae94d3fbc17a6600999dc24c28bd01735a87b76
+	parent = 553d91b8376910fcb48e7433f3ceb842bdb6923e
 	cmdver = 0.3.0

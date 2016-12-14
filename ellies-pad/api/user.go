@@ -9,7 +9,7 @@ import (
 	"github.com/graphql-go/relay"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
-	"google.golang.org/cloud/trace"
+	"cloud.google.com/go/trace"
 )
 
 var ErrUserNotFound = errors.New("user not found")

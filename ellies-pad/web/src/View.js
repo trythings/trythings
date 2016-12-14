@@ -4,7 +4,7 @@ import Relay from 'react-relay';
 import resetStyles from './resetStyles.js';
 import SavedSearch from './SavedSearch.js';
 
-export default class View extends React.Component {
+class View extends React.Component {
 	static propTypes = {
 		view: React.PropTypes.shape({
 			searches: React.PropTypes.arrayOf(React.PropTypes.shape({

@@ -6,6 +6,6 @@
 [subrepo]
 	remote = git@github.com:golang/appengine.git
 	branch = master
-	commit = f21d98e7aefbf9ff4d5eeba05d7a925cc7ac20c3
-	parent = e2dc537463cc765ec9a2b8ca31186ef1ae4be0ee
+	commit = ca59ef35f409df61fa4a5f8290ff289b37eccfb8
+	parent = d8280b6b8ae43c67f2e7b381525dbcc31ae69ba7
 	cmdver = 0.3.0

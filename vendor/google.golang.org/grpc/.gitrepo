@@ -5,7 +5,7 @@
 ;
 [subrepo]
 	remote = git@github.com:grpc/grpc-go.git
-	branch = 8ab0d24ed31225b07f507131f110b62552fd9dfb
-	commit = 8ab0d24ed31225b07f507131f110b62552fd9dfb
-	parent = e76a669f0e08838e4ca89c6fe7a5694c626badcb
+	branch = master
+	commit = 8712952b7d646dbbbc6fb73a782174f3115060f3
+	parent = 8c7f240c984e5e7920f52c403bc3aa09ebf84a9f
 	cmdver = 0.3.0
