@@ -4,24 +4,35 @@ services:
     build:
       context: .
       dockerfile: ./ellies-pad/api/Dockerfile
+    container_name: api
     ports:
-      - "8000:8000"
-      - "8080:8080"
+      - 8000:8000
+      - 8080:8080
+    volumes_from:
+      - tools
+  tools:
+    build:
+      args:
+        - USER
+      context: .
+      dockerfile: ./tools/Dockerfile
+    container_name: tools
+    ports:
+      - 5000:5000
     volumes:
-      - ".:/go/src/github.com/trythings/trythings"
+      - .:/go/src/github.com/trythings/trythings
+      - /var/run/docker.sock:/var/run/docker.sock
+    tty: true
   web:
     build:
       context: .
       dockerfile: ./ellies-pad/web/Dockerfile
+    container_name: web
     depends_on:
       - api
     ports:
-      - "3000:3000"
+      - 3000:3000
     volumes:
-      - "./ellies-pad/web/src:/go/src/github.com/trythings/trythings/ellies-pad/web/src"
-  tools:
-    build:
-      context: .
-      dockerfile: ./tools/Dockerfile
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"
+      - /go/src/github.com/trythings/trythings/ellies-pad/web/node_modules
+    volumes_from:
+      - tools
