@@ -3,7 +3,6 @@ ENV CODE /go/src/github.com/trythings/trythings
 
 # Copy the code.
 COPY . "$CODE"
-
 WORKDIR "$CODE"/ellies-pad/web
 
 # Install dependencies.
