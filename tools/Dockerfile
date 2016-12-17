@@ -37,6 +37,14 @@ RUN echo "deb http://download.opensuse.org/repositories/shells:/fish:/release:/2
 # Copy the code.
 COPY . "$CODE"
 
+# Create and run as the user.
+ARG USER
+RUN useradd --create-home --shell /usr/bin/fish "$USER"
+USER "$USER"
+
+# Set git email.
+RUN git config --global user.email "$USER"@trythings.com
+
 # Install fisherman.
 RUN mkdir -p "$HOME"/.config/fish/functions \
 	&& ln -s "$CODE"/tools/home/.config/fish/functions/fisher.fish "$HOME"/.config/fish/functions/fisher.fish
