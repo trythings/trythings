@@ -1,0 +1,11 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = git@github.com:urfave/cli.git
+	branch = master
+	commit = 0bdeddeeb0f650497d603c4ad7b20cfe685682f6
+	parent = 324c1d6f74b1c57832cbd2162a643f689f7e9d0c
+	cmdver = 0.3.0
