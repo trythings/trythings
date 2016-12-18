@@ -1,2 +1,2 @@
 #!/bin/sh
-go run "$0.go" "$@"
+exec go run "$0".go "$@"
