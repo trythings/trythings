@@ -1,0 +1,4 @@
+#!/bin/sh
+dirname=$(dirname "$0")
+basename=$(basename "$0")
+exec "$dirname"/tools/cmd/try/"$basename" "$@"
