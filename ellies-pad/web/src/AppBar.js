@@ -4,6 +4,7 @@ import React from 'react';
 import resetStyles from './resetStyles.js';
 import theme from './theme.js';
 
+// TODO(annied): Add currently-working on tracker.
 class AppBar extends React.Component {
 	static propTypes = {
 		children: React.PropTypes.node,
