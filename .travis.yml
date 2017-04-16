@@ -42,10 +42,9 @@ script:
   - if test "$API"; then go test ./ellies-pad/api; fi
   - |
     if test "$WEB"
-    then (
-      cd ellies-pad/web
-      yarn run test
-    ) fi
+    then
+      yarn run lint
+    fi
 after_success: |
   if test "$DEPLOY"
   then

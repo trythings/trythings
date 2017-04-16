@@ -5,6 +5,9 @@
   "main": "",
   "private": true,
   "license": "private",
+  "scripts": {
+    "lint": "eslint src"
+  },
   "repository": {
     "type": "git",
     "url": "github.com/trythings/trythings"
