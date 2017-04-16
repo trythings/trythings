@@ -6,7 +6,7 @@ sudo: false
 env: GO15VENDOREXPERIMENT=1
 cache:
   directories:
-    - ellies-pad/web/node_modules
+    - node_modules
     - google-cloud-sdk
 before_install:
   # Decrypt service account key file.
@@ -33,13 +33,9 @@ install:
     fi
   - |
     if test "$WEB"
-    then (
-      # npm needs to be run from the same directory as package.json,
-      # so run npm commands in a subshell to avoid changing the working directory
-      # for subsequent commands.
-      cd ellies-pad/web
+    then
       npm install
-    ) fi
+    fi
 script:
   - if test "$API"; then go test ./ellies-pad/api; fi
   - |

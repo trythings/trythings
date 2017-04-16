@@ -33,6 +33,7 @@ services:
     ports:
       - 3000:3000
     volumes:
+      - /go/src/github.com/trythings/trythings/node_modules
       - /go/src/github.com/trythings/trythings/ellies-pad/web/node_modules
     volumes_from:
       - tools
