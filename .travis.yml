@@ -6,7 +6,7 @@ sudo: false
 env: GO15VENDOREXPERIMENT=1
 cache:
   directories:
-    - ellies-pad/web/node_modules
+    - node_modules
     - google-cloud-sdk
 before_install:
   # Decrypt service account key file.
@@ -18,7 +18,9 @@ before_install:
   # Only build and test the web app if it has changed, or we should deploy.
   - if test "$DEPLOY" || test $(git rev-list --count "$TRAVIS_COMMIT_RANGE" -- ellies-pad/web) -ne 0; then export WEB=true; fi
   # If we need to build and test the web app, install a newer version of node.
-  - if test "$WEB"; then nvm install 5.5.0; fi
+  - if test "$WEB"; then nvm install 7.9.0; fi
+  # If we need to build and test the web app, install yarn.
+  - if test "$WEB"; then npm install --global yarn; fi
 install:
   - |
     if test "$API"
@@ -33,21 +35,16 @@ install:
     fi
   - |
     if test "$WEB"
-    then (
-      # npm needs to be run from the same directory as package.json,
-      # so run npm commands in a subshell to avoid changing the working directory
-      # for subsequent commands.
-      cd ellies-pad/web
-      npm install
-    ) fi
+    then
+      yarn install
+    fi
 script:
   - if test "$API"; then go test ./ellies-pad/api; fi
   - |
     if test "$WEB"
-    then (
-      cd ellies-pad/web
-      npm test
-    ) fi
+    then
+      yarn run lint
+    fi
 after_success: |
   if test "$DEPLOY"
   then
